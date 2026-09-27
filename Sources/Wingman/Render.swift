@@ -28,6 +28,15 @@ enum Render {
                 print(file.path)
             }
         }
+        for (name, appearance) in [("light", NSAppearance.Name.aqua), ("dark", .darkAqua)] {
+            for step in 0..<3 {
+                let view = OnboardingView(settings: Prefs.shared, finish: {}, initialStep: step)
+                    .background(Color(nsColor: .windowBackgroundColor))
+                let file = url.appendingPathComponent("onboarding-\(name)-\(step + 1).png")
+                write(view, appearance: NSAppearance(named: appearance)!, to: file)
+                print(file.path)
+            }
+        }
         return 0
     }
 

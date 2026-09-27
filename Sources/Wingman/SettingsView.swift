@@ -5,6 +5,31 @@ import ServiceManagement
 import SwiftUI
 
 /// Click, then press the new combination. Esc cancels; plain keys are refused.
+/// A setting's name and, under it, what it is for in one plain sentence.
+struct SettingPurpose: View {
+    let title: String
+    let detail: String
+
+    init(_ title: String, _ detail: String) {
+        self.title = title
+        self.detail = detail
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Text(title).fontWeight(.semibold)
+            Text(detail).font(.caption).foregroundStyle(.secondary)
+        }
+        .padding(.top, 4)
+    }
+}
+
+/// Pasted keys often carry a trailing newline.
+func trimmedKey(_ binding: Binding<String>) -> Binding<String> {
+    Binding(get: { binding.wrappedValue },
+            set: { binding.wrappedValue = $0.trimmingCharacters(in: .whitespacesAndNewlines) })
+}
+
 struct HotkeyRecorder: View {
     @ObservedObject var settings: Prefs
     @State private var recording = false
@@ -75,21 +100,6 @@ struct SettingsView: View {
     private let tick = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
     private static let custom = "custom"
 
-    /// A setting's name and, under it, what it is for in one plain sentence.
-    private func purpose(_ title: String, _ detail: String) -> some View {
-        VStack(alignment: .leading, spacing: 2) {
-            Text(title).fontWeight(.semibold)
-            Text(detail).font(.caption).foregroundStyle(.secondary)
-        }
-        .padding(.top, 4)
-    }
-
-    /// Pasted keys often carry a trailing newline.
-    private func trimmed(_ binding: Binding<String>) -> Binding<String> {
-        Binding(get: { binding.wrappedValue },
-                set: { binding.wrappedValue = $0.trimmingCharacters(in: .whitespacesAndNewlines) })
-    }
-
     /// A listed model shows as itself; anything else, or choosing 自訂, shows the free-text field.
     private var modelChoice: Binding<String> {
         Binding(
@@ -139,9 +149,9 @@ struct SettingsView: View {
             } header: { Text("LINE、Telegram（選用）") }
 
             Section {
-                purpose("寫回覆：OpenRouter（必填）",
+                SettingPurpose("寫回覆：OpenRouter（必填）",
                         "請 AI 寫出 3 句候選回覆。按用量付費，要先在 OpenRouter 儲值（例如 US$5）；一次建議大約 US$0.0002。")
-                SecureField("OpenRouter API key（sk-or-v1-…）", text: trimmed($settings.openRouterKey))
+                SecureField("OpenRouter API key（sk-or-v1-…）", text: trimmedKey($settings.openRouterKey))
                 if let problem = Prefs.keyProblem(settings.openRouterKey, prefix: "sk-or-") {
                     Text(problem).font(.caption).foregroundStyle(.red)
                 }
@@ -151,9 +161,9 @@ struct SettingsView: View {
                 }
                 .font(.callout)
 
-                purpose("判斷訊息：TypeSafe（選填）",
+                SettingPurpose("判斷訊息：TypeSafe（選填）",
                         "判斷對方想要什麼、需不需要回、有多急，並從 3 句裡挑出最推薦的那句。沒填也能用，會改透過 OpenRouter 呼叫，每次建議大約慢 2–4 秒。")
-                SecureField("TypeSafe API key", text: trimmed($settings.typesafeKey))
+                SecureField("TypeSafe API key", text: trimmedKey($settings.typesafeKey))
                 if let problem = Prefs.keyProblem(settings.typesafeKey, prefix: "api") {
                     Text(problem).font(.caption).foregroundStyle(.red)
                 }

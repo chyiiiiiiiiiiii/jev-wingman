@@ -22,6 +22,11 @@ final class Prefs: ObservableObject {
     @Published var model: String { didSet { UserDefaults.standard.set(model, forKey: "model") } }
     @Published var myName: String { didSet { UserDefaults.standard.set(myName, forKey: "myName") } }
     @Published var paused: Bool { didSet { UserDefaults.standard.set(paused, forKey: "paused") } }
+    /// Set when the first-run steps are finished; people who set Wingman up before they existed count.
+    var onboarded: Bool {
+        get { UserDefaults.standard.bool(forKey: "onboarded") || (hasWriterKey && !myName.isEmpty) }
+        set { UserDefaults.standard.set(newValue, forKey: "onboarded") }
+    }
     @Published var hotkey: HotkeySetting {
         didSet { UserDefaults.standard.set(try? JSONEncoder().encode(hotkey), forKey: "hotkey") }
     }

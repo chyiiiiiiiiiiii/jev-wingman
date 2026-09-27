@@ -10,6 +10,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var panels: PanelController!
     private var statusItem: NSStatusItem!
     private var settingsWindow: NSWindow?
+    private var onboardingWindow: NSWindow?
     private var timer: Timer?
     private var watching: ChatApp?
     private var askedForScreenCapture = false
@@ -40,7 +41,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         if !AXIsProcessTrusted() {
             AXIsProcessTrustedWithOptions([kAXTrustedCheckOptionPrompt.takeUnretainedValue(): true] as CFDictionary)
         }
-        if !AXIsProcessTrusted() || !Prefs.shared.hasWriterKey || Prefs.shared.myName.isEmpty {
+        if !Prefs.shared.onboarded {
+            showOnboarding()
+        } else if !AXIsProcessTrusted() || !Prefs.shared.hasWriterKey {
             showSettings()
         }
         frontmostChanged()
@@ -152,6 +155,22 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     @objc private func togglePause() {
         Prefs.shared.paused.toggle()
+    }
+
+    private func showOnboarding() {
+        let view = OnboardingView(settings: Prefs.shared) { [weak self] in
+            Prefs.shared.onboarded = true
+            self?.onboardingWindow?.close()
+            self?.onboardingWindow = nil
+        }
+        let window = NSWindow(contentViewController: NSHostingController(rootView: view))
+        window.title = "歡迎使用 Wingman"
+        window.styleMask = [.titled, .closable, .miniaturizable]
+        window.isReleasedWhenClosed = false
+        window.center()
+        onboardingWindow = window
+        NSApp.activate()
+        window.makeKeyAndOrderFront(nil)
     }
 
     @objc private func showSettings() {
