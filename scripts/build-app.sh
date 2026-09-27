@@ -10,6 +10,7 @@ rm -rf "$app"
 mkdir -p "$app/Contents/MacOS" "$app/Contents/Resources"
 cp .build/release/Wingman "$app/Contents/MacOS/Wingman"
 cp Resources/Info.plist "$app/Contents/Info.plist"
+cp Resources/AppIcon.icns Resources/MenuBarIcon.png Resources/MenuBarIcon@2x.png "$app/Contents/Resources/"
 
 identity="${WINGMAN_SIGN_IDENTITY:-$(security find-identity -v -p codesigning | awk '/Apple Development/ {print $2; exit}')}"
 codesign --force --options runtime --sign "${identity:--}" "$app"

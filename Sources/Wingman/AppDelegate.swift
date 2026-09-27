@@ -88,9 +88,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     // MARK: - Menu bar
 
     private func setUpStatusItem() {
-        statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
-        statusItem.button?.image = NSImage(systemSymbolName: "bubble.left.and.text.bubble.right",
-                                           accessibilityDescription: "Wingman")
+        statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
+        let glyph = Bundle.main.image(forResource: "MenuBarIcon")
+            ?? NSImage(systemSymbolName: "bubble.left.and.text.bubble.right", accessibilityDescription: "Wingman")
+        glyph?.isTemplate = true
+        statusItem.button?.image = glyph
         let menu = NSMenu()
         let pause = NSMenuItem(title: "", action: #selector(togglePause), keyEquivalent: "")
         pause.target = self
