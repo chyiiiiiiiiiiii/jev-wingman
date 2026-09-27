@@ -189,11 +189,8 @@ struct Brain {
 
     /// Strategy labels the model makes up are shown as they come, so ask for the interface's language.
     static var labelLanguage: String {
-        switch interfaceLanguage {
-        case "en": "，用英文寫"
-        case "zh-Hans": "，用簡體中文寫"
-        default: ""
-        }
+        let names = ["en": "英文", "zh-Hans": "簡體中文", "ja": "日文", "ko": "韓文", "es": "西班牙文", "fr": "法文", "de": "德文"]
+        return names[interfaceLanguage].map { "，用\($0)寫" } ?? ""
     }
 
     static let excludedProviders = ["DeepSeek", "StreamLake", "Alibaba", "SiliconFlow", "Baidu"]

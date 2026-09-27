@@ -229,7 +229,9 @@ struct SuggestionView: View {
                 Text("Wingman").font(.system(size: 13, weight: .semibold))
             }
             if let replyTo = model.replyTo {
-                Text(L("回覆 %@：%@", "\(replyTo.sender ?? L("對方"))", "\(replyTo.text)"))
+                // Every translation ends with the quoted text, so it can take the chat's own face.
+                (Text(L("回覆 %@：%@", "\(replyTo.sender ?? L("對方"))", ""))
+                    + Text(replyTo.text).font(Self.chatFont(for: replyTo.text, size: 12)))
                     .font(.system(size: 12))
                     .foregroundStyle(.secondary)
                     .lineLimit(2)
@@ -309,7 +311,7 @@ struct SuggestionView: View {
                 }
                 .frame(height: 18)
                 Text(candidate.text)
-                    .font(.system(size: 13))
+                    .font(Self.chatFont(for: candidate.text, size: 13))
                     .fixedSize(horizontal: false, vertical: true)
             }
             Spacer(minLength: 0)
@@ -321,6 +323,18 @@ struct SuggestionView: View {
         .contentShape(Rectangle())
         .onHover { hovered = $0 ? index : (hovered == index ? nil : hovered) }
         .onTapGesture { model.insert(index) }
+    }
+
+    /// Drafts are typeset in their own language, whatever the interface's. With an English or Japanese
+    /// interface the system font takes that language's CJK glyphs, so Chinese drafts got Japanese
+    /// punctuation; the locale environment did not change that (checked in --render), a CJK face does.
+    static func chatFont(for text: String, size: CGFloat) -> Font {
+        switch ReplyLanguage.pick(replyTo: text, recent: []) {
+        case .chinese: .custom(interfaceLanguage == "zh-Hans" ? "PingFang SC" : "PingFang TC", size: size)
+        case .japanese: .custom("Hiragino Sans", size: size)
+        case .korean: .custom("Apple SD Gothic Neo", size: size)
+        case .theirs: .system(size: size)
+        }
     }
 
     /// The icon's indigo, not the system accent: white text on it stays legible (about 6:1) on the

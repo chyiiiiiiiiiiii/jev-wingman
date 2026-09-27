@@ -43,7 +43,7 @@ struct HotkeyRecorder: View {
                 Spacer()
                 Button(recording ? L("請按下新的組合…（Esc 取消）") : settings.hotkey.label) { recording ? stop() : start() }
                 if settings.hotkey != .standard && !recording {
-                    Button(L("還原")) { settings.hotkey = .standard }.controlSize(.small)
+                    Button(L("恢復預設")) { settings.hotkey = .standard }.controlSize(.small)
                 }
             }
             if let problem { Text(problem).font(.caption).foregroundStyle(.red) }
@@ -133,7 +133,7 @@ struct SettingsView: View {
                 HStack {
                     Image(systemName: canCapture ? "checkmark.circle.fill" : "circle.dashed")
                         .foregroundStyle(canCapture ? .green : .secondary)
-                    Text(canCapture ? L("已開啟「螢幕錄製」") : L("LINE、Telegram 需要「螢幕錄製」"))
+                    Text(canCapture ? L("已開啟「螢幕與系統錄音」") : L("LINE、Telegram 需要「螢幕與系統錄音」"))
                     Spacer()
                     if !canCapture {
                         Button(L("打開系統設定")) {
@@ -171,13 +171,13 @@ struct SettingsView: View {
                     .font(.callout)
 
                 Picker(L("寫回覆的模型"), selection: modelChoice) {
-                    ForEach(Prefs.writerModels, id: \.id) { Text($0.label).tag($0.id) }
+                    ForEach(Prefs.writerModels, id: \.id) { Text($0.name).tag($0.id) }
                     Text(L("自訂…")).tag(Self.custom)
                 }
                 if modelChoice.wrappedValue == Self.custom {
                     TextField(L("OpenRouter 模型 ID，例如 openai/gpt-5.4-mini"), text: $settings.model)
                 }
-                Text(L("推薦的那個最快、用台灣用語，不確定的時間會留 [時間] 讓你自己填，不會替你亂承諾。"))
+                Text(Prefs.writerModels.first { $0.id == settings.model }?.note ?? L("用任何 OpenRouter 上的模型。"))
                     .font(.caption).foregroundStyle(.secondary)
 
                 HStack(alignment: .top) {

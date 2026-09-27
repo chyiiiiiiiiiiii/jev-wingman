@@ -4,7 +4,7 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
-python3 scripts/localize.py          # fails when a string has no English yet
+python3 scripts/localize.py          # fails when a string is missing a translation
 swift build -c release --product Wingman
 app=build/Wingman.app
 rm -rf "$app"
@@ -12,7 +12,7 @@ mkdir -p "$app/Contents/MacOS" "$app/Contents/Resources"
 cp .build/release/Wingman "$app/Contents/MacOS/Wingman"
 cp Resources/Info.plist "$app/Contents/Info.plist"
 cp Resources/AppIcon.icns Resources/MenuBarIcon.png Resources/MenuBarIcon@2x.png "$app/Contents/Resources/"
-cp -R Resources/en.lproj Resources/zh-Hant.lproj Resources/zh-Hans.lproj "$app/Contents/Resources/"
+cp -R Resources/*.lproj "$app/Contents/Resources/"
 
 identity="${WINGMAN_SIGN_IDENTITY:-$(security find-identity -v -p codesigning | awk '/Apple Development/ {print $2; exit}')}"
 codesign --force --options runtime --sign "${identity:--}" "$app"

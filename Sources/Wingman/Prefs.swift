@@ -11,10 +11,11 @@ final class Prefs: ObservableObject {
 
     /// Picked by scripts/bench-writers.py on 2026-09-27: speed, cost, Taiwan wording, and whether
     /// the drafts invent times and facts the thread never gave.
-    static let writerModels: [(id: String, label: String)] = [
-        ("deepseek/deepseek-v4.1-flash", L("DeepSeek V4.1 Flash：最快、台灣用語最道地（推薦）")),
-        ("google/gemini-3.1-flash-lite", L("Gemini 3.1 Flash-Lite：快，偶爾用「數據」這類大陸用語")),
-        ("anthropic/claude-haiku-4.5", L("Claude Haiku 4.5：穩，但貴約 10 倍")),
+    static let writerModels: [(id: String, name: String, note: String)] = [
+        ("deepseek/deepseek-v4.1-flash", L("DeepSeek V4.1 Flash（推薦）"),
+         L("最快，台灣用語最道地；不確定的時間會留 [時間] 讓你自己填，不會替你亂承諾。")),
+        ("google/gemini-3.1-flash-lite", "Gemini 3.1 Flash-Lite", L("快，偶爾會用「數據」這類大陸用語。")),
+        ("anthropic/claude-haiku-4.5", "Claude Haiku 4.5", L("穩定，但費用約 10 倍。")),
     ]
 
     @Published var openRouterKey: String { didSet { Keychain.set(openRouterKey, account: "openrouter") } }
