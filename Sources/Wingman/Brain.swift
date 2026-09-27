@@ -1,5 +1,4 @@
 import Foundation
-import NaturalLanguage
 import WingmanCore
 
 /// Jev picks how to answer; an LLM writes one reply per pick.
@@ -120,7 +119,7 @@ struct Brain {
         }.joined(separator: "\n")
         let user = """
         \(app.name)\(convo.isThread ? " 對話串" : "") \(convo.title)
-        \(Self.languageRule(for: convo.messages.last(where: { !$0.isMe })?.text ?? ""))
+        \(Self.languageRule(for: convo))
         我的名字：\(me)
         最近的對話（由舊到新）：
         \(transcript)
@@ -146,12 +145,15 @@ struct Brain {
         return try CandidateDecoder.candidates(from: data)
     }
 
-    /// Models drift back to Chinese in a Chinese workspace unless told which language answers.
-    static func languageRule(for text: String) -> String {
-        switch NLLanguageRecognizer.dominantLanguage(for: text) {
-        case .english?: "對方用英文，請用英文回覆。"
-        case .japanese?: "對方用日文，請用日文回覆。"
-        default: "請用臺灣繁體中文回覆。"
+    /// Say which language answers; left to themselves, models drift with whatever the thread is in.
+    static func languageRule(for convo: Conversation) -> String {
+        let replyTo = convo.messages.last(where: { !$0.isMe })?.text ?? ""
+        let recent = convo.messages.suffix(8).map(\.text)
+        switch ReplyLanguage.pick(replyTo: replyTo, recent: recent) {
+        case .chinese: return "請用臺灣繁體中文回覆，技術名詞照對方的寫法保留英文。"
+        case .japanese: return "對方用日文，請用日文回覆。"
+        case .korean: return "對方用韓文，請用韓文回覆。"
+        case .theirs: return "對方這則不是中文，請用對方訊息的語言回覆。"
         }
     }
 
