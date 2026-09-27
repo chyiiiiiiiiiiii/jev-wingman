@@ -1,0 +1,241 @@
+import AppKit
+import Combine
+import SwiftUI
+import WingmanCore
+
+/// Floating panels that never activate Wingman, so Slack stays the app in front.
+final class FloatingPanel: NSPanel {
+    var acceptsKey = false
+    var onKeyDown: ((NSEvent) -> Bool)?
+
+    init() {
+        super.init(contentRect: .zero, styleMask: [.nonactivatingPanel, .borderless], backing: .buffered, defer: true)
+        isFloatingPanel = true
+        level = .floating
+        hidesOnDeactivate = false
+        backgroundColor = .clear
+        isOpaque = false
+        hasShadow = true
+        collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
+    }
+
+    override var canBecomeKey: Bool { acceptsKey }
+
+    override func sendEvent(_ event: NSEvent) {
+        if event.type == .keyDown, onKeyDown?(event) == true { return }
+        super.sendEvent(event)
+    }
+}
+
+/// Wingman is never the active app, so the first click on a panel must count.
+final class ClickThroughHostingView<Content: View>: NSHostingView<Content> {
+    override func acceptsFirstMouse(for event: NSEvent?) -> Bool { true }
+}
+
+/// Keeps the pill and the suggestion panel glued above Slack's composer.
+@MainActor
+final class PanelController {
+    private let model: AppModel
+    private let pill = FloatingPanel()
+    private let panel = FloatingPanel()
+    private var observation: AnyCancellable?
+
+    init(model: AppModel) {
+        self.model = model
+        pill.contentView = ClickThroughHostingView(rootView: PillView(model: model))
+        panel.acceptsKey = true
+        panel.contentView = ClickThroughHostingView(rootView: SuggestionView(model: model))
+        panel.onKeyDown = { [weak self] event in self?.handleKey(event) ?? false }
+        observation = model.objectWillChange.sink { [weak self] _ in
+            DispatchQueue.main.async { self?.refresh() }
+        }
+    }
+
+    func refresh() {
+        guard model.slackInFront, let composer = model.conversation?.composerFrame, composer.width > 0 else {
+            pill.orderOut(nil)
+            panel.orderOut(nil)
+            return
+        }
+        let top = Self.appKitY(ofAXY: composer.minY)
+
+        if model.panelShown {
+            pill.orderOut(nil)
+            let width = min(max(composer.width, 440), 580)
+            if model.panelWidth != width { model.panelWidth = width }   // the view lays out at this width
+            let height = panel.contentView!.fittingSize.height
+            panel.setFrame(NSRect(x: composer.minX, y: top + 8, width: width, height: height), display: true)
+            if !panel.isVisible { panel.makeKeyAndOrderFront(nil) }
+        } else {
+            if panel.isVisible { panel.orderOut(nil) }
+            guard model.pillText != nil else {
+                pill.orderOut(nil)
+                return
+            }
+            let size = pill.contentView!.fittingSize
+            pill.setFrame(NSRect(x: composer.maxX - size.width - 10, y: top + 6, width: size.width, height: size.height),
+                          display: true)
+            pill.orderFrontRegardless()
+        }
+    }
+
+    private func handleKey(_ event: NSEvent) -> Bool {
+        let command = event.modifierFlags.contains(.command)
+        switch event.keyCode {
+        case 53:  // Esc
+            if model.fieldFocused && !model.direction.isEmpty {
+                model.direction = ""
+            } else {
+                model.closePanel()
+            }
+            return true
+        case 18...20 where command || !model.fieldFocused:  // 1 2 3
+            model.insert(Int(event.keyCode) - 18)
+            return true
+        default:
+            return false
+        }
+    }
+
+    /// Accessibility frames use a top-left origin on the primary screen; AppKit uses bottom-left.
+    private static func appKitY(ofAXY y: CGFloat) -> CGFloat {
+        (NSScreen.screens.first?.frame.height ?? 0) - y
+    }
+}
+
+// MARK: - Views
+
+struct PillView: View {
+    @ObservedObject var model: AppModel
+
+    var body: some View {
+        Text(model.pillText ?? "")
+            .font(.system(size: 12, weight: .medium))
+            .padding(.horizontal, 10)
+            .padding(.vertical, 5)
+            .background(.regularMaterial, in: Capsule())
+            .overlay(Capsule().strokeBorder(.separator))
+            .fixedSize()
+            .onTapGesture { model.togglePanel() }
+    }
+}
+
+struct SuggestionView: View {
+    @ObservedObject var model: AppModel
+    @FocusState private var fieldFocused: Bool
+    @State private var hovered: Int?
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            header
+            Divider()
+            content
+            Divider()
+            HStack(spacing: 6) {
+                ForEach(["更短", "更委婉", "更正式", "更熱情"], id: \.self) { chip in
+                    Button(chip) { model.rewrite(chip) }
+                        .buttonStyle(.bordered)
+                        .controlSize(.small)
+                }
+            }
+            TextField("說說你想怎麼回，例如「跟他說週五前給」，按 Enter 重寫", text: $model.direction)
+                .textFieldStyle(.roundedBorder)
+                .focused($fieldFocused)
+                .onSubmit { model.rewrite(model.direction) }
+            Text(fieldFocused ? "Enter 重寫 · ⌘1–3 填入 · Esc 清除" : "1–3 填入 · 點輸入框寫你的意思 · Esc 關閉 · 不會自動送出")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+        }
+        .padding(14)
+        .frame(width: model.panelWidth, alignment: .leading)
+        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 12))
+        .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(.separator))
+        .onChange(of: fieldFocused) { _, focused in model.fieldFocused = focused }
+        .onChange(of: model.panelShown) { _, shown in if !shown { fieldFocused = false } }
+    }
+
+    @ViewBuilder private var header: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            if let j = model.judgment {
+                HStack(spacing: 6) {
+                    Circle().fill(Self.urgencyColor(j.urgency)).frame(width: 8, height: 8)
+                    Text(j.intent).fontWeight(.semibold)
+                    Text("·").foregroundStyle(.secondary)
+                    Text(j.needsReply < 0.35 ? "可以不回" : Self.urgencyText(j.urgency)).foregroundStyle(.secondary)
+                }
+                .font(.system(size: 13))
+            } else {
+                Text("Wingman").font(.system(size: 13, weight: .semibold))
+            }
+            if let replyTo = model.replyTo {
+                Text("回覆 \(replyTo.sender ?? "對方")：\(replyTo.text)")
+                    .font(.system(size: 12))
+                    .foregroundStyle(.secondary)
+                    .lineLimit(2)
+            }
+        }
+    }
+
+    @ViewBuilder private var content: some View {
+        switch model.phase {
+        case .idle, .thinking:
+            HStack(spacing: 8) {
+                ProgressView().controlSize(.small)
+                Text(model.judgment == nil ? "正在讀對話、判斷怎麼回…" : "正在寫回覆…").foregroundStyle(.secondary)
+            }
+            .frame(maxWidth: .infinity, minHeight: 60, alignment: .leading)
+        case let .failed(reason):
+            VStack(alignment: .leading, spacing: 6) {
+                Text(reason).foregroundStyle(.red).font(.system(size: 12))
+                Button("再試一次") { model.analyze() }.controlSize(.small)
+            }
+        case .ready:
+            VStack(alignment: .leading, spacing: 4) {
+                ForEach(Array(model.candidates.enumerated()), id: \.offset) { index, candidate in
+                    candidateRow(index, candidate)
+                }
+            }
+        }
+    }
+
+    private func candidateRow(_ index: Int, _ candidate: Candidate) -> some View {
+        HStack(alignment: .top, spacing: 10) {
+            Text("\(index + 1)")
+                .font(.system(size: 12, weight: .bold, design: .rounded))
+                .frame(width: 20, height: 20)
+                .background(Color.accentColor.opacity(0.15), in: RoundedRectangle(cornerRadius: 5))
+            VStack(alignment: .leading, spacing: 2) {
+                if !candidate.strategy.isEmpty {
+                    Text(candidate.strategy).font(.system(size: 11)).foregroundStyle(.secondary)
+                }
+                Text(candidate.text)
+                    .font(.system(size: 13))
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            Spacer(minLength: 0)
+        }
+        .padding(8)
+        .background(hovered == index ? Color.accentColor.opacity(0.08) : .clear, in: RoundedRectangle(cornerRadius: 8))
+        .contentShape(Rectangle())
+        .onHover { hovered = $0 ? index : (hovered == index ? nil : hovered) }
+        .onTapGesture { model.insert(index) }
+    }
+
+    private static func urgencyColor(_ urgency: Double) -> Color {
+        switch urgency {
+        case 2.5...: .red
+        case 1.5...: .orange
+        case 0.5...: .yellow
+        default: .gray
+        }
+    }
+
+    private static func urgencyText(_ urgency: Double) -> String {
+        switch urgency {
+        case 2.5...: "對方正在等，建議馬上回"
+        case 1.5...: "最好一小時內回"
+        case 0.5...: "今天內回就好"
+        default: "不急"
+        }
+    }
+}
