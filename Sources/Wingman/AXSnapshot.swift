@@ -19,16 +19,22 @@ struct AXSnapshot {
         AXUIElementSetAttributeValue(app, "AXManualAccessibility" as CFString, kCFBooleanTrue)
     }
 
-    static func focusedWindow(pid: pid_t) -> AXUIElement? {
+    /// The focused window first, then the rest: a huddle or a pop-out can hold focus
+    /// while the conversation sits in the main window.
+    static func windows(pid: pid_t) -> [AXUIElement] {
         let app = AXUIElementCreateApplication(pid)
-        var value: CFTypeRef?
-        guard AXUIElementCopyAttributeValue(app, kAXFocusedWindowAttribute as CFString, &value) == .success,
-              let value, CFGetTypeID(value) == AXUIElementGetTypeID() else { return nil }
-        return (value as! AXUIElement)
+        var focused: CFTypeRef?, all: CFTypeRef?
+        AXUIElementCopyAttributeValue(app, kAXFocusedWindowAttribute as CFString, &focused)
+        AXUIElementCopyAttributeValue(app, kAXWindowsAttribute as CFString, &all)
+        var windows: [AXUIElement] = []
+        if let focused, CFGetTypeID(focused) == AXUIElementGetTypeID() { windows.append(focused as! AXUIElement) }
+        for window in (all as? [AXUIElement]) ?? [] where !windows.contains(where: { CFEqual($0, window) }) {
+            windows.append(window)
+        }
+        return windows
     }
 
-    init?(pid: pid_t, maxNodes: Int = 5000) {
-        guard let window = Self.focusedWindow(pid: pid) else { return nil }
+    init(window: AXUIElement, maxNodes: Int = 5000) {
         var elements: [AXUIElement] = []
         func build(_ element: AXUIElement) -> UINode {
             let handle = elements.count
@@ -76,10 +82,14 @@ enum Slack {
         NSWorkspace.shared.frontmostApplication?.bundleIdentifier == bundleID
     }
 
-    /// Reads the conversation in Slack's focused window; nil when Slack or its composer is not there.
+    /// Reads the conversation in the first Slack window that has a composer; nil when there is none.
     static func read(pid: pid_t, myName: String?) -> (Conversation, AXSnapshot)? {
-        guard let snapshot = AXSnapshot(pid: pid),
-              let conversation = SlackParser.parse(window: snapshot.root, myName: myName) else { return nil }
-        return (conversation, snapshot)
+        for window in AXSnapshot.windows(pid: pid) {
+            let snapshot = AXSnapshot(window: window)
+            if let conversation = SlackParser.parse(window: snapshot.root, myName: myName) {
+                return (conversation, snapshot)
+            }
+        }
+        return nil
     }
 }

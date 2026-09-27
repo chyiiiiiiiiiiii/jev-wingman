@@ -18,11 +18,25 @@ enum Dump {
         AXSnapshot.enableWebAccessibility(pid: slack.processIdentifier)
         Thread.sleep(forTimeInterval: 0.5)
         let myName = Prefs.storedMyName
+        let show = { (s: String) in full || s.count <= 2 ? s : "\(s.prefix(2))…(\(s.count))" }
         guard let (convo, snapshot) = Slack.read(pid: slack.processIdentifier, myName: myName) else {
-            print("No Slack composer found in the focused window.")
+            print("No Slack composer found. Windows Slack reports:")
+            for window in AXSnapshot.windows(pid: slack.processIdentifier) {
+                let root = AXSnapshot(window: window).root
+                var nodes = 0, editors: [String] = []
+                func visit(_ node: UINode) {
+                    nodes += 1
+                    if node.role == "AXTextArea" || node.role == "AXTextField" {
+                        editors.append("\(node.role)[\(node.classes.prefix(2).joined(separator: "."))]")
+                    }
+                    node.children.forEach(visit)
+                }
+                visit(root)
+                print("  \(show(root.title)) \(Int(root.frame.width))x\(Int(root.frame.height)) · \(nodes) nodes · "
+                      + "text inputs: \(editors.isEmpty ? "none" : editors.joined(separator: ", "))")
+            }
             return 1
         }
-        let show = { (s: String) in full || s.count <= 2 ? s : "\(s.prefix(2))…(\(s.count))" }
         print("nodes \(snapshot.elements.count) · me \(myName.map(show) ?? "(not set)")")
         print("title \(show(convo.title)) · \(convo.isThread ? "thread" : "channel") · draft \(convo.draft.count) chars")
         print("composer \(Int(convo.composerFrame.minX)),\(Int(convo.composerFrame.minY)) \(Int(convo.composerFrame.width))x\(Int(convo.composerFrame.height))")
