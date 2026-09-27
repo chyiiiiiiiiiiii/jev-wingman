@@ -31,7 +31,32 @@ struct AXSnapshot {
         for window in (all as? [AXUIElement]) ?? [] where !windows.contains(where: { CFEqual($0, window) }) {
             windows.append(window)
         }
+        if windows.isEmpty, let window = windowUnderItsLargestFrame(pid: pid) { windows.append(window) }
         return windows
+    }
+
+    /// Slack reports no windows while another app is in front. The window server still knows where
+    /// its window is, and a hit-test scoped to Slack's application element finds the window there.
+    private static func windowUnderItsLargestFrame(pid: pid_t) -> AXUIElement? {
+        let info = CGWindowListCopyWindowInfo([.optionOnScreenOnly, .excludeDesktopElements], kCGNullWindowID)
+            as? [[String: Any]] ?? []
+        let frames = info
+            .filter { ($0[kCGWindowOwnerPID as String] as? pid_t) == pid && ($0[kCGWindowLayer as String] as? Int) == 0 }
+            .compactMap { ($0[kCGWindowBounds as String] as? NSDictionary).flatMap { CGRect(dictionaryRepresentation: $0) } }
+        guard let frame = frames.max(by: { $0.width * $0.height < $1.width * $1.height }) else { return nil }
+        var element: AXUIElement?
+        guard AXUIElementCopyElementAtPosition(AXUIElementCreateApplication(pid), Float(frame.midX), Float(frame.midY),
+                                               &element) == .success else { return nil }
+        for _ in 0..<80 {
+            guard let current = element else { return nil }
+            var role: CFTypeRef?, parent: CFTypeRef?
+            AXUIElementCopyAttributeValue(current, kAXRoleAttribute as CFString, &role)
+            if role as? String == kAXWindowRole { return current }
+            AXUIElementCopyAttributeValue(current, kAXParentAttribute as CFString, &parent)
+            guard let parent, CFGetTypeID(parent) == AXUIElementGetTypeID() else { return nil }
+            element = (parent as! AXUIElement)
+        }
+        return nil
     }
 
     init(window: AXUIElement, maxNodes: Int = 5000) {

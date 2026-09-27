@@ -2,7 +2,8 @@ import AppKit
 
 let arguments = CommandLine.arguments
 if arguments.contains("--dump") {
-    exit(Dump.run(full: arguments.contains("--full"), trace: arguments.contains("--trace")))
+    exit(Dump.run(full: arguments.contains("--full"), trace: arguments.contains("--trace"),
+              wait: arguments.contains("--wait")))
 }
 
 let app = NSApplication.shared

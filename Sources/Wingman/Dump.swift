@@ -6,7 +6,7 @@ import WingmanCore
 /// `Wingman --dump [--full]`: print what Wingman reads from Slack right now, then exit.
 /// Text is redacted to its first two characters unless `--full` is given.
 enum Dump {
-    static func run(full: Bool, trace: Bool) -> Int32 {
+    static func run(full: Bool, trace: Bool, wait: Bool) -> Int32 {
         guard AXIsProcessTrusted() else {
             print("Accessibility is not granted to the process running this command.")
             return 1
@@ -16,6 +16,10 @@ enum Dump {
             return 1
         }
         AXSnapshot.enableWebAccessibility(pid: slack.processIdentifier)
+        if wait {
+            print("5 秒後讀取，請切到 Slack…")
+            Thread.sleep(forTimeInterval: 5)
+        }
         Thread.sleep(forTimeInterval: 0.5)
         let myName = Prefs.storedMyName
         let show = { (s: String) in full || s.count <= 2 ? s : "\(s.prefix(2))…(\(s.count))" }
