@@ -218,7 +218,7 @@ struct SettingsView: View {
 
             Section {
                 TextField(L("你在聊天 App 裡顯示的名字"), text: $settings.myName)
-                Text(L("用來分辨 Slack、Discord 裡哪些訊息是你說的。各 App 顯示的名字不同時，用逗號分開，例如「Yii, Yii Chen」。LINE、Telegram 看氣泡位置，不需要名字。"))
+                Text(L("用來分辨 Slack、Discord 裡哪些訊息是你說的。各 App 顯示的名字不同時，用逗號分開，例如「Yii, Yii Chen」。LINE、Telegram 和網頁版的 Messenger、Instagram、Threads 看氣泡位置，不需要名字。"))
                     .font(.caption).foregroundStyle(.secondary)
             } header: { Text(L("3. 你是誰")) }
 

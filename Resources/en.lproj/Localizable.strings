@@ -42,7 +42,7 @@
 "讓 Wingman 看得到聊天" = "Let Wingman see your chats";
 "Wingman 讀你正在看的對話，幫你想好 3 句回覆，你選一句填進輸入框，自己按 Enter 送出。它不會自動送出任何訊息。" = "Wingman reads the conversation you're looking at and drafts 3 replies. Pick one to fill in the message box, then press Enter yourself. It never sends anything on its own.";
 "輔助使用（必要）" = "Accessibility (required)";
-"讀 Slack、Discord 的對話，並把回覆填進輸入框。" = "Reads Slack and Discord conversations and fills replies into the message box.";
+"讀 Slack、Discord，以及 Messenger、Instagram、Threads 網頁版的對話，並把回覆填進輸入框。" = "Reads Slack and Discord conversations, and Messenger, Instagram and Threads on the web, and fills replies into the message box.";
 "螢幕與系統錄音（用 LINE、Telegram 才需要）" = "Screen & System Audio Recording (only for LINE and Telegram)";
 "這兩個 App 只能看畫面讀字，截圖只在這台 Mac 上辨識，不會上傳。開啟後要重新啟動 Wingman。" = "These two apps can only be read from the screen. Captures are read on this Mac and never uploaded. Restart Wingman after turning it on.";
 "打開設定" = "Open Settings";
@@ -118,7 +118,7 @@
 "填好 key 後按「測試連線」，確認都能用。" = "After entering the keys, press Test Connection to check them.";
 "key 只存在這台 Mac 的鑰匙圈，只會送到它所屬的服務。" = "Keys stay in this Mac's Keychain and go only to the service they belong to.";
 "2. 連上 AI" = "2. Connect the AI";
-"用來分辨 Slack、Discord 裡哪些訊息是你說的。各 App 顯示的名字不同時，用逗號分開，例如「Yii, Yii Chen」。LINE、Telegram 看氣泡位置，不需要名字。" = "Tells your Slack and Discord messages apart from others'. If apps show different names, separate them with commas, e.g. \"Yii, Yii Chen\". LINE and Telegram go by bubble position and need no name.";
+"用來分辨 Slack、Discord 裡哪些訊息是你說的。各 App 顯示的名字不同時，用逗號分開，例如「Yii, Yii Chen」。LINE、Telegram 和網頁版的 Messenger、Instagram、Threads 看氣泡位置，不需要名字。" = "Tells your Slack and Discord messages apart from others'. If apps show different names, separate them with commas, e.g. \"Yii, Yii Chen\". LINE, Telegram, and Messenger, Instagram and Threads on the web go by bubble position and need no name.";
 "3. 你是誰" = "3. Who you are";
 "Wingman 沒有自己的伺服器，開發者收不到你的 key，也收不到聊天內容。" = "Wingman has no server of its own: its developer never receives your keys or your chats.";
 "送出去的只有你正在看的對話裡最近 20 則訊息、聊天室名稱和發言人名字：判斷送到 TypeSafe（承諾不拿來訓練模型），寫回覆送到 OpenRouter，而且只轉給不保留、不訓練的供應商。聊天內容不會存在這台 Mac 上，紀錄檔只記時間、次數和花費。" = "Only the last 20 messages of the chat you're looking at, the chat's name and the senders' names are sent: to TypeSafe for reading (it commits not to train on them) and to OpenRouter for drafts, routed only to providers that neither keep nor train on them. Chats are not stored on this Mac; the log holds only times, counts and costs.";

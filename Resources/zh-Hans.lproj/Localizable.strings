@@ -42,7 +42,7 @@
 "讓 Wingman 看得到聊天" = "让 Wingman 看得到聊天";
 "Wingman 讀你正在看的對話，幫你想好 3 句回覆，你選一句填進輸入框，自己按 Enter 送出。它不會自動送出任何訊息。" = "Wingman 读你正在看的对话，帮你想好 3 句回复，你选一句填进输入框，自己按 Enter 送出。它不会自动送出任何消息。";
 "輔助使用（必要）" = "辅助功能（必要）";
-"讀 Slack、Discord 的對話，並把回覆填進輸入框。" = "读 Slack、Discord 的对话，并把回复填进输入框。";
+"讀 Slack、Discord，以及 Messenger、Instagram、Threads 網頁版的對話，並把回覆填進輸入框。" = "读 Slack、Discord，以及 Messenger、Instagram、Threads 网页版的对话，并把回复填进输入框。";
 "螢幕與系統錄音（用 LINE、Telegram 才需要）" = "录屏与系统录音（用 LINE、Telegram 才需要）";
 "這兩個 App 只能看畫面讀字，截圖只在這台 Mac 上辨識，不會上傳。開啟後要重新啟動 Wingman。" = "这两个 App 只能看画面读字，截屏只在这台 Mac 上辨识，不会上传。打开后要重新启动 Wingman。";
 "打開設定" = "打开设置";
@@ -118,7 +118,7 @@
 "填好 key 後按「測試連線」，確認都能用。" = "填好 key 后按“测试连接”，确认都能用。";
 "key 只存在這台 Mac 的鑰匙圈，只會送到它所屬的服務。" = "key 只存在这台 Mac 的钥匙串，只会送到它所属的服务。";
 "2. 連上 AI" = "2. 连上 AI";
-"用來分辨 Slack、Discord 裡哪些訊息是你說的。各 App 顯示的名字不同時，用逗號分開，例如「Yii, Yii Chen」。LINE、Telegram 看氣泡位置，不需要名字。" = "用来分辨 Slack、Discord 里哪些消息是你说的。各 App 显示的名字不同时，用逗号分开，例如“Yii, Yii Chen”。LINE、Telegram 看气泡位置，不需要名字。";
+"用來分辨 Slack、Discord 裡哪些訊息是你說的。各 App 顯示的名字不同時，用逗號分開，例如「Yii, Yii Chen」。LINE、Telegram 和網頁版的 Messenger、Instagram、Threads 看氣泡位置，不需要名字。" = "用来分辨 Slack、Discord 里哪些消息是你说的。各 App 显示的名字不同时，用逗号分开，例如“Yii, Yii Chen”。LINE、Telegram 和网页版的 Messenger、Instagram、Threads 看气泡位置，不需要名字。";
 "3. 你是誰" = "3. 你是谁";
 "Wingman 沒有自己的伺服器，開發者收不到你的 key，也收不到聊天內容。" = "Wingman 没有自己的服务器，开发者收不到你的 key，也收不到聊天内容。";
 "送出去的只有你正在看的對話裡最近 20 則訊息、聊天室名稱和發言人名字：判斷送到 TypeSafe（承諾不拿來訓練模型），寫回覆送到 OpenRouter，而且只轉給不保留、不訓練的供應商。聊天內容不會存在這台 Mac 上，紀錄檔只記時間、次數和花費。" = "送出去的只有你正在看的对话里最近 20 则消息、聊天室名称和发言人名字：判断送到 TypeSafe（承诺不拿来训练模型），写回复送到 OpenRouter，而且只转给不保留、不训练的供应商。聊天内容不会存在这台 Mac 上，纪录档只记时间、次数和花费。";

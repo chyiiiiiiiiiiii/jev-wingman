@@ -42,7 +42,7 @@
 "讓 Wingman 看得到聊天" = "Chats für Wingman freigeben";
 "Wingman 讀你正在看的對話，幫你想好 3 句回覆，你選一句填進輸入框，自己按 Enter 送出。它不會自動送出任何訊息。" = "Wingman liest die Unterhaltung, die du gerade ansiehst, und schlägt dir 3 Antworten vor. Wähle eine aus, um sie ins Eingabefeld einzufügen, und drücke dann selbst Enter. Wingman sendet nie selbst etwas.";
 "輔助使用（必要）" = "Bedienungshilfen (erforderlich)";
-"讀 Slack、Discord 的對話，並把回覆填進輸入框。" = "Liest Unterhaltungen in Slack und Discord und fügt Antworten ins Eingabefeld ein.";
+"讀 Slack、Discord，以及 Messenger、Instagram、Threads 網頁版的對話，並把回覆填進輸入框。" = "Liest Unterhaltungen in Slack und Discord sowie in Messenger, Instagram und Threads im Web und fügt Antworten ins Eingabefeld ein.";
 "螢幕與系統錄音（用 LINE、Telegram 才需要）" = "Aufnahme von Bildschirm & Systemaudio (nur für LINE und Telegram)";
 "這兩個 App 只能看畫面讀字，截圖只在這台 Mac 上辨識，不會上傳。開啟後要重新啟動 Wingman。" = "Diese beiden Apps lassen sich nur über den Bildschirm lesen. Aufnahmen werden auf diesem Mac ausgewertet und nie hochgeladen. Starte Wingman nach dem Aktivieren neu.";
 "打開設定" = "Einstellungen öffnen";
@@ -118,7 +118,7 @@
 "填好 key 後按「測試連線」，確認都能用。" = "Drücke nach dem Eingeben der Schlüssel auf „Verbindung testen“, um sie zu prüfen.";
 "key 只存在這台 Mac 的鑰匙圈，只會送到它所屬的服務。" = "Schlüssel bleiben im Schlüsselbund dieses Macs und gehen nur an den Dienst, zu dem sie gehören.";
 "2. 連上 AI" = "2. KI verbinden";
-"用來分辨 Slack、Discord 裡哪些訊息是你說的。各 App 顯示的名字不同時，用逗號分開，例如「Yii, Yii Chen」。LINE、Telegram 看氣泡位置，不需要名字。" = "Damit Wingman in Slack und Discord deine Nachrichten von denen anderer unterscheiden kann. Zeigen die Apps verschiedene Namen, trenne sie mit Kommas, z. B. „Yii, Yii Chen“. Bei LINE und Telegram zählt die Position der Sprechblase, dort ist kein Name nötig.";
+"用來分辨 Slack、Discord 裡哪些訊息是你說的。各 App 顯示的名字不同時，用逗號分開，例如「Yii, Yii Chen」。LINE、Telegram 和網頁版的 Messenger、Instagram、Threads 看氣泡位置，不需要名字。" = "Damit Wingman in Slack und Discord deine Nachrichten von denen anderer unterscheiden kann. Zeigen die Apps verschiedene Namen, trenne sie mit Kommas, z. B. „Yii, Yii Chen“. Bei LINE, Telegram sowie Messenger, Instagram und Threads im Web zählt die Position der Sprechblase, dort ist kein Name nötig.";
 "3. 你是誰" = "3. Wer du bist";
 "Wingman 沒有自己的伺服器，開發者收不到你的 key，也收不到聊天內容。" = "Wingman hat keinen eigenen Server: Der Entwickler erhält weder deine Schlüssel noch deine Chats.";
 "送出去的只有你正在看的對話裡最近 20 則訊息、聊天室名稱和發言人名字：判斷送到 TypeSafe（承諾不拿來訓練模型），寫回覆送到 OpenRouter，而且只轉給不保留、不訓練的供應商。聊天內容不會存在這台 Mac 上，紀錄檔只記時間、次數和花費。" = "Gesendet werden nur die letzten 20 Nachrichten des Chats, den du gerade ansiehst, sein Name und die Namen der Absender: an TypeSafe zur Analyse (verpflichtet sich, damit nicht zu trainieren) und an OpenRouter für die Entwürfe, weitergeleitet nur an Anbieter, die nichts speichern und nicht damit trainieren. Chats werden nicht auf diesem Mac gespeichert; das Protokoll enthält nur Zeiten, Zählungen und Kosten.";

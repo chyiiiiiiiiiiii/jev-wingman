@@ -42,7 +42,7 @@
 "讓 Wingman 看得到聊天" = "Deja que Wingman vea tus chats";
 "Wingman 讀你正在看的對話，幫你想好 3 句回覆，你選一句填進輸入框，自己按 Enter 送出。它不會自動送出任何訊息。" = "Wingman lee la conversación que estás viendo y redacta 3 respuestas. Eliges una, se inserta en el cuadro de mensaje y la envías tú con Enter. Nunca envía nada por su cuenta.";
 "輔助使用（必要）" = "Accesibilidad (obligatorio)";
-"讀 Slack、Discord 的對話，並把回覆填進輸入框。" = "Lee las conversaciones de Slack y Discord e inserta las respuestas en el cuadro de mensaje.";
+"讀 Slack、Discord，以及 Messenger、Instagram、Threads 網頁版的對話，並把回覆填進輸入框。" = "Lee las conversaciones de Slack y Discord, y de Messenger, Instagram y Threads en la web, e inserta las respuestas en el cuadro de mensaje.";
 "螢幕與系統錄音（用 LINE、Telegram 才需要）" = "Grabación de pantalla y del audio del sistema (solo para LINE y Telegram)";
 "這兩個 App 只能看畫面讀字，截圖只在這台 Mac 上辨識，不會上傳。開啟後要重新啟動 Wingman。" = "Estas dos apps solo se pueden leer desde la pantalla. Las capturas se procesan en tu Mac y nunca se suben. Después de activarla, reinicia Wingman.";
 "打開設定" = "Abrir Ajustes";
@@ -118,7 +118,7 @@
 "填好 key 後按「測試連線」，確認都能用。" = "Después de añadir las claves, presiona “Probar conexión” para comprobar que funcionan.";
 "key 只存在這台 Mac 的鑰匙圈，只會送到它所屬的服務。" = "Las claves se quedan en el Llavero de este Mac y solo se envían al servicio al que pertenecen.";
 "2. 連上 AI" = "2. Conecta la IA";
-"用來分辨 Slack、Discord 裡哪些訊息是你說的。各 App 顯示的名字不同時，用逗號分開，例如「Yii, Yii Chen」。LINE、Telegram 看氣泡位置，不需要名字。" = "Sirve para distinguir tus mensajes en Slack y Discord. Si cada app muestra un nombre distinto, sepáralos con comas, por ejemplo: “Yii, Yii Chen”. En LINE y Telegram se usa la posición de las burbujas, así que no hace falta nombre.";
+"用來分辨 Slack、Discord 裡哪些訊息是你說的。各 App 顯示的名字不同時，用逗號分開，例如「Yii, Yii Chen」。LINE、Telegram 和網頁版的 Messenger、Instagram、Threads 看氣泡位置，不需要名字。" = "Sirve para distinguir tus mensajes en Slack y Discord. Si cada app muestra un nombre distinto, sepáralos con comas, por ejemplo: “Yii, Yii Chen”. En LINE, Telegram y en Messenger, Instagram y Threads en la web se usa la posición de las burbujas, así que no hace falta nombre.";
 "3. 你是誰" = "3. Quién eres";
 "Wingman 沒有自己的伺服器，開發者收不到你的 key，也收不到聊天內容。" = "Wingman no tiene servidor propio: su desarrollador nunca recibe tus claves ni tus chats.";
 "送出去的只有你正在看的對話裡最近 20 則訊息、聊天室名稱和發言人名字：判斷送到 TypeSafe（承諾不拿來訓練模型），寫回覆送到 OpenRouter，而且只轉給不保留、不訓練的供應商。聊天內容不會存在這台 Mac 上，紀錄檔只記時間、次數和花費。" = "Solo se envían los últimos 20 mensajes del chat que estás viendo, su nombre y los nombres de quienes escriben: a TypeSafe para analizarlos (se compromete a no entrenar con ellos) y a OpenRouter para los borradores, que solo los pasa a proveedores que no los guardan ni entrenan con ellos. Los chats no se guardan en este Mac; el registro solo anota horas, recuentos y costes.";
