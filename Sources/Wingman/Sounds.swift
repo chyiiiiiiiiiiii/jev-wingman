@@ -57,8 +57,12 @@ extension Chime.Voice {
     var name: String {
         switch self {
         case .wood: L("木質")
-        case .droplet: L("水滴")
+        case .kalimba: L("拇指琴")
+        case .harp: L("豎琴")
+        case .keys: L("電鋼琴")
         case .glass: L("玻璃")
+        case .droplet: L("水滴")
+        case .bamboo: L("竹筒")
         case .tap: L("輕觸")
         }
     }

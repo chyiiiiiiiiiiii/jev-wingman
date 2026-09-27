@@ -8,7 +8,7 @@ import SwiftUI
 final class AppDelegate: NSObject, NSApplicationDelegate {
     private let model = AppModel()
     private var panels: PanelController!
-    private var statusItem: NSStatusItem!
+    private var statusItem: NSStatusItem?
     private var settingsWindow: NSWindow?
     private var onboardingWindow: NSWindow?
     private var timer: Timer?
@@ -52,6 +52,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         if !AXIsProcessTrusted() {
             AXIsProcessTrustedWithOptions([kAXTrustedCheckOptionPrompt.takeUnretainedValue(): true] as CFDictionary)
         }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { [weak self] in self?.keepIconInSight() }
         if !Prefs.shared.onboarded {
             showOnboarding()
         } else if !AXIsProcessTrusted() || !Prefs.shared.hasWriterKey {
@@ -158,7 +159,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     // MARK: - Menu bar
 
     private func setUpStatusItem() {
-        statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
+        // A new icon lands at the far left of the others, under the notch on a crowded bar: start it on the
+        // right. Once someone drags it, macOS saves their place under the same key and this leaves it alone.
+        if UserDefaults.standard.object(forKey: MenuBarIcon.positionKey) == nil {
+            UserDefaults.standard.set(MenuBarIcon.visiblePosition, forKey: MenuBarIcon.positionKey)
+        }
+        let statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
+        self.statusItem = statusItem
+        statusItem.autosaveName = MenuBarIcon.name
         let glyph = Bundle.main.image(forResource: "MenuBarIcon")
             ?? NSImage(systemSymbolName: "bubble.left.and.text.bubble.right", accessibilityDescription: "Wingman")
         glyph?.isTemplate = true
@@ -174,6 +182,25 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         menu.addItem(NSMenuItem(title: L("結束 Wingman"), action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q"))
         menu.delegate = self
         statusItem.menu = menu
+    }
+
+    /// An icon under the notch cannot be clicked. Move it to the right side once per launch; if it is still
+    /// covered (the right side is full too), settings says so and how to make room.
+    private func keepIconInSight() {
+        guard let old = statusItem, MenuBarIcon.isHidden(old) else { return }
+        Log.write("menu bar icon was under the notch; moving it right")
+        // Releasing the old icon clears its saved place, so it must be gone before the new place is written.
+        NSStatusBar.system.removeStatusItem(old)
+        statusItem = nil
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { [weak self] in
+            UserDefaults.standard.set(MenuBarIcon.visiblePosition, forKey: MenuBarIcon.positionKey)
+            self?.setUpStatusItem()
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1) { [weak self] in
+                guard let self, let item = self.statusItem else { return }
+                self.model.iconHidden = MenuBarIcon.isHidden(item)
+                Log.write("menu bar icon \(self.model.iconHidden ? "still hidden" : "in sight")")
+            }
+        }
     }
 
     @objc private func togglePause() {
@@ -197,6 +224,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     @objc private func showSettings() {
+        model.iconHidden = statusItem.map(MenuBarIcon.isHidden) ?? false
         if settingsWindow == nil {
             let controller = NSHostingController(rootView: SettingsView(settings: Prefs.shared, model: model))
             controller.sizingOptions = [.minSize]

@@ -7,13 +7,22 @@ import Foundation
 public enum Chime {
     public enum Event: CaseIterable { case ready, inserted }
 
+    /// In the order settings shows them: tuned voices first, then the textures.
     public enum Voice: String, CaseIterable {
         /// A soft mallet on wood, like a marimba.
         case wood
-        /// A water drop.
-        case droplet
+        /// A plucked metal tine.
+        case kalimba
+        /// A plucked string; ready is a quick three-note arpeggio.
+        case harp
+        /// An electric piano's bell-like tone.
+        case keys
         /// A small glass bell.
         case glass
+        /// A water drop.
+        case droplet
+        /// A knock on a hollow bamboo tube.
+        case bamboo
         /// A barely-there tap, like a trackpad click.
         case tap
     }
@@ -54,6 +63,39 @@ public enum Chime {
             let thump = [Partial(1, 1, 0.018), Partial(2.3, 0.2, 0.008)]
             strike(&dry, at: 0, pitch: 190, partials: thump, click: 0.3)
             if ready { strike(&dry, at: 0.07, pitch: 240, level: 0.8, partials: thump, click: 0.3) }
+        case .kalimba:
+            // A tine is a bar clamped at one end: its overtones sit at 6.27 and 17.55 times the note.
+            let tine = [Partial(1, 1, 0.38), Partial(6.267, 0.16, 0.045), Partial(17.55, 0.03, 0.012)]
+            if ready {
+                strike(&dry, at: 0, pitch: 659.26, partials: tine, click: 0.05)                // E5
+                strike(&dry, at: 0.1, pitch: 880, level: 0.85, partials: tine, click: 0.05)    // A5, a fourth up
+            } else {
+                strike(&dry, at: 0, pitch: 523.25, level: 0.9, partials: tine.map { $0.shortened(0.6) }, click: 0.05)  // C5
+            }
+        case .harp:
+            if ready {
+                for (index, pitch) in [523.25, 659.26, 783.99].enumerated() {                  // C5 E5 G5
+                    pluck(&dry, at: Double(index) * 0.065, pitch: pitch, level: 1 - Double(index) * 0.1)
+                }
+            } else {
+                pluck(&dry, at: 0, pitch: 392, level: 0.9, sustain: 0.992)                     // G4
+            }
+        case .keys:
+            if ready {
+                electricPiano(&dry, at: 0, pitch: 440)                                          // A4
+                electricPiano(&dry, at: 0.08, pitch: 659.26, level: 0.8)                        // E5, a fifth up
+            } else {
+                electricPiano(&dry, at: 0, pitch: 554.37, level: 0.85, decay: 0.3)              // C#5
+            }
+        case .bamboo:
+            // A hollow tube's modes are close and die fast; a little noise is the stick.
+            let tube = [Partial(1, 1, 0.07), Partial(2.37, 0.45, 0.035), Partial(4.1, 0.15, 0.015)]
+            if ready {
+                strike(&dry, at: 0, pitch: 520, partials: tube, click: 0.25)
+                strike(&dry, at: 0.09, pitch: 693, level: 0.85, partials: tube, click: 0.25)
+            } else {
+                strike(&dry, at: 0, pitch: 440, level: 0.9, partials: tube, click: 0.25)
+            }
         }
         return finish(room(dry), peak: loudness(voice) * (ready ? 1 : 0.75))
     }
@@ -84,12 +126,27 @@ public enum Chime {
 
     /// Seconds of sound, room tail included.
     private static func length(_ voice: Voice) -> Double {
-        switch voice { case .wood: 0.75; case .droplet: 0.5; case .glass: 0.9; case .tap: 0.35 }
+        switch voice {
+        case .wood: 0.75
+        case .kalimba, .harp, .keys, .glass: 0.9
+        case .droplet: 0.5
+        case .bamboo: 0.45
+        case .tap: 0.35
+        }
     }
 
     /// Peak level: a bright bell sounds louder than a low tap at the same level. All sit well under full scale.
     private static func loudness(_ voice: Voice) -> Double {
-        switch voice { case .wood: 0.22; case .droplet: 0.18; case .glass: 0.15; case .tap: 0.28 }
+        switch voice {
+        case .wood: 0.22
+        case .kalimba: 0.17
+        case .harp: 0.2
+        case .keys: 0.18
+        case .glass: 0.15
+        case .droplet: 0.18
+        case .bamboo: 0.24
+        case .tap: 0.28
+        }
     }
 
     /// One note: partials decaying at their own rates under a raised-cosine attack (no click). `glide` bends
@@ -116,6 +173,45 @@ public enum Chime {
                 sum += click * smooth * exp(-t / 0.004)
             }
             buffer[i] += level * onset * sum
+        }
+    }
+
+    /// A plucked string (Karplus–Strong): a burst of softened noise circulating in a delay one period long,
+    /// averaged on each pass so the highs die first, the way a string's do.
+    private static func pluck(_ buffer: inout [Double], at start: Double, pitch: Double, level: Double = 1,
+                              sustain: Double = 0.995) {
+        let rate = Double(sampleRate), first = Int(start * rate)
+        let period = max(2, Int((rate / pitch).rounded()))
+        var noise: UInt32 = 0x9E37_79B9, soft = 0.0
+        var line = (0..<period).map { _ -> Double in
+            noise ^= noise << 13; noise ^= noise >> 17; noise ^= noise << 5
+            soft += 0.5 * (Double(noise) / Double(UInt32.max) * 2 - 1 - soft)   // a felt pick, not a nail
+            return soft
+        }
+        var index = 0, previous = 0.0
+        for i in first..<buffer.count {
+            let t = Double(i - first) / rate
+            let onset = t < 0.002 ? 0.5 - 0.5 * cos(Double.pi * t / 0.002) : 1
+            let current = line[index]
+            line[index] = sustain * 0.5 * (current + previous)
+            previous = current
+            index = (index + 1) % period
+            buffer[i] += level * onset * current
+        }
+    }
+
+    /// An electric piano, by frequency modulation: a bright attack that mellows as the modulation fades,
+    /// with the brief high ping of the tine on top.
+    private static func electricPiano(_ buffer: inout [Double], at start: Double, pitch: Double, level: Double = 1,
+                                      decay: Double = 0.55) {
+        let rate = Double(sampleRate), first = Int(start * rate), attack = 0.003
+        for i in first..<buffer.count {
+            let t = Double(i - first) / rate
+            let onset = t < attack ? 0.5 - 0.5 * cos(Double.pi * t / attack) : 1
+            let index = 1.6 * exp(-t / 0.18)
+            let body = sin(2 * Double.pi * pitch * t + index * sin(2 * Double.pi * pitch * t)) * exp(-t / decay)
+            let ping = 0.06 * sin(2 * Double.pi * pitch * 14 * t) * exp(-t / 0.015)
+            buffer[i] += level * onset * (body + ping)
         }
     }
 

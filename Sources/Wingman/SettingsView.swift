@@ -31,6 +31,32 @@ func trimmedKey(_ binding: Binding<String>) -> Binding<String> {
             set: { binding.wrappedValue = $0.trimmingCharacters(in: .whitespacesAndNewlines) })
 }
 
+/// One voice in the sound grid. The chosen one is filled with the accent colour and ticked, drawn by hand
+/// because a prominent button turns grey whenever the window is not in front.
+struct VoiceChip: View {
+    let name: String
+    let chosen: Bool
+    let action: () -> Void
+    @Environment(\.isEnabled) private var enabled
+
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: 4) {
+                if chosen { Image(systemName: "checkmark").font(.system(size: 10, weight: .bold)) }
+                Text(name)
+            }
+            .foregroundStyle(chosen ? Color.white : Color.primary)
+            .frame(maxWidth: .infinity, minHeight: 26)
+            .background(RoundedRectangle(cornerRadius: 6).fill(chosen ? Color.accentColor : Color.primary.opacity(0.08)))
+            .overlay(RoundedRectangle(cornerRadius: 6).strokeBorder(Color.primary.opacity(chosen ? 0 : 0.12)))
+            .contentShape(RoundedRectangle(cornerRadius: 6))
+            .opacity(enabled ? 1 : 0.45)
+        }
+        .buttonStyle(.plain)
+        .accessibilityAddTraits(chosen ? .isSelected : [])
+    }
+}
+
 struct HotkeyRecorder: View {
     @ObservedObject var settings: Prefs
     @State private var recording = false
@@ -278,15 +304,18 @@ struct SettingsView: View {
                             .font(.caption).foregroundStyle(.secondary)
                     }
                 }
-                HStack {
-                    Picker(L("音色"), selection: $settings.soundVoice) {
-                        ForEach(Chime.Voice.allCases, id: \.self) { Text($0.name).tag($0) }
+                VStack(alignment: .leading, spacing: 8) {
+                    Text(L("音色（點一下試聽）"))
+                    LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 8), count: 4), spacing: 8) {
+                        ForEach(Chime.Voice.allCases, id: \.self) { voice in
+                            VoiceChip(name: voice.name, chosen: settings.soundVoice == voice) {
+                                settings.soundVoice = voice
+                                preview(voice)
+                            }
+                        }
                     }
-                    .pickerStyle(.segmented)
-                    Button(L("試聽")) { preview(settings.soundVoice) }
                 }
                 .disabled(!settings.soundsOn)
-                .onChange(of: settings.soundVoice) { _, voice in preview(voice) }
                 if settings.soundsOn && !systemSounds {
                     HStack {
                         Text(L("系統設定裡的「播放使用者介面音效」是關的，所以不會出聲。"))
@@ -301,6 +330,14 @@ struct SettingsView: View {
             } header: { Text(L("音效")) }
 
             Section {
+                if model.iconHidden {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Label(L("選單列太擠，Wingman 的圖示被瀏海擋住了"), systemImage: "exclamationmark.triangle")
+                            .foregroundStyle(.orange)
+                        Text(L("按住 ⌘ 把其他圖示拖出選單列，或到「系統設定 › 選單列」關掉用不到的圖示，就會空出位置。在那之前，從 Spotlight 或 Launchpad 打開 Wingman 就能叫出這個視窗。"))
+                            .font(.caption).foregroundStyle(.secondary)
+                    }
+                }
                 Toggle(isOn: $opensAtLogin) {
                     VStack(alignment: .leading, spacing: 2) {
                         Text(L("登入 Mac 時自動開啟 Wingman"))

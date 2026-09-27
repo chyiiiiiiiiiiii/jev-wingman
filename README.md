@@ -60,7 +60,7 @@ On first launch Wingman walks through three steps: permissions, keys (an [OpenRo
 - When a message arrives, **✦ 3 suggestions** appears above the message box. Press **⌥Space** (you can change the shortcut) or click it.
 - **Enter** types the ★ draft, **1–3** types any draft, **Esc** closes. Check the text, then press Enter yourself.
 - **Shorter, Softer, More formal, Warmer** rewrite the drafts. You can also type what you want to say, for example "tell them by Friday", and press Enter.
-- **Sounds:** a soft sound when suggestions you are waiting for are ready, and when a reply is typed in. Analysis that finishes in the background stays silent. Settings has a switch and four voices: Wood, Droplet, Glass and Tap. They are synthesised by the app, well under full volume.
+- **Sounds:** a soft sound when suggestions you are waiting for are ready, and when a reply is typed in. Analysis that finishes in the background stays silent. Settings has a switch and eight voices: Wood, Kalimba, Harp, Keys, Glass, Droplet, Bamboo and Tap; click one to hear it. They are synthesised by the app, play as system sound effects (at the alert volume, and not at all when interface sounds are off in System Settings), well under full volume.
 
 A suggestion costs about US$0.0002 with the default models (one judgment, three drafts, one ranking).
 

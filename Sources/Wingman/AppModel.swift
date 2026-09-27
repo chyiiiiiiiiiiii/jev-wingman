@@ -19,6 +19,8 @@ final class AppModel: ObservableObject {
     @Published var hotkeyLabel = "⌥Space"
     @Published var panelWidth: CGFloat = 480
     @Published private(set) var chatInFront = false
+    /// The menu bar icon is under the notch even after moving it; settings explains how to make room.
+    @Published var iconHidden = false
     private(set) var app: ChatApp = .slack
 
     let settings = Prefs.shared

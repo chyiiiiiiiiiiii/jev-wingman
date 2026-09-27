@@ -158,12 +158,17 @@
  "key 只存在這台 Mac 的鑰匙圈，只會送到它所屬的服務。": "Keys stay in this Mac's Keychain and go only to the service they belong to.",
  "互動音效": "Sounds",
  "你在等的建議寫好時，和回覆填進輸入框時，輕輕響一聲。背景自動分析完成時不會出聲。音量跟著系統的提示音音量。": "A soft sound when suggestions you are waiting for are ready, and when a reply is typed in. Analysis that finishes in the background stays silent. The volume follows the Mac's alert volume.",
- "音色": "Sound",
- "試聽": "Play",
  "音效": "Sounds",
  "木質": "Wood",
  "水滴": "Droplet",
  "玻璃": "Glass",
  "輕觸": "Tap",
- "系統設定裡的「播放使用者介面音效」是關的，所以不會出聲。": "\"Play user interface sound effects\" is off in System Settings, so nothing plays."
+ "系統設定裡的「播放使用者介面音效」是關的，所以不會出聲。": "\"Play user interface sound effects\" is off in System Settings, so nothing plays.",
+ "拇指琴": "Kalimba",
+ "豎琴": "Harp",
+ "電鋼琴": "Keys",
+ "竹筒": "Bamboo",
+ "音色（點一下試聽）": "Sound (click to hear it)",
+ "選單列太擠，Wingman 的圖示被瀏海擋住了": "The menu bar is full: Wingman's icon is hidden under the notch",
+ "按住 ⌘ 把其他圖示拖出選單列，或到「系統設定 › 選單列」關掉用不到的圖示，就會空出位置。在那之前，從 Spotlight 或 Launchpad 打開 Wingman 就能叫出這個視窗。": "Hold ⌘ and drag other icons out of the menu bar, or turn off ones you don't need in System Settings › Menu Bar, to make room. Until then, open Wingman from Spotlight or Launchpad to bring up this window."
 }

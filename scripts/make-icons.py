@@ -3,10 +3,12 @@
 
     scripts/make-icons.py artwork.png
 
-Writes Resources/AppIcon.icns (macOS squircle body per Apple's 1024 template, stroke
-multiplied onto it so the white artwork background disappears) and Resources/MenuBarIcon*.png
-(a black template image whose alpha is the stroke).
+The stroke's outline is filled solid, in the stroke's own indigo-to-cyan gradient, with a ✦ cut out of
+the middle (the ✦ Wingman shows above the message box): a solid shape is found at a glance in a crowded
+menu bar or Dock, where a thin line is not. Writes Resources/AppIcon.icns (macOS squircle body per
+Apple's 1024 template) and Resources/MenuBarIcon*.png (a black template image, the ✦ transparent).
 """
+import math
 import subprocess
 import sys
 import tempfile
@@ -17,6 +19,7 @@ from PIL import Image, ImageChops, ImageDraw, ImageFilter
 ROOT = Path(__file__).resolve().parent.parent
 CANVAS, BODY, RADIUS = 1024, 824, 185     # Apple's macOS icon template
 MARK_BOX = (0.66, 0.60)                    # widest and tallest the mark may be, as parts of the body
+INDIGO, CYAN = (57, 48, 139), (38, 201, 206)   # the artwork stroke's two ends
 
 
 def stroke_mask(art: Image.Image) -> Image.Image:
@@ -26,19 +29,53 @@ def stroke_mask(art: Image.Image) -> Image.Image:
     return darkest.point(lambda v: 0 if v > 245 else min(255, int((255 - v) * 1.25)))
 
 
+def solid_mark(art: Image.Image) -> Image.Image:
+    """The bubble as one filled shape: the stroke plus everything it encloses, with the ✦ cut out."""
+    stroke = stroke_mask(art)
+    line = stroke.point(lambda v: 255 if v > 90 else 0)
+    inside = line.copy()
+    box = stroke.getbbox()
+    seed = ((box[0] + box[2]) // 2, (box[1] + box[3]) // 2 - (box[3] - box[1]) // 8)   # above the tail
+    ImageDraw.floodfill(inside, seed, 255)
+    shape = ImageChops.lighter(inside, stroke)           # keep the stroke's soft outer edge
+    enclosed = ImageChops.subtract(inside, line).getbbox()
+    center = ((enclosed[0] + enclosed[2]) / 2, (enclosed[1] + enclosed[3]) / 2)
+    radius = min(enclosed[2] - enclosed[0], enclosed[3] - enclosed[1]) * 0.27
+    return ImageChops.subtract(shape, sparkle(shape.size, center, radius))
+
+
+def sparkle(size: tuple[int, int], center: tuple[float, float], radius: float) -> Image.Image:
+    """A four-pointed star with curved sides (a squashed astroid), drawn 4× larger and scaled down for a smooth edge."""
+    scale = 4
+    canvas = Image.new("L", (size[0] * scale, size[1] * scale), 0)
+    points = []
+    for step in range(720):
+        t = 2 * math.pi * step / 720
+        c, s = math.cos(t), math.sin(t)
+        points.append((scale * (center[0] + radius * math.copysign(abs(c) ** 2.5, c)),
+                       scale * (center[1] + radius * math.copysign(abs(s) ** 2.5, s))))
+    ImageDraw.Draw(canvas).polygon(points, fill=255)
+    return canvas.resize(size, Image.LANCZOS)
+
+
+def gradient(size: tuple[int, int], start: tuple[int, int, int], end: tuple[int, int, int]) -> Image.Image:
+    """Top-left to bottom-right, the direction the artwork's stroke shades."""
+    ramp = Image.new("L", (256, 256))
+    ramp.putdata([(x + y) // 2 for y in range(256) for x in range(256)])   # 0 top-left … 255 bottom-right
+    return Image.composite(Image.new("RGB", size, end), Image.new("RGB", size, start), ramp.resize(size, Image.BILINEAR))
+
+
 def app_icon(art: Image.Image, mark: tuple[int, int, int, int]) -> Image.Image:
-    crop = art.convert("RGB").crop(mark)
-    scale = min(BODY * MARK_BOX[0] / crop.width, BODY * MARK_BOX[1] / crop.height)
-    crop = crop.resize((round(crop.width * scale), round(crop.height * scale)), Image.LANCZOS)
+    shape = solid_mark(art).crop(mark)
+    scale = min(BODY * MARK_BOX[0] / shape.width, BODY * MARK_BOX[1] / shape.height)
+    shape = shape.resize((round(shape.width * scale), round(shape.height * scale)), Image.LANCZOS)
 
     body = Image.new("RGB", (BODY, BODY))
     top, bottom = (255, 255, 255), (240, 242, 247)
     for y in range(BODY):
         t = y / (BODY - 1)
         ImageDraw.Draw(body).line([(0, y), (BODY, y)], fill=tuple(round(a + (b - a) * t) for a, b in zip(top, bottom)))
-    field = Image.new("RGB", (BODY, BODY), (255, 255, 255))
-    field.paste(crop, ((BODY - crop.width) // 2, (BODY - crop.height) // 2))
-    body = ImageChops.multiply(body, field)          # white artwork background vanishes
+    body.paste(gradient(shape.size, INDIGO, CYAN), ((BODY - shape.width) // 2, (BODY - shape.height) // 2), shape)
 
     shape = Image.new("L", (BODY, BODY), 0)
     ImageDraw.Draw(shape).rounded_rectangle([0, 0, BODY - 1, BODY - 1], RADIUS, fill=255)
@@ -52,7 +89,7 @@ def app_icon(art: Image.Image, mark: tuple[int, int, int, int]) -> Image.Image:
 
 
 def menu_bar_glyph(art: Image.Image, mark: tuple[int, int, int, int], height: int) -> Image.Image:
-    alpha = stroke_mask(art).crop(mark)
+    alpha = solid_mark(art).crop(mark)
     width = round(alpha.width * height / alpha.height)
     glyph = Image.new("RGBA", (width, height), (0, 0, 0, 0))
     glyph.putalpha(alpha.resize((width, height), Image.LANCZOS))
@@ -75,8 +112,8 @@ def main(artwork: str) -> None:
                 icon.resize((points * scale,) * 2, Image.LANCZOS).save(iconset / name)
         subprocess.run(["iconutil", "-c", "icns", str(iconset), "-o", str(resources / "AppIcon.icns")], check=True)
 
-    menu_bar_glyph(art, mark, 14).save(resources / "MenuBarIcon.png")
-    menu_bar_glyph(art, mark, 28).save(resources / "MenuBarIcon@2x.png")
+    menu_bar_glyph(art, mark, 16).save(resources / "MenuBarIcon.png")
+    menu_bar_glyph(art, mark, 32).save(resources / "MenuBarIcon@2x.png")
     print("wrote AppIcon.icns, AppIcon-1024.png, MenuBarIcon.png, MenuBarIcon@2x.png")
 
 
