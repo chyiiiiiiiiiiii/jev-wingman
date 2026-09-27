@@ -63,3 +63,20 @@ private let page = UINode(role: "AXWindow", title: "Messenger", frame: CGRect(x:
     ])
     #expect(MessengerParser.parse(window: github) == nil)
 }
+
+@Test func findsTheMessageBoxByPlaceWhateverItsLabelSays() {
+    // The real box is labelled 撰寫內容… (2026-09-27), not 撰寫訊息; the search box sits at the top.
+    let window = UINode(role: "AXWindow", title: "Messenger", frame: CGRect(x: 0, y: 0, width: 1512, height: 827), children: [
+        UINode(role: "AXComboBox", desc: "搜尋 Messenger", frame: CGRect(x: 200, y: 120, width: 380, height: 36)),
+        UINode(role: "AXHeading", title: "Alex Chen", frame: CGRect(x: 500, y: 40, width: 90, height: 20)),
+        UINode(role: "AXStaticText", value: "我剛確認過，是週五", frame: CGRect(x: 500, y: 600, width: 120, height: 20)),
+        UINode(role: "AXButton", desc: "傳送語音訊息", frame: CGRect(x: 438, y: 760, width: 30, height: 30)),
+        UINode(role: "AXTextArea", desc: "撰寫內容給 Alex Chen", frame: CGRect(x: 605, y: 762, width: 440, height: 30), handle: 4),
+        UINode(role: "AXButton", desc: "送出讚", frame: CGRect(x: 1089, y: 760, width: 30, height: 30)),
+    ])
+
+    let convo = MessengerParser.parse(window: window)
+
+    #expect(convo?.composerHandle == 4)
+    #expect(convo?.messages == [ChatMessage(sender: nil, text: "我剛確認過，是週五", isMe: false)])
+}

@@ -3,7 +3,7 @@ import CoreGraphics
 /// Turns Messenger (web, read through Chrome's accessibility tree) into the conversation on screen.
 ///
 /// Messenger's class names are generated (`x1n2onr6`) and change between deployments, so nothing here
-/// depends on them: the message box is found by its label, the conversation's column by the controls on
+/// depends on them: the message box is found by where it sits, the conversation's column by the controls on
 /// the message box's row, whose bubble is whose by which edge of that column it hugs.
 public enum MessengerParser {
     static let controls: Set<String> = ["AXButton", "AXPopUpButton", "AXTextArea"]
@@ -18,8 +18,13 @@ public enum MessengerParser {
         }
         collect(window, false)
 
-        let boxes = nodes.map(\.node).filter { $0.role == "AXTextArea" && isMessageBox($0) }
-        guard let composer = boxes.first(where: \.focused) ?? boxes.last else { return nil }
+        // The message box is the text area low in the window. Its label changes wording (撰寫內容…,
+        // not 撰寫訊息) and language, so place decides; the reader has already checked it is Messenger.
+        let boxes = nodes.map(\.node).filter {
+            $0.role == "AXTextArea" && $0.frame.midY > window.frame.minY + window.frame.height * 0.6
+        }
+        guard let composer = boxes.first(where: \.focused) ?? boxes.max(by: { $0.frame.midY < $1.frame.midY })
+        else { return nil }
 
         // The conversation column spans the controls beside the message box (voice, attach … send).
         let reach = window.frame.width * 0.15
@@ -49,11 +54,5 @@ public enum MessengerParser {
                             messages: BubbleParser.messages(from: lines, pane: pane),
                             draft: composer.value.trimmingCharacters(in: .whitespacesAndNewlines),
                             composerHandle: composer.handle, composerFrame: composer.frame)
-    }
-
-    /// Messenger labels its box 撰寫訊息 / Message (Chinese or English UI).
-    static func isMessageBox(_ node: UINode) -> Bool {
-        let label = (node.desc + " " + node.title).lowercased()
-        return label.contains("訊息") || label.contains("消息") || label.contains("message")
     }
 }
