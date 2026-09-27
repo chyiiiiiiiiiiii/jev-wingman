@@ -1,4 +1,5 @@
 import AppKit
+import SwiftUI
 import WingmanCore
 
 /// What Wingman knows about the Slack conversation in front of the user, and what it suggests.
@@ -154,8 +155,10 @@ final class AppModel: ObservableObject {
             do {
                 let written = try await self.brain.write(convo, strategies: picks, judgment: self.judgment)
                 guard !Task.isCancelled else { return }
-                self.candidates = Array(written.prefix(3))
-                self.phase = .ready
+                withAnimation(Motion.reveal) {
+                    self.candidates = Array(written.prefix(3))
+                    self.phase = .ready
+                }
                 Log.write("suggest \(Int(Date().timeIntervalSince(started) * 1000))ms candidates=\(written.count)")
                 await self.rankCandidates(convo)
             } catch {

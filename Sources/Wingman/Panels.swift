@@ -151,14 +151,14 @@ struct SuggestionView: View {
                     Button(chip) { model.rewrite(chip) }
                         .buttonStyle(.bordered)
                         .controlSize(.small)
+                        .disabled(!rewritable)
                 }
             }
             TextField("說說你想怎麼回，例如「跟他說週五前給」，按 Enter 重寫", text: $model.direction)
                 .textFieldStyle(.roundedBorder)
                 .focused($fieldFocused)
                 .onSubmit { model.rewrite(model.direction) }
-            Text(fieldFocused ? "Enter 重寫 · ⌘1–3 填入 · Esc 清除"
-                              : "Enter 填入 ★ 推薦 · 1–3 選一句 · Esc 關閉 · 不會自動送出")
+            Text(hint)
                 .font(.caption)
                 .foregroundStyle(.secondary)
         }
@@ -168,6 +168,24 @@ struct SuggestionView: View {
         .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(.separator))
         .onChange(of: fieldFocused) { _, focused in model.fieldFocused = focused }
         .onChange(of: model.panelShown) { _, shown in if !shown { fieldFocused = false } }
+    }
+
+    /// Chips and the direction field rewrite what is on screen; nothing to rewrite while writing.
+    private var rewritable: Bool {
+        switch model.phase {
+        case .ready, .failed: true
+        default: false
+        }
+    }
+
+    /// What the keys do right now.
+    private var hint: String {
+        if fieldFocused { return "Enter 重寫 · ⌘1–3 填入 · Esc 清除" }
+        switch model.phase {
+        case .ready: return "Enter 填入 ★ 推薦 · 1–3 選一句 · Esc 關閉 · 不會自動送出"
+        case .failed: return "Esc 關閉"
+        default: return "正在寫，好了就能按 Enter 或 1–3 填入 · Esc 關閉"
+        }
     }
 
     @ViewBuilder private var header: some View {
@@ -207,11 +225,12 @@ struct SuggestionView: View {
     @ViewBuilder private var content: some View {
         switch model.phase {
         case .idle, .thinking, .skipped:
-            HStack(spacing: 8) {
-                ProgressView().controlSize(.small)
-                Text(model.judgment == nil ? "正在讀對話、判斷怎麼回…" : "正在寫回覆…").foregroundStyle(.secondary)
+            // Skeleton rows the size of drafts, so the panel keeps its height when they arrive.
+            VStack(alignment: .leading, spacing: 4) {
+                Text(model.judgment == nil ? "正在讀對話、判斷怎麼回…" : "正在寫回覆…")
+                    .font(.system(size: 11)).foregroundStyle(.secondary)
+                ForEach(0..<3, id: \.self) { _ in SkeletonRow() }
             }
-            .frame(maxWidth: .infinity, minHeight: 60, alignment: .leading)
         case let .failed(reason):
             VStack(alignment: .leading, spacing: 6) {
                 Text(reason).foregroundStyle(.red).font(.system(size: 12))
@@ -224,6 +243,7 @@ struct SuggestionView: View {
                 }
                 ForEach(Array(model.candidates.enumerated()), id: \.offset) { index, candidate in
                     candidateRow(index, candidate)
+                        .transition(Motion.arrival(index))
                 }
             }
         }
