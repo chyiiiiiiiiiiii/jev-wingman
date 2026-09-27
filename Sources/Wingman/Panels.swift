@@ -68,8 +68,21 @@ final class PanelController: NSObject, NSWindowDelegate {
             let width = min(max(composer.width, 440), 580)
             if model.panelWidth != width { model.panelWidth = width }   // the view lays out at this width
             let height = panel.contentView!.fittingSize.height
-            panel.setFrame(NSRect(x: composer.minX, y: top + 8, width: width, height: height), display: true)
-            if !panel.isVisible { panel.makeKeyAndOrderFront(nil) }
+            let frame = NSRect(x: composer.minX, y: top + 8, width: width, height: height).integral
+            // Touch the window only when its frame really changes, and ease a height change instead of
+            // snapping; the bottom edge stays on the composer.
+            if !panel.isVisible {
+                panel.setFrame(frame, display: true)
+                panel.alphaValue = 0
+                panel.makeKeyAndOrderFront(nil)
+                NSAnimationContext.runAnimationGroup { $0.duration = 0.16; panel.animator().alphaValue = 1 }
+            } else if panel.frame != frame {
+                NSAnimationContext.runAnimationGroup { context in
+                    context.duration = 0.18
+                    context.timingFunction = CAMediaTimingFunction(controlPoints: 0.22, 0.8, 0.36, 1)
+                    panel.animator().setFrame(frame, display: true)
+                }
+            }
         } else {
             if panel.isVisible { panel.orderOut(nil) }
             guard model.pillText != nil else {
@@ -224,34 +237,47 @@ struct SuggestionView: View {
         }
     }
 
+    /// One layout for every state: a status line that only changes its words, and three fixed slots in
+    /// which a skeleton fades into its draft. Swapping layouts between writing and done re-created the
+    /// rows (they replayed their entrance) and dropped the status line, which read as a jolt.
     @ViewBuilder private var content: some View {
-        switch model.phase {
-        case .idle, .thinking, .skipped:
-            // Drafts appear as they are written; skeleton rows hold the rest of the space so the
-            // panel keeps its height.
-            VStack(alignment: .leading, spacing: 4) {
-                Text(model.judgment == nil ? "正在讀對話、判斷怎麼回…" : "正在寫回覆…")
-                    .font(.system(size: 11)).foregroundStyle(.secondary)
-                ForEach(Array(model.candidates.enumerated()), id: \.offset) { index, candidate in
-                    candidateRow(index, candidate).transition(Motion.arrival(0))
-                }
-                ForEach(0..<max(0, 3 - model.candidates.count), id: \.self) { _ in SkeletonRow() }
-            }
-        case let .failed(reason):
+        if case let .failed(reason) = model.phase {
             VStack(alignment: .leading, spacing: 6) {
                 Text(reason).foregroundStyle(.red).font(.system(size: 12))
                 Button("再試一次") { model.analyze() }.controlSize(.small)
             }
-        case .ready:
+        } else {
             VStack(alignment: .leading, spacing: 4) {
-                if let best = model.bestIndex, let score = model.candidates[best].score, score < 0.5 {
-                    Text("幾句都可以，挑你喜歡的語氣").font(.system(size: 11)).foregroundStyle(.secondary)
-                }
-                ForEach(Array(model.candidates.enumerated()), id: \.offset) { index, candidate in
-                    candidateRow(index, candidate)
-                        .transition(Motion.arrival(index))
+                Text(status)
+                    .font(.system(size: 11)).foregroundStyle(.secondary)
+                    .frame(height: 14, alignment: .leading)
+                    .contentTransition(.opacity)
+                ForEach(0..<3, id: \.self) { slot in
+                    ZStack(alignment: .topLeading) {
+                        if slot < model.candidates.count {
+                            candidateRow(slot, model.candidates[slot]).transition(.opacity.combined(with: .offset(y: 6)))
+                        } else {
+                            SkeletonRow().transition(.opacity)
+                        }
+                    }
+                    .frame(minHeight: Self.rowHeight, alignment: .topLeading)
                 }
             }
+        }
+    }
+
+    /// Two lines of draft; a skeleton row is the same height, so a draft replacing it moves nothing.
+    static let rowHeight: CGFloat = 70
+
+    private var status: String {
+        switch model.phase {
+        case .ready where model.ranking: return "正在挑最推薦的一句…"
+        case .ready:
+            if let best = model.bestIndex, let score = model.candidates[best].score, score < 0.5 {
+                return "幾句都可以，挑你喜歡的語氣"
+            }
+            return "★ 是最推薦的一句"
+        default: return model.judgment == nil ? "正在讀對話、判斷怎麼回…" : "正在寫回覆…"
         }
     }
 
@@ -264,6 +290,7 @@ struct SuggestionView: View {
                 .foregroundStyle(best ? .white : .primary)
                 .background(best ? Self.brand : Color.accentColor.opacity(0.15), in: RoundedRectangle(cornerRadius: 5))
             VStack(alignment: .leading, spacing: 2) {
+                // Fixed height: the ★ badge and the score bar arrive later without pushing the text down.
                 HStack(spacing: 6) {
                     if best {
                         Text("★ 最推薦")
@@ -279,12 +306,10 @@ struct SuggestionView: View {
                         Text(candidate.strategy).font(.system(size: 11)).foregroundStyle(.secondary)
                     }
                     Spacer(minLength: 0)
-                    if let score = candidate.score {
-                        ScoreBar(score: score, highlighted: best)
-                    } else if model.ranking {
-                        Text("評分中…").font(.system(size: 11)).foregroundStyle(.tertiary)
-                    }
+                    ScoreBar(score: candidate.score ?? 0, highlighted: best)
+                        .opacity(candidate.score == nil ? 0 : 1)
                 }
+                .frame(height: 18)
                 Text(candidate.text)
                     .font(.system(size: 13))
                     .fixedSize(horizontal: false, vertical: true)

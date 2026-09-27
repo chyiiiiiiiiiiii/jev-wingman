@@ -13,10 +13,12 @@ enum Render {
         try? FileManager.default.createDirectory(at: url, withIntermediateDirectories: true)
         for (name, appearance, backdrop) in [("light", NSAppearance.Name.aqua, NSColor(white: 0.96, alpha: 1)),
                                              ("dark", .darkAqua, NSColor(red: 0.11, green: 0.11, blue: 0.13, alpha: 1))] {
-            for (state, phase, drafts) in [("ready", AppModel.Phase.ready, 3), ("thinking", .thinking, 0),
-                                           ("streaming", .thinking, 1)] {
+            for (state, phase, drafts, scored) in [("1-thinking", AppModel.Phase.thinking, 0, false),
+                                                   ("2-streaming", .thinking, 1, false),
+                                                   ("3-written", .ready, 3, false),
+                                                   ("4-ranked", .ready, 3, true)] {
                 let model = AppModel()
-                model.loadSample(phase: phase, drafts: drafts)
+                model.loadSample(phase: phase, drafts: drafts, scored: scored)
                 let view = VStack(alignment: .trailing, spacing: 16) {
                     PillView(model: model)
                     SuggestionView(model: model)
@@ -24,8 +26,8 @@ enum Render {
                 .padding(24)
                 .background(Color(nsColor: backdrop))
                 let file = url.appendingPathComponent("panel-\(name)-\(state).png")
-                write(view, appearance: NSAppearance(named: appearance)!, to: file)
-                print(file.path)
+                let height = write(view, appearance: NSAppearance(named: appearance)!, to: file)
+                print("\(file.lastPathComponent) height \(Int(height))")
             }
         }
         for (name, appearance) in [("light", NSAppearance.Name.aqua), ("dark", .darkAqua)] {
@@ -33,14 +35,15 @@ enum Render {
                 let view = OnboardingView(settings: Prefs.shared, finish: {}, initialStep: step)
                     .background(Color(nsColor: .windowBackgroundColor))
                 let file = url.appendingPathComponent("onboarding-\(name)-\(step + 1).png")
-                write(view, appearance: NSAppearance(named: appearance)!, to: file)
-                print(file.path)
+                let height = write(view, appearance: NSAppearance(named: appearance)!, to: file)
+                print("\(file.lastPathComponent) height \(Int(height))")
             }
         }
         return 0
     }
 
-    private static func write(_ view: some View, appearance: NSAppearance, to file: URL) {
+    @discardableResult
+    private static func write(_ view: some View, appearance: NSAppearance, to file: URL) -> CGFloat {
         let host = NSHostingView(rootView: view)
         host.appearance = appearance
         host.frame.size = host.fittingSize
@@ -49,8 +52,9 @@ enum Render {
         window.appearance = appearance
         window.contentView = host
         host.layoutSubtreeIfNeeded()
-        guard let bitmap = host.bitmapImageRepForCachingDisplay(in: host.bounds) else { return }
+        guard let bitmap = host.bitmapImageRepForCachingDisplay(in: host.bounds) else { return host.frame.height }
         host.cacheDisplay(in: host.bounds, to: bitmap)
         try? bitmap.representation(using: .png, properties: [:])?.write(to: file)
+        return host.frame.height
     }
 }

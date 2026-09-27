@@ -55,7 +55,7 @@ final class AppModel: ObservableObject {
     }
 
     /// Sample state for `Wingman --render`, so panel changes can be looked at before shipping.
-    func loadSample(phase: Phase, drafts: Int = 3) {
+    func loadSample(phase: Phase, drafts: Int = 3, scored: Bool = true) {
         chatInFront = true
         conversation = Conversation(
             title: "#開發", isThread: true,
@@ -69,7 +69,7 @@ final class AppModel: ObservableObject {
                 Candidate(strategy: "直接答應", text: "可以，我下午把新的欄位補上，好了再跟你說", score: 0.12),
                 Candidate(strategy: "先問用途", text: "你說的是 v2 的文件，還是整份都要改？我先確認範圍", score: 0.71),
                 Candidate(strategy: "提醒音源", text: "可以，但要等後端的欄位定案，大概明天", score: 0.17),
-            ].prefix(drafts).map { phase == .ready ? $0 : Candidate(strategy: $0.strategy, text: $0.text) }
+            ].prefix(drafts).map { scored ? $0 : Candidate(strategy: $0.strategy, text: $0.text) }
         }
     }
 
@@ -162,7 +162,8 @@ final class AppModel: ObservableObject {
                 }
                 guard !Task.isCancelled else { return }
                 withAnimation(Motion.reveal) {
-                    self.candidates = Array(written.prefix(3))
+                    let final = Array(written.prefix(3))
+                    if final.map(\.text) != self.candidates.map(\.text) { self.candidates = final }
                     self.phase = .ready
                 }
                 Log.write("suggest \(Int(Date().timeIntervalSince(started) * 1000))ms candidates=\(written.count)")
@@ -191,8 +192,11 @@ final class AppModel: ObservableObject {
                     await self.show(drafts, for: current)
                 }
                 guard !Task.isCancelled else { return }
-                self.candidates = Array(written.prefix(3))
-                self.phase = .ready
+                withAnimation(Motion.reveal) {
+                    let final = Array(written.prefix(3))
+                    if final.map(\.text) != self.candidates.map(\.text) { self.candidates = final }
+                    self.phase = .ready
+                }
                 self.direction = ""
                 await self.rankCandidates(convo)
             } catch {
@@ -218,7 +222,9 @@ final class AppModel: ObservableObject {
         do {
             let scores = try await brain.rank(convo, drafts: drafts)
             guard !Task.isCancelled, candidates.map(\.text) == drafts else { return }
-            for index in candidates.indices { candidates[index].score = scores[index] }
+            withAnimation(.easeOut(duration: 0.22)) {
+                for index in candidates.indices { candidates[index].score = scores[index] }
+            }
             Log.write("rank \(Int(Date().timeIntervalSince(started) * 1000))ms")
         } catch {
             Log.write("rank failed: \(error.localizedDescription)")
