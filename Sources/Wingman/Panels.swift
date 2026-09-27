@@ -228,10 +228,17 @@ struct SuggestionView: View {
         VStack(alignment: .leading, spacing: 4) {
             if let j = model.judgment {
                 HStack(spacing: 6) {
-                    Circle().fill(Self.urgencyColor(j.urgency)).frame(width: 8, height: 8)
+                    if let urgency = j.urgency {
+                        Circle().fill(Self.urgencyColor(urgency)).frame(width: 8, height: 8)
+                    }
                     Text(L(j.intent)).fontWeight(.semibold)     // Jev answers with the Chinese option name
                     Text("·").foregroundStyle(.secondary)
-                    Text(j.needsReply < 0.35 ? L("可以不回") : Self.urgencyText(j.urgency)).foregroundStyle(.secondary)
+                    if model.conversation?.isPost == true {
+                        // A reply under a post is public; say so before anything is typed.
+                        Text(L("公開留言")).foregroundStyle(.secondary)
+                    } else if let urgency = j.urgency {
+                        Text(j.needsReply < 0.35 ? L("可以不回") : Self.urgencyText(urgency)).foregroundStyle(.secondary)
+                    }
                 }
                 .font(.system(size: 13))
             } else {

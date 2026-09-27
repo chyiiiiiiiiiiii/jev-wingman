@@ -79,6 +79,27 @@ struct AXSnapshot {
         return nil
     }
 
+    /// The element that has keyboard focus in the app, wherever it is.
+    static func focusedElement(pid: pid_t) -> AXUIElement? {
+        var value: CFTypeRef?
+        AXUIElementCopyAttributeValue(AXUIElementCreateApplication(pid), kAXFocusedUIElementAttribute as CFString, &value)
+        guard let value, CFGetTypeID(value) == AXUIElementGetTypeID() else { return nil }
+        return (value as! AXUIElement)
+    }
+
+    static func parent(of element: AXUIElement) -> AXUIElement? {
+        var value: CFTypeRef?
+        AXUIElementCopyAttributeValue(element, kAXParentAttribute as CFString, &value)
+        guard let value, CFGetTypeID(value) == AXUIElementGetTypeID() else { return nil }
+        return (value as! AXUIElement)
+    }
+
+    static func role(of element: AXUIElement) -> String {
+        var value: CFTypeRef?
+        AXUIElementCopyAttributeValue(element, kAXRoleAttribute as CFString, &value)
+        return value as? String ?? ""
+    }
+
     static func title(of window: AXUIElement) -> String {
         var value: CFTypeRef?
         AXUIElementCopyAttributeValue(window, kAXTitleAttribute as CFString, &value)

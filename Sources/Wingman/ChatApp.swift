@@ -119,19 +119,44 @@ enum Readers {
         }
     }
 
-    /// Only a tab showing a web chat that is switched on is read; any other page stops at its address.
+    /// Only a tab showing a web chat that is switched on is read, or on Instagram and Threads the post a reply
+    /// is being written under; any other page stops at its address.
     private static func readBrowser(pid: pid_t) -> (app: ChatApp, reading: Reading)? {
         guard let window = AXSnapshot.windows(pid: pid).first else { return nil }
-        guard let url = AXSnapshot.pageURL(of: window), let chat = WebChat.at(url),
-              let app = ChatApp(rawValue: chat.rawValue) else {
-            // The address only appears once the browser builds the page's tree; a tab titled like a web
-            // chat switches that on, and the next read checks the address before anything else.
-            if WebChat.mayBe(title: AXSnapshot.title(of: window)) { AXSnapshot.enableWebAccessibility(pid: pid) }
-            return nil
+        let url = AXSnapshot.pageURL(of: window)
+        if let url, let chat = WebChat.at(url), let app = ChatApp(rawValue: chat.rawValue) {
+            guard !Prefs.storedDisabledApps.contains(app.rawValue) else { return nil }
+            let snapshot = AXSnapshot(window: window, maxNodes: 8000)
+            guard let convo = MessengerParser.parse(window: snapshot.root) else { return nil }
+            return (app, Reading(conversation: convo, composer: snapshot.elements[convo.composerHandle]))
         }
-        guard !Prefs.storedDisabledApps.contains(app.rawValue) else { return nil }
-        let snapshot = AXSnapshot(window: window, maxNodes: 8000)
-        guard let convo = MessengerParser.parse(window: snapshot.root) else { return nil }
-        return (app, Reading(conversation: convo, composer: snapshot.elements[convo.composerHandle]))
+        if let url, let chat = WebChat.posts(url), let app = ChatApp(rawValue: chat.rawValue) {
+            guard !Prefs.storedDisabledApps.contains(app.rawValue) else { return nil }
+            return readPost(pid: pid).map { (app, $0) }
+        }
+        // The address only appears once the browser builds the page's tree; a tab titled like a web chat
+        // switches that on, and the next read checks the address before anything else.
+        if url == nil, WebChat.mayBe(title: AXSnapshot.title(of: window)) { AXSnapshot.enableWebAccessibility(pid: pid) }
+        return nil
+    }
+
+    /// Nothing is read unless a text box has focus. Then the view widens from that box a few levels at a time
+    /// until it takes in the post the box belongs to: a few levels on a post's page, more in a feed. Only that
+    /// part of the page is copied, never the whole feed.
+    private static func readPost(pid: pid_t) -> Reading? {
+        guard let box = AXSnapshot.focusedElement(pid: pid), AXSnapshot.role(of: box) == "AXTextArea" else { return nil }
+        var around = box
+        for level in 1...18 {
+            guard let parent = AXSnapshot.parent(of: around) else { break }
+            around = parent
+            let top = AXSnapshot.role(of: parent) == "AXWebArea"
+            guard level % 3 == 0 || top else { continue }
+            let snapshot = AXSnapshot(window: around, maxNodes: 4000)
+            if let convo = PostParser.parse(window: snapshot.root) {
+                return Reading(conversation: convo, composer: snapshot.elements[convo.composerHandle])
+            }
+            if top { break }
+        }
+        return nil
     }
 }

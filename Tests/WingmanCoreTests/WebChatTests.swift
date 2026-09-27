@@ -32,3 +32,17 @@ import Testing
     #expect(WebChat.mayBe(title: "Messenger"))
     #expect(!WebChat.mayBe(title: "GitHub - Google Chrome"))
 }
+
+@Test func postsAreConsideredOnInstagramAndThreadsOnly() {
+    // Anywhere on these two sites a reply box can open; the reader still needs one to have focus.
+    #expect(WebChat.posts(URL(string: "https://www.instagram.com/")!) == .instagram)
+    #expect(WebChat.posts(URL(string: "https://www.instagram.com/p/abc/")!) == .instagram)
+    #expect(WebChat.posts(URL(string: "https://www.threads.com/@someone/post/abc")!) == .threads)
+    #expect(WebChat.posts(URL(string: "https://www.threads.net/")!) == .threads)
+    // Messages pages are read as chats, and Facebook's feed is not in scope.
+    #expect(WebChat.posts(URL(string: "https://www.instagram.com/direct/t/1/")!) == nil)
+    #expect(WebChat.posts(URL(string: "https://www.threads.com/messages/t/1")!) == nil)
+    #expect(WebChat.posts(URL(string: "https://www.facebook.com/")!) == nil)
+    #expect(WebChat.posts(URL(string: "https://instagram.com.example.net/p/abc/")!) == nil)
+    #expect(WebChat.posts(URL(string: "http://www.instagram.com/p/abc/")!) == nil)
+}

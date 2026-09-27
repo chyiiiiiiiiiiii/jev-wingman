@@ -25,12 +25,12 @@ Wingman splits the job between two kinds of model:
 | Slack | Accessibility tree (Electron DOM) | Accessibility |
 | Discord | Accessibility tree (Electron DOM) | Accessibility |
 | Messenger (web, in Chrome, Edge, Arc or Brave) | Accessibility tree, only on messenger.com or facebook.com/messages | Accessibility |
-| Instagram messages (web, same browsers) | Accessibility tree, only on instagram.com/direct | Accessibility |
-| Threads messages (web, same browsers) | Accessibility tree, only on threads.com/messages | Accessibility |
+| Instagram (web, same browsers): messages, and replies under posts | Accessibility tree: instagram.com/direct, or the post whose reply box has your cursor | Accessibility |
+| Threads (web, same browsers): messages, and replies under posts | Accessibility tree: threads.com/messages, or the post whose reply box has your cursor | Accessibility |
 | LINE | Chat name and input box from accessibility; messages by on-device OCR | Accessibility, Screen & System Audio Recording |
 | Telegram | On-device OCR | Accessibility, Screen & System Audio Recording |
 
-Slack, Discord, Messenger, Instagram and Threads have been read on real chats. LINE and Telegram are read by OCR and have had less real-world use. In a browser, only the message pages of Messenger, Instagram and Threads are read: feeds, profiles, posts and every other site are not. A photo, reel or shared post counts as a turn in the conversation (📎), so Wingman knows who spoke last.
+Slack, Discord, Messenger, Instagram and Threads have been read on real chats. LINE and Telegram are read by OCR and have had less real-world use. In a browser, only the message pages of Messenger, Instagram and Threads are read, plus, on Instagram and Threads, the one post whose reply box your cursor is in: Wingman first asks the browser whether a text box has focus, and reads nothing further if not, so scrolling a feed or reading posts reads nothing. It then reads only that post (and the comment you are answering, when the box starts with @name), not the page. Every other site is not read. Replies under posts are written as public comments, and the panel says so. A photo, reel or shared post counts as a turn in the conversation (📎), so Wingman knows who spoke last.
 
 ## Privacy
 

@@ -167,7 +167,7 @@ struct SettingsView: View {
                         }
                     }
                 }
-                Text(L("用來讀 Slack、Discord，以及 Messenger、Instagram、Threads 網頁版的對話，並把你選的回覆填進輸入框。瀏覽器裡只讀這三個網站的訊息頁，其他網頁不讀。在清單裡把 Wingman 打開，這裡會自動打勾。Wingman 只讀你正在看的對話，不會自動送出任何訊息。"))
+                Text(L("用來讀 Slack、Discord，以及 Messenger、Instagram、Threads 網頁版的對話，並把你選的回覆填進輸入框。瀏覽器裡只讀這三個網站的訊息頁，以及你正在 Instagram、Threads 留言回覆的那篇貼文，其他網頁不讀。在清單裡把 Wingman 打開，這裡會自動打勾。Wingman 只讀你正在看的對話，不會自動送出任何訊息。"))
                     .font(.caption).foregroundStyle(.secondary)
             } header: { Text(L("1. 讓 Wingman 讀聊天內容")) }
 
@@ -292,7 +292,7 @@ struct SettingsView: View {
 
             Section {
                 HotkeyRecorder(settings: settings)
-                Text(L("在 Slack、Discord、LINE、Telegram，或 Messenger、Instagram、Threads 網頁版收到訊息時，輸入框右上方會出現「✦ 3 個建議」。按 %@ 或點它展開，按 Enter 填入 ★ 推薦的那句，或按 1、2、3 選一句，確認後自己按 Enter 送出。", "\(settings.hotkey.label)"))
+                Text(L("在 Slack、Discord、LINE、Telegram，或 Messenger、Instagram、Threads 網頁版收到訊息時，以及在 Instagram、Threads 的貼文底下準備留言時，輸入框右上方會出現「✦ 3 個建議」。按 %@ 或點它展開，按 Enter 填入 ★ 推薦的那句，或按 1、2、3 選一句，確認後自己按 Enter 送出。", "\(settings.hotkey.label)"))
                     .font(.callout)
             } header: { Text(L("怎麼用")) }
 

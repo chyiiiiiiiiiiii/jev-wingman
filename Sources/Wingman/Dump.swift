@@ -119,6 +119,29 @@ enum Dump {
         return 0
     }
 
+    /// `--dump --app <instagram|threads> --pretend-focus`: read the front tab as if its first text box had focus,
+    /// to check the post reader on a real page without clicking into a box where Enter would post.
+    static func post(app: ChatApp) -> Int32 {
+        guard AXIsProcessTrusted(),
+              let running = NSWorkspace.shared.runningApplications.first(where: { $0.bundleIdentifier.map(app.bundleIDs.contains) == true }),
+              let window = AXSnapshot.windows(pid: running.processIdentifier).first
+        else { print("Not trusted, or no \(app.name) window."); return 1 }
+        var root = AXSnapshot(window: window, maxNodes: 8000).root
+        func focusFirstBox(_ node: inout UINode) -> Bool {
+            if node.role == "AXTextArea" { node.focused = true; return true }
+            for index in node.children.indices where focusFirstBox(&node.children[index]) { return true }
+            return false
+        }
+        guard focusFirstBox(&root), let convo = PostParser.parse(window: root) else { print("\(app.name): no post read"); return 1 }
+        let show = { (s: String) in s.count <= 2 ? s : "\(s.prefix(2))…(\(s.count))" }
+        print("\(app.name) post: “\(show(convo.title))” · box \(Int(convo.composerFrame.minX)),\(Int(convo.composerFrame.minY)) · draft \(convo.draft.count) chars")
+        for message in convo.messages {
+            let lines = message.text.split(separator: "\n").map { show(String($0)) }.joined(separator: " ⏎ ")
+            print("  [\(show(message.sender ?? "?"))] \(lines)")
+        }
+        return 0
+    }
+
     /// `--probe <bundle id> [--wait] [--host <domain>]`: role, DOM classes and redacted text of every labelled
     /// node in an app's window, to learn where a new app keeps its messages before writing its reader.
     /// `--host` picks the browser window showing that site, in front or not.

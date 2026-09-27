@@ -71,7 +71,7 @@ struct OnboardingView: View {
             Text(L("Wingman 讀你正在看的對話，幫你想好 3 句回覆，你選一句填進輸入框，自己按 Enter 送出。它不會自動送出任何訊息。"))
                 .foregroundStyle(.secondary)
             permissionRow(done: trusted, title: L("輔助使用（必要）"),
-                          detail: L("讀 Slack、Discord，以及 Messenger、Instagram、Threads 網頁版的對話，並把回覆填進輸入框。"),
+                          detail: L("讀 Slack、Discord，以及 Messenger、Instagram、Threads 網頁版的對話和你正在留言的貼文，並把回覆填進輸入框。"),
                           pane: "Privacy_Accessibility")
             permissionRow(done: canCapture, title: L("螢幕與系統錄音（用 LINE、Telegram 才需要）"),
                           detail: L("這兩個 App 只能看畫面讀字，截圖只在這台 Mac 上辨識，不會上傳。開啟後要重新啟動 Wingman。"),

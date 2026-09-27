@@ -59,15 +59,18 @@ public struct Conversation: Equatable {
     public var draft: String
     public var composerHandle: Int
     public var composerFrame: CGRect
+    /// A public post (Threads, Instagram) being replied to, rather than a private chat.
+    public var isPost: Bool
 
     public init(title: String, isThread: Bool, messages: [ChatMessage], draft: String,
-                composerHandle: Int, composerFrame: CGRect) {
+                composerHandle: Int, composerFrame: CGRect, isPost: Bool = false) {
         self.title = title
         self.isThread = isThread
         self.messages = messages
         self.draft = draft
         self.composerHandle = composerHandle
         self.composerFrame = composerFrame
+        self.isPost = isPost
     }
 
     /// A photo, video, sticker or shared post is in the conversation (as 📎).

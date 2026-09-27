@@ -25,12 +25,12 @@ Wingman 把工作分給兩種模型：
 | Slack | 輔助使用（直接讀網頁結構） | 輔助使用 |
 | Discord | 輔助使用（直接讀網頁結構） | 輔助使用 |
 | Messenger 網頁版（Chrome、Edge、Arc、Brave） | 輔助使用，只讀 messenger.com 或 facebook.com/messages | 輔助使用 |
-| Instagram 網頁版私訊（同上瀏覽器） | 輔助使用，只讀 instagram.com/direct | 輔助使用 |
-| Threads 網頁版私訊（同上瀏覽器） | 輔助使用，只讀 threads.com/messages | 輔助使用 |
+| Instagram 網頁版（同上瀏覽器）：私訊，和貼文底下的留言回覆 | 輔助使用：instagram.com/direct，或游標所在留言框的那篇貼文 | 輔助使用 |
+| Threads 網頁版（同上瀏覽器）：私訊，和貼文底下的回覆 | 輔助使用：threads.com/messages，或游標所在回覆框的那篇貼文 | 輔助使用 |
 | LINE | 聊天室名稱和輸入框用輔助使用讀；訊息內容在本機截圖辨識 | 輔助使用、螢幕與系統錄音 |
 | Telegram | 在本機截圖辨識 | 輔助使用、螢幕與系統錄音 |
 
-Slack、Discord、Messenger、Instagram、Threads 都已經在真實聊天中讀過。LINE 和 Telegram 是靠截圖辨識，實際使用的次數還比較少。瀏覽器裡只讀 Messenger、Instagram、Threads 的訊息頁，動態、個人檔案、貼文和其他網站都不讀。對話裡的照片、Reels 或分享的貼文會算成一則（📎），這樣 Wingman 才知道最後是誰說話。
+Slack、Discord、Messenger、Instagram、Threads 都已經在真實聊天中讀過。LINE 和 Telegram 是靠截圖辨識，實際使用的次數還比較少。瀏覽器裡只讀 Messenger、Instagram、Threads 的訊息頁；在 Instagram、Threads 上，另外只讀你游標所在留言框的那一篇貼文。Wingman 會先問瀏覽器「現在有沒有文字框被點開」，沒有就什麼都不讀，所以滑動態、看貼文都不會被讀。有的話，也只讀那篇貼文（留言框以 @某人 開頭時，再加上你要回的那則留言），不讀整頁。其他網站一律不讀。貼文底下的回覆會照公開留言的語氣寫，面板上也會標示「公開留言」。對話裡的照片、Reels 或分享的貼文會算成一則（📎），這樣 Wingman 才知道最後是誰說話。
 
 ## 隱私
 

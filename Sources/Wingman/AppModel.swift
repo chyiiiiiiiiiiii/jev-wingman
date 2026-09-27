@@ -108,6 +108,8 @@ final class AppModel: ObservableObject {
         guard let convo else { return }
         // Only messages that came in while this chat was open count; opening it or scrolling back does not.
         let arrived = convo.title == lastRead.title ? Arrivals.new(since: lastRead.messages, in: convo.messages) : []
+        // Under a post, the cursor landing in its reply box is the cue: a reply is on its way.
+        let replyStarted = convo.isPost && convo.title != lastRead.title
         lastRead = (convo.title, convo.messages)
         let print = fingerprint(convo)
         guard print != seenFingerprint else { return }
@@ -121,8 +123,8 @@ final class AppModel: ObservableObject {
         }
         // Prefetch once the other side's message has sat still, so ⌥Space opens instantly. With
         // automatic analysis off, nothing leaves the Mac until the shortcut is pressed.
-        guard arrived.contains(where: { !$0.isMe }), convo.awaitingReply, !settings.paused, settings.autoAnalyze,
-              !panelShown else { return }
+        guard arrived.contains(where: { !$0.isMe }) || replyStarted, convo.awaitingReply, !settings.paused,
+              settings.autoAnalyze, !panelShown else { return }
         settleTask = Task { [weak self] in
             try? await Task.sleep(for: .seconds(1))
             guard !Task.isCancelled, let self, self.seenFingerprint == print else { return }

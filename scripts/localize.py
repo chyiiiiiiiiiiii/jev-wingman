@@ -24,7 +24,7 @@ def keys() -> list[str]:
     for path in sorted((ROOT / "Sources/Wingman").glob("*.swift")):
         found += re.findall(r'\bL\(' + LITERAL, path.read_text())
     questions = (ROOT / "Sources/WingmanCore/ReplyQuestions.swift").read_text()
-    for block in ("intents", "strategies"):
+    for block in ("intents", "strategies", "postIntents", "postStrategies"):
         body = questions.split(f"static let {block}")[1].split("= [", 1)[1].split("\n    ]")[0]
         found += re.findall(r'\(' + LITERAL + r',', body)
     unique = []

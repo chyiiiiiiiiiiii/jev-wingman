@@ -36,12 +36,13 @@ struct Brain {
     func judge(_ convo: Conversation) async throws -> Judgment {
         guard let replyTo = convo.messages.last(where: { !$0.isMe }) else { throw Failure.nothingToAnswer }
         let body: [String: Any] = ["model": jevModel, "state": state(convo, replyTo: replyTo),
-                                   "questions": ReplyQuestions.payload]
+                                   "questions": convo.isPost ? ReplyQuestions.postPayload : ReplyQuestions.payload]
         let data = try await post(jevURL, key: jevKey, body: body)
         let usage = (try? JSONSerialization.jsonObject(with: data) as? [String: Any])?["usage"] as? [String: Any]
         let tokens = usage?["input_tokens"] as? Int ?? 0
         Log.write("jev tokens in=\(tokens) cost=$\(String(format: "%.6f", Double(tokens) * 0.042 / 1_000_000))")
-        return try JevDecoder.judgment(from: data, strategyOrder: ReplyQuestions.strategyOrder)
+        return try JevDecoder.judgment(from: data, strategyOrder: convo.isPost ? ReplyQuestions.postStrategyOrder
+                                                                                : ReplyQuestions.strategyOrder)
     }
 
     /// Jev's pick among the drafts, as a probability per draft in the order given.
@@ -49,7 +50,9 @@ struct Brain {
         guard let replyTo = convo.messages.last(where: { !$0.isMe }) else { throw Failure.nothingToAnswer }
         let criteria = Dictionary(drafts.map { ($0, NSNull()) }, uniquingKeysWith: { first, _ in first })
         let body: [String: Any] = ["model": jevModel, "state": state(convo, replyTo: replyTo),
-                                   "questions": ["best": ["type": "choice", "instructions": ReplyQuestions.rankInstructions,
+                                   "questions": ["best": ["type": "choice",
+                                                          "instructions": convo.isPost ? ReplyQuestions.postRankInstructions
+                                                                                       : ReplyQuestions.rankInstructions,
                                                           "criteria": criteria]]]
         let data = try await post(jevURL, key: jevKey, body: body)
         return try JevDecoder.scores(from: data, for: drafts)
@@ -140,7 +143,7 @@ struct Brain {
             "\(m.isMe ? "\(me)（我）" : (m.sender ?? "（不明）"))：\(m.text)"
         }.joined(separator: "\n")
         let user = """
-        \(app.name)\(convo.isThread ? " 對話串" : "") \(convo.title)
+        \(app.name)\(convo.isPost ? " 貼文底下的留言區" : convo.isThread ? " 對話串" : "") \(convo.title)
         \(Self.languageRule(for: convo))
         我的名字：\(me)
         最近的對話（由舊到新）：
@@ -163,7 +166,8 @@ struct Brain {
             // Amazon Bedrock).
             "provider": ["order": Self.preferredProviders, "ignore": Self.excludedProviders,
                          "data_collection": "deny", "zdr": true],
-            "messages": [["role": "system", "content": Self.writerRules(for: app)], ["role": "user", "content": user]],
+            "messages": [["role": "system", "content": Self.writerRules(for: app, post: convo.isPost)],
+                         ["role": "user", "content": user]],
         ]
         var request = try jsonRequest(URL(string: "https://openrouter.ai/api/v1/chat/completions")!,
                                       key: settings.openRouterKey, body: body)
@@ -215,14 +219,18 @@ struct Brain {
         return names[interfaceLanguage].map { "，用\($0)寫" } ?? ""
     }
 
+    /// How a reply under a public post should sound: many people read it, including strangers.
+    static let publicRegister = "這是公開留言，很多人看得到：像真人網友留言，自然、友善、有自己的觀點，簡短；"
+        + "不要業配腔、不要過度吹捧，不要堆砌 hashtag 或表情符號，也不要說出會冒犯人或引戰的話。"
+
     static let excludedProviders = ["DeepSeek", "StreamLake", "Alibaba", "SiliconFlow", "Baidu"]
     static let preferredProviders = ["Fireworks", "Together", "BaseTen", "DeepInfra"]
 
-    static func writerRules(for app: ChatApp) -> String { """
-    你替使用者（「我」）起草要在 \(app.name) 回覆的訊息。
+    static func writerRules(for app: ChatApp, post: Bool = false) -> String { """
+    你替使用者（「我」）起草要在 \(app.name) \(post ? "公開留言回覆的內容。第一則是貼文，若還有一則，是我要回覆的那則留言" : "回覆的訊息")。
     - 每則回覆就是我會直接送出的原文：不加引號、不加說明、不署名。
     - 用對方使用的語言回覆；中文一律用臺灣繁體中文與臺灣用語。
-    - \(app.register)
+    - \(post ? Self.publicRegister : app.register)
     - 一則只寫一段，不換行，通常一到兩句。
     - 不要編造對話裡沒有的事實、數字、日期或承諾；需要但不知道時，留下像 [時間] 這樣的空格讓我自己填。
     - 只輸出 JSON 陣列，不要其他文字：[{"strategy": "<回法>", "text": "<回覆>"}]

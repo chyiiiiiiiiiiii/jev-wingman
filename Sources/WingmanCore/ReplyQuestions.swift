@@ -31,11 +31,38 @@ public enum ReplyQuestions {
 
     public static var strategyOrder: [String] { strategies.map(\.0) }
 
+    /// What someone posting publicly (a post on Threads or Instagram, or a comment under one) is doing.
+    public static let postIntents: [(String, String)] = [
+        ("分享觀點", "發表看法、評論或心得"),
+        ("分享生活或成果", "分享近況、作品、成就或好消息"),
+        ("提問或求助", "想得到答案、建議或推薦"),
+        ("徵求互動", "邀大家留言、投票或分享經驗"),
+        ("宣傳或公告", "推廣產品、活動或發布消息"),
+        ("心情抒發", "抒發情緒、感嘆或吐苦水"),
+        ("幽默或玩梗", "搞笑、玩梗或輕鬆內容"),
+    ]
+
+    /// Ways to answer in public, where many others read along.
+    public static let postStrategies: [(String, String)] = [
+        ("共鳴附和", "表示認同或有同感"),
+        ("補充觀點", "補上相關的資訊、角度或例子"),
+        ("提出問題", "針對內容問一個好問題，延續討論"),
+        ("分享經驗", "用自己的經驗回應"),
+        ("讚美鼓勵", "具體地稱讚或給予鼓勵"),
+        ("幽默回應", "輕鬆、機智地回一句"),
+        ("禮貌提出不同看法", "有禮貌地表達不同意見，說明理由"),
+    ]
+
+    public static var postStrategyOrder: [String] { postStrategies.map(\.0) }
+
+    public static let postRankInstructions = "`me` 要在公開貼文底下留言回覆 `reply_to`。下面哪一則留言最適合直接發出？"
+        + "考慮它是否切題、語氣是否自然得體，以及有沒有編造貼文裡沒有的事實。"
+
     public static let rankInstructions = "`me` 要回覆 `reply_to`。下面哪一則草稿最適合直接送出？"
         + "考慮它有沒有回應對方真正的意思、語氣是否得體，以及有沒有做出對話裡沒有根據的承諾。"
 
     public static func description(ofStrategy name: String) -> String {
-        strategies.first { $0.0 == name }?.1 ?? name
+        (strategies + postStrategies).first { $0.0 == name }?.1 ?? name
     }
 
     /// The `questions` map of a System One request; state carries `me` and `reply_to`.
@@ -49,6 +76,18 @@ public enum ReplyQuestions {
             "strategy": ["type": "choice",
                          "instructions": "`me` 回覆 `reply_to` 時，哪一種回法最能推進這段對話？",
                          "criteria": Dictionary(uniqueKeysWithValues: strategies)],
+        ]
+    }
+
+    /// The questions about a public post: whether to reply and how soon do not apply.
+    public static var postPayload: [String: Any] {
+        [
+            "intent": ["type": "choice",
+                       "instructions": "`reply_to` 是一則公開貼文，或貼文底下的一則留言。發文的人主要想做什麼？",
+                       "criteria": Dictionary(uniqueKeysWithValues: postIntents)],
+            "strategy": ["type": "choice",
+                         "instructions": "`me` 要公開留言回覆 `reply_to`，哪一種回法最自然、最能帶起好的互動？",
+                         "criteria": Dictionary(uniqueKeysWithValues: postStrategies)],
         ]
     }
 }

@@ -45,3 +45,13 @@ private let recordedRanking = #"""
 
     #expect(scores == [0.0, 0.99, 0.01, 0.0])
 }
+
+@Test func aPostJudgmentHasNoReplyOrUrgencyQuestion() throws {
+    // Posts ask only what the author is doing and which way to reply; a reply is wanted by definition.
+    let post = #"{"answers":{"intent":{"type":"choice","choice":"提問或求助","confidence":0.8,"probabilities":{"提問或求助":0.9}},"strategy":{"type":"choice","choice":"分享經驗","probabilities":{"分享經驗":0.7,"提出問題":0.3}}}}"#
+    let j = try JevDecoder.judgment(from: Data(post.utf8), strategyOrder: ReplyQuestions.postStrategyOrder)
+    #expect(j.intent == "提問或求助")
+    #expect(j.needsReply == 1)
+    #expect(j.urgency == nil)
+    #expect(j.strategies.prefix(2).map(\.name) == ["分享經驗", "提出問題"])
+}

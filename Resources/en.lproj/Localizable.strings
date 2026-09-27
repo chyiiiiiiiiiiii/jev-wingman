@@ -42,7 +42,7 @@
 "讓 Wingman 看得到聊天" = "Let Wingman see your chats";
 "Wingman 讀你正在看的對話，幫你想好 3 句回覆，你選一句填進輸入框，自己按 Enter 送出。它不會自動送出任何訊息。" = "Wingman reads the conversation you're looking at and drafts 3 replies. Pick one to fill in the message box, then press Enter yourself. It never sends anything on its own.";
 "輔助使用（必要）" = "Accessibility (required)";
-"讀 Slack、Discord，以及 Messenger、Instagram、Threads 網頁版的對話，並把回覆填進輸入框。" = "Reads Slack and Discord conversations, and Messenger, Instagram and Threads on the web, and fills replies into the message box.";
+"讀 Slack、Discord，以及 Messenger、Instagram、Threads 網頁版的對話和你正在留言的貼文，並把回覆填進輸入框。" = "Reads Slack and Discord conversations, Messenger, Instagram and Threads on the web, and the post you are replying under, and fills replies into the message box.";
 "螢幕與系統錄音（用 LINE、Telegram 才需要）" = "Screen & System Audio Recording (only for LINE and Telegram)";
 "這兩個 App 只能看畫面讀字，截圖只在這台 Mac 上辨識，不會上傳。開啟後要重新啟動 Wingman。" = "These two apps can only be read from the screen. Captures are read on this Mac and never uploaded. Restart Wingman after turning it on.";
 "打開設定" = "Open Settings";
@@ -71,6 +71,7 @@
 "Esc 關閉" = "Esc close";
 "正在寫，好了就能按 Enter 或 1–3 填入 · Esc 關閉" = "Writing… Enter or 1–3 once ready · Esc close";
 "關閉（Esc）" = "Close (Esc)";
+"公開留言" = "Public reply";
 "可以不回" = "No reply needed";
 "回覆 %@：%@" = "Replying to %@: %@";
 "對方" = "them";
@@ -101,7 +102,7 @@
 "已開啟「輔助使用」" = "Accessibility is on";
 "需要開啟「輔助使用」" = "Accessibility needs to be turned on";
 "打開系統設定" = "Open System Settings";
-"用來讀 Slack、Discord，以及 Messenger、Instagram、Threads 網頁版的對話，並把你選的回覆填進輸入框。瀏覽器裡只讀這三個網站的訊息頁，其他網頁不讀。在清單裡把 Wingman 打開，這裡會自動打勾。Wingman 只讀你正在看的對話，不會自動送出任何訊息。" = "Reads Slack and Discord conversations, and Messenger, Instagram and Threads on the web, and fills in the reply you pick. In a browser only those three sites' message pages are read, no other page. Turn Wingman on in the list and this ticks itself. Wingman only reads the conversation in front of you and never sends anything on its own.";
+"用來讀 Slack、Discord，以及 Messenger、Instagram、Threads 網頁版的對話，並把你選的回覆填進輸入框。瀏覽器裡只讀這三個網站的訊息頁，以及你正在 Instagram、Threads 留言回覆的那篇貼文，其他網頁不讀。在清單裡把 Wingman 打開，這裡會自動打勾。Wingman 只讀你正在看的對話，不會自動送出任何訊息。" = "Reads Slack and Discord conversations, and Messenger, Instagram and Threads on the web, and fills in the reply you pick. In a browser only those three sites' message pages are read, plus the Instagram or Threads post you are writing a reply under; no other page. Turn Wingman on in the list and this ticks itself. Wingman only reads the conversation in front of you and never sends anything on its own.";
 "1. 讓 Wingman 讀聊天內容" = "1. Let Wingman read chats";
 "已開啟「螢幕與系統錄音」" = "Screen & System Audio Recording is on";
 "LINE、Telegram 需要「螢幕與系統錄音」" = "LINE and Telegram need Screen & System Audio Recording";
@@ -134,7 +135,7 @@
 "清除並重新啟動" = "Erase and Restart";
 "取消" = "Cancel";
 "會刪除鑰匙圈裡的 key、所有設定和紀錄檔，然後重新啟動 Wingman。聊天內容本來就不會存在這台 Mac 上。" = "This deletes the keys in your Keychain, all settings and the log, then restarts Wingman. Chats were never stored on this Mac.";
-"在 Slack、Discord、LINE、Telegram，或 Messenger、Instagram、Threads 網頁版收到訊息時，輸入框右上方會出現「✦ 3 個建議」。按 %@ 或點它展開，按 Enter 填入 ★ 推薦的那句，或按 1、2、3 選一句，確認後自己按 Enter 送出。" = "When a message arrives in Slack, Discord, LINE, Telegram, or Messenger, Instagram or Threads on the web, \"✦ 3 suggestions\" appears above the message box. Press %@ or click it, then Enter for the ★ one or 1, 2, 3 to pick. Check it and press Enter yourself to send.";
+"在 Slack、Discord、LINE、Telegram，或 Messenger、Instagram、Threads 網頁版收到訊息時，以及在 Instagram、Threads 的貼文底下準備留言時，輸入框右上方會出現「✦ 3 個建議」。按 %@ 或點它展開，按 Enter 填入 ★ 推薦的那句，或按 1、2、3 選一句，確認後自己按 Enter 送出。" = "When a message arrives in Slack, Discord, LINE, Telegram, or Messenger, Instagram or Threads on the web, and when you start a reply under an Instagram or Threads post, \"✦ 3 suggestions\" appears above the message box. Press %@ or click it, then Enter for the ★ one or 1, 2, 3 to pick. Check it and press Enter yourself to send.";
 "怎麼用" = "How it works";
 "互動音效" = "Sounds";
 "你在等的建議寫好時，和回覆填進輸入框時，輕輕響一聲。背景自動分析完成時不會出聲。音量跟著系統的提示音音量。" = "A soft sound when suggestions you are waiting for are ready, and when a reply is typed in. Analysis that finishes in the background stays silent. The volume follows the Mac's alert volume.";
@@ -170,3 +171,17 @@
 "婉拒或延後" = "Decline or postpone";
 "表達感謝" = "Say thanks";
 "簡短回應" = "Short reply";
+"分享觀點" = "Sharing a view";
+"分享生活或成果" = "Sharing news or work";
+"提問或求助" = "Asking for help";
+"徵求互動" = "Inviting replies";
+"宣傳或公告" = "Promotion or news";
+"心情抒發" = "Venting";
+"幽默或玩梗" = "Humor";
+"共鳴附和" = "Relate";
+"補充觀點" = "Add a point";
+"提出問題" = "Ask a question";
+"分享經驗" = "Share experience";
+"讚美鼓勵" = "Praise";
+"幽默回應" = "Be witty";
+"禮貌提出不同看法" = "Politely disagree";

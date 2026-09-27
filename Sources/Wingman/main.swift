@@ -18,6 +18,10 @@ if let index = arguments.firstIndex(of: "--render-demo"), index + 1 < arguments.
 if let index = arguments.firstIndex(of: "--render"), index + 1 < arguments.count {
     exit(MainActor.assumeIsolated { Render.run(to: arguments[index + 1]) })
 }
+if arguments.contains("--dump"), arguments.contains("--pretend-focus"), let index = arguments.firstIndex(of: "--app"),
+   index + 1 < arguments.count, let app = ChatApp(rawValue: arguments[index + 1].lowercased()) {
+    exit(Dump.post(app: app))
+}
 if arguments.contains("--dump"), let index = arguments.firstIndex(of: "--app"), index + 1 < arguments.count,
    let app = ChatApp(rawValue: arguments[index + 1].lowercased()) {
     let wait = arguments.contains("--wait")

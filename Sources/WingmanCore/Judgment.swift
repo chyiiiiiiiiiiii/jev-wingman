@@ -15,12 +15,12 @@ public struct Judgment: Equatable {
     public var intentConfidence: Double
     /// Probability that a reply is expected at all.
     public var needsReply: Double
-    /// 0 = can wait days … 3 = they are waiting right now.
-    public var urgency: Double
+    /// 0 = can wait days … 3 = they are waiting right now; nil for a public post, where it is not asked.
+    public var urgency: Double?
     /// Every reply strategy, most probable first.
     public var strategies: [Strategy]
 
-    public init(intent: String, intentConfidence: Double, needsReply: Double, urgency: Double, strategies: [Strategy]) {
+    public init(intent: String, intentConfidence: Double, needsReply: Double, urgency: Double?, strategies: [Strategy]) {
         self.intent = intent
         self.intentConfidence = intentConfidence
         self.needsReply = needsReply
@@ -33,14 +33,15 @@ public enum JevDecoder {
     public struct Malformed: Error {}
 
     /// `strategyOrder` breaks ties between equally likely strategies in the order they were offered.
+    /// A post's judgment has no `needs_reply` or `urgency`: replying is the point, and nobody is waiting.
     public static func judgment(from data: Data, strategyOrder: [String]) throws -> Judgment {
         guard let root = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
               let answers = root["answers"] as? [String: Any],
               let intent = answers["intent"] as? [String: Any], let intentChoice = intent["choice"] as? String,
-              let needsReply = (answers["needs_reply"] as? [String: Any])?["noul"] as? Double,
-              let urgency = (answers["urgency"] as? [String: Any])?["score"] as? Double,
               let strategyProbs = (answers["strategy"] as? [String: Any])?["probabilities"] as? [String: Double]
         else { throw Malformed() }
+        let needsReply = (answers["needs_reply"] as? [String: Any])?["noul"] as? Double ?? 1
+        let urgency = (answers["urgency"] as? [String: Any])?["score"] as? Double
 
         let rank = Dictionary(uniqueKeysWithValues: strategyOrder.enumerated().map { ($1, $0) })
         let strategies = strategyProbs

@@ -17,6 +17,16 @@ public enum WebChat: String, CaseIterable {
         return nil
     }
 
+    /// Instagram or Threads outside their messages, where a reply box can open under any post: in the feed,
+    /// on a post's page, in a reply dialog. Only a reply box that has focus, and the post it answers, is read.
+    public static func posts(_ url: URL) -> WebChat? {
+        guard url.scheme == "https", let host = url.host?.lowercased(), at(url) == nil else { return nil }
+        func within(_ domain: String) -> Bool { host == domain || host.hasSuffix("." + domain) }
+        if within("instagram.com") { return .instagram }
+        if within("threads.com") || within("threads.net") { return .threads }
+        return nil
+    }
+
     /// A browser shows a page's address only once its accessibility tree is built. A tab title naming one
     /// of these sites is reason to build it; the address still decides whether anything is read.
     public static func mayBe(title: String) -> Bool {
