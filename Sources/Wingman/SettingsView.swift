@@ -202,20 +202,6 @@ struct SettingsView: View {
 
             Section {
                 TextField("你在聊天 App 裡顯示的名字", text: $settings.myName)
-                let senders = Array(Set(model.conversation?.messages.compactMap(\.sender) ?? [])).sorted()
-                if !senders.isEmpty {
-                    HStack {
-                        Text("是其中一個嗎？").font(.caption).foregroundStyle(.secondary)
-                        ForEach(senders, id: \.self) { name in
-                            Button(name) {
-                                let names = settings.myName.split(separator: ",").map { $0.trimmingCharacters(in: .whitespaces) }
-                                if !names.contains(name) {
-                                    settings.myName = (names.filter { !$0.isEmpty } + [name]).joined(separator: ", ")
-                                }
-                            }.controlSize(.small)
-                        }
-                    }
-                }
                 Text("用來分辨 Slack、Discord 裡哪些訊息是你說的。各 App 顯示的名字不同時，用逗號分開，例如「Yii, Yii Chen」。LINE、Telegram 看氣泡位置，不需要名字。")
                     .font(.caption).foregroundStyle(.secondary)
             } header: { Text("3. 你是誰") }
