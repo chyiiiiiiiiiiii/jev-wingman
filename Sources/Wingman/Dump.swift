@@ -65,9 +65,20 @@ enum Dump {
             print("5 秒後讀取，請切到 \(app.localizedName ?? bundleID)…")
             Thread.sleep(forTimeInterval: 5)
         }
-        Thread.sleep(forTimeInterval: 1)
-        guard let window = AXSnapshot.windows(pid: app.processIdentifier).first else { print("No window."); return 1 }
-        let root = AXSnapshot(window: window).root
+        // Electron builds its tree a few seconds after accessibility is switched on.
+        var root: UINode?, counts: [Int] = []
+        for _ in 0..<8 {
+            Thread.sleep(forTimeInterval: 1)
+            guard let window = AXSnapshot.windows(pid: app.processIdentifier).first else { counts.append(0); continue }
+            let snapshot = AXSnapshot(window: window)
+            root = snapshot.root
+            counts.append(snapshot.elements.count)
+            if counts.count >= 2, counts.last! > 100, counts.last! == counts[counts.count - 2] { break }
+        }
+        print("front app: \(NSWorkspace.shared.frontmostApplication?.localizedName ?? "?") · nodes over time: "
+              + counts.map(String.init).joined(separator: " → "))
+        guard let root else { print("No window."); return 1 }
+        print("window \(Int(root.frame.width))x\(Int(root.frame.height)) “\(root.title.prefix(2))…”")
         let show = { (s: String) in s.count <= 2 ? s : "\(s.prefix(2))…(\(s.count))" }
         var printed = 0
         func visit(_ node: UINode, _ depth: Int) {
@@ -83,6 +94,7 @@ enum Dump {
             node.children.forEach { visit($0, depth + 1) }
         }
         visit(root, 0)
+        print("printed \(printed)")
         return 0
     }
 
