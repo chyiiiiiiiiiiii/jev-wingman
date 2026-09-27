@@ -17,6 +17,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         Log.write("launch trusted=\(AXIsProcessTrusted())")
+        NSApp.mainMenu = Self.mainMenu()
         panels = PanelController(model: model)
         setUpStatusItem()
         NSWorkspace.shared.notificationCenter.addObserver(
@@ -90,6 +91,28 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             hotkey = Hotkey(keyCode: kVK_Space, modifiers: optionKey | controlKey, id: 2, handler: toggle)
             model.hotkeyLabel = "⌃⌥Space"
         }
+    }
+
+    /// A menu bar app has no menus, yet ⌘V, ⌘C and ⌘A in text fields are the Edit menu's key
+    /// equivalents; without it nothing can be pasted into settings or the suggestion panel.
+    private static func mainMenu() -> NSMenu {
+        let edit = NSMenu(title: "編輯")
+        edit.addItem(withTitle: "還原", action: Selector(("undo:")), keyEquivalent: "z")
+        edit.addItem(withTitle: "重做", action: Selector(("redo:")), keyEquivalent: "Z")
+        edit.addItem(.separator())
+        edit.addItem(withTitle: "剪下", action: #selector(NSText.cut(_:)), keyEquivalent: "x")
+        edit.addItem(withTitle: "拷貝", action: #selector(NSText.copy(_:)), keyEquivalent: "c")
+        edit.addItem(withTitle: "貼上", action: #selector(NSText.paste(_:)), keyEquivalent: "v")
+        edit.addItem(withTitle: "全選", action: #selector(NSText.selectAll(_:)), keyEquivalent: "a")
+        let app = NSMenu(title: "Wingman")
+        app.addItem(withTitle: "結束 Wingman", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
+        let menu = NSMenu()
+        for submenu in [app, edit] {
+            let item = NSMenuItem()
+            item.submenu = submenu
+            menu.addItem(item)
+        }
+        return menu
     }
 
     // MARK: - Menu bar
