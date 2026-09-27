@@ -1,6 +1,7 @@
 import AppKit
 import ApplicationServices
 import Combine
+import ServiceManagement
 import SwiftUI
 
 struct SettingsView: View {
@@ -10,6 +11,7 @@ struct SettingsView: View {
     @State private var testResult = ""
     @State private var testing = false
     @State private var customModel = false
+    @State private var opensAtLogin = SMAppService.mainApp.status == .enabled
     private let tick = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
     private static let custom = "custom"
 
@@ -107,8 +109,17 @@ struct SettingsView: View {
             } header: { Text("怎麼用") }
 
             Section {
+                Toggle("登入 Mac 時自動開啟 Wingman", isOn: $opensAtLogin)
+                    .onChange(of: opensAtLogin) { _, on in
+                        do {
+                            try on ? SMAppService.mainApp.register() : SMAppService.mainApp.unregister()
+                        } catch {
+                            Log.write("login item: \(error.localizedDescription)")
+                            opensAtLogin = SMAppService.mainApp.status == .enabled
+                        }
+                    }
                 HStack {
-                    Text("關掉這個視窗後 Wingman 會繼續在背景運作。要再打開設定，點選單列的泡泡圖示，或再開一次 Wingman。")
+                    Text("關掉這個視窗後 Wingman 會繼續在背景運作。要再打開設定：點選單列的泡泡圖示，或從 Launchpad／Spotlight 再開一次 Wingman。")
                         .font(.caption).foregroundStyle(.secondary)
                     Spacer()
                     Button("完成") { NSApp.keyWindow?.performClose(nil) }
