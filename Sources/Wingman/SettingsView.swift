@@ -13,6 +13,12 @@ struct SettingsView: View {
     private let tick = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
     private static let custom = "custom"
 
+    /// Pasted keys often carry a trailing newline.
+    private func trimmed(_ binding: Binding<String>) -> Binding<String> {
+        Binding(get: { binding.wrappedValue },
+                set: { binding.wrappedValue = $0.trimmingCharacters(in: .whitespacesAndNewlines) })
+    }
+
     /// A listed model shows as itself; anything else, or choosing 自訂, shows the free-text field.
     private var modelChoice: Binding<String> {
         Binding(
@@ -43,8 +49,14 @@ struct SettingsView: View {
             } header: { Text("1. 讓 Wingman 讀 Slack") }
 
             Section {
-                SecureField("OpenRouter API key（寫回覆用，sk-or-…）", text: $settings.openRouterKey)
-                SecureField("TypeSafe API key（Jev 判斷用，選填）", text: $settings.typesafeKey)
+                SecureField("OpenRouter API key（寫回覆用，sk-or-…）", text: trimmed($settings.openRouterKey))
+                if let problem = Prefs.keyProblem(settings.openRouterKey, prefix: "sk-or-") {
+                    Text(problem).font(.caption).foregroundStyle(.red)
+                }
+                SecureField("TypeSafe API key（Jev 判斷用，選填）", text: trimmed($settings.typesafeKey))
+                if let problem = Prefs.keyProblem(settings.typesafeKey, prefix: "api") {
+                    Text(problem).font(.caption).foregroundStyle(.red)
+                }
                 Text("Jev 只做判斷、不會寫字，所以寫回覆需要 OpenRouter。有 TypeSafe key 時 Jev 直連 TypeSafe，沒有就透過 OpenRouter 呼叫。")
                     .font(.caption).foregroundStyle(.secondary)
                 HStack {

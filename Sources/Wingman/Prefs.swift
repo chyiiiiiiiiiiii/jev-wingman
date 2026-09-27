@@ -35,6 +35,16 @@ final class Prefs: ObservableObject {
     }
 
     var hasWriterKey: Bool { !openRouterKey.isEmpty }
+
+    /// Why a pasted value is not an API key, or nil when it looks like one. Keys have no spaces;
+    /// pasting a whole command or sentence is the usual mistake.
+    static func keyProblem(_ value: String, prefix: String) -> String? {
+        let trimmed = value.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return nil }
+        if trimmed.contains(where: \.isWhitespace) { return "這不像 key：中間有空白，可能貼到整段指令或文字了" }
+        if !trimmed.hasPrefix(prefix) { return "這不像 key：應該以 \(prefix) 開頭" }
+        return nil
+    }
 }
 
 enum Keychain {
