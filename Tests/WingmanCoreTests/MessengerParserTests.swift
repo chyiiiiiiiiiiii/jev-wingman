@@ -76,6 +76,8 @@ private let page = UINode(role: "AXWindow", title: "Messenger", frame: CGRect(x:
                children: [UINode(role: "AXStaticText", value: "撰寫內容給 Alex Chen", frame: CGRect(x: 610, y: 730, width: 200, height: 20))],
                handle: 4),
         UINode(role: "AXButton", desc: "送出讚", frame: CGRect(x: 1089, y: 760, width: 30, height: 30)),
+        // In the real page the placeholder is a separate node beside the box, not inside it.
+        UINode(role: "AXStaticText", value: "撰寫內容給 Alex Chen", frame: CGRect(x: 612, y: 738, width: 200, height: 20)),
     ])
 
     let convo = MessengerParser.parse(window: window)

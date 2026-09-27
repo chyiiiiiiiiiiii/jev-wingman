@@ -47,11 +47,16 @@ public enum MessengerParser {
         let top = (heading?.frame.maxY ?? window.frame.minY + window.frame.height * 0.08) + 8
         let pane = CGRect(x: left, y: top, width: right - left, height: max(0, composer.frame.minY - 4 - top))
 
+        // The placeholder (撰寫內容給…) is its own node floating just above the box: drop text that
+        // repeats the box's label, and anything on the box's row.
+        let boxLabel = [composer.desc, composer.title].map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty }
         let lines = nodes.compactMap { entry -> OCRLine? in
             let node = entry.node
             let text = node.value.trimmingCharacters(in: .whitespacesAndNewlines)
             guard node.role == "AXStaticText", !entry.inLabel, !text.isEmpty,
-                  pane.insetBy(dx: -2, dy: -2).contains(node.frame) else { return nil }
+                  pane.insetBy(dx: -2, dy: -2).contains(node.frame),
+                  !boxLabel.contains(where: { $0 == text || $0.hasPrefix(text) }),
+                  node.frame.maxY < composer.frame.minY - 6 else { return nil }
             return OCRLine(text: text, frame: node.frame)
         }
         lastLines = lines
