@@ -19,3 +19,8 @@ private let chineseThread = ["Google 釋出了新的 TTS 模型", "我拿來做�
     #expect(ReplyLanguage.pick(replyTo: "Sounds good, let's ship it tomorrow morning then", recent: chineseThread) == .theirs)
     #expect(ReplyLanguage.pick(replyTo: "LGTM 👍", recent: ["Merged the fix", "Deploying now"]) == .theirs)
 }
+
+@Test func photosAndSharedPostsSayNothingAboutTheLanguage() {
+    // They sent three photos after a question in Chinese; the thread is still Chinese.
+    #expect(ReplyLanguage.pick(replyTo: "📎", recent: ["今天幾點到？", "📎", "📎", "📎"]) == .chinese)
+}

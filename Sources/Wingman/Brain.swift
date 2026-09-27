@@ -127,8 +127,11 @@ struct Brain {
                  "text": message.text]
             },
             "reply_to": replyTo.text,
-        ]
+        ].merging(convo.hasAttachments ? ["attachments": Self.attachmentNote] : [:]) { $1 }
     }
+
+    /// What 📎 stands for, told to Jev and the writer only when the conversation has one.
+    static let attachmentNote = "「📎」是一張照片、一段影片、一個貼圖或一則分享的貼文，看不到內容，不要猜裡面是什麼。"
 
     private func complete(_ convo: Conversation, brief: String, onDrafts: Drafts) async throws -> [Candidate] {
         guard !settings.openRouterKey.isEmpty else { throw Failure.missingKey }
@@ -142,6 +145,7 @@ struct Brain {
         我的名字：\(me)
         最近的對話（由舊到新）：
         \(transcript)
+        \(convo.hasAttachments ? Self.attachmentNote : "")
 
         \(brief)
         """

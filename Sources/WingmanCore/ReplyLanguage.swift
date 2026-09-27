@@ -8,9 +8,11 @@ public enum ReplyLanguage: Equatable {
         if replyTo.unicodeScalars.contains(where: isKana) { return .japanese }
         if replyTo.unicodeScalars.contains(where: isHangul) { return .korean }
         if replyTo.unicodeScalars.contains(where: isHan) { return .chinese }
-        // "LGTM", "OK 👍": too short to say anything; answer in the thread's language.
+        // "LGTM", "OK 👍": too short to say anything; answer in the thread's language. Photos and shared
+        // posts (📎) have no words, so they are no evidence either way.
         let letters = replyTo.unicodeScalars.filter { $0.properties.isAlphabetic }.count
-        let chineseThread = recent.filter { $0.unicodeScalars.contains(where: isHan) }.count * 2 > recent.count
+        let worded = recent.filter { $0 != BubbleParser.attachment }
+        let chineseThread = worded.filter { $0.unicodeScalars.contains(where: isHan) }.count * 2 > worded.count
         return letters <= 12 && chineseThread ? .chinese : .theirs
     }
 

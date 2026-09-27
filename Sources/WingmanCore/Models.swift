@@ -70,6 +70,9 @@ public struct Conversation: Equatable {
         self.composerFrame = composerFrame
     }
 
+    /// A photo, video, sticker or shared post is in the conversation (as 📎).
+    public var hasAttachments: Bool { messages.contains { $0.text == BubbleParser.attachment } }
+
     /// The other side spoke last, so there is something to answer.
     public var awaitingReply: Bool {
         guard let last = messages.last else { return false }
