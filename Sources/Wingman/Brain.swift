@@ -23,6 +23,9 @@ struct Brain {
         let body: [String: Any] = ["model": jevModel, "state": state(convo, replyTo: replyTo),
                                    "questions": ReplyQuestions.payload]
         let data = try await post(jevURL, key: jevKey, body: body)
+        let usage = (try? JSONSerialization.jsonObject(with: data) as? [String: Any])?["usage"] as? [String: Any]
+        let tokens = usage?["input_tokens"] as? Int ?? 0
+        Log.write("jev tokens in=\(tokens) cost=$\(String(format: "%.6f", Double(tokens) * 0.042 / 1_000_000))")
         return try JevDecoder.judgment(from: data, strategyOrder: ReplyQuestions.strategyOrder)
     }
 
@@ -114,10 +117,14 @@ struct Brain {
             "model": settings.model,
             "temperature": 0.7,
             "max_tokens": 700,
+            "usage": ["include": true],   // OpenRouter then reports the charge in the response
             "messages": [["role": "system", "content": Self.writerRules], ["role": "user", "content": user]],
         ]
         let data = try await post(URL(string: "https://openrouter.ai/api/v1/chat/completions")!,
                                   key: settings.openRouterKey, body: body)
+        let usage = (try? JSONSerialization.jsonObject(with: data) as? [String: Any])?["usage"] as? [String: Any]
+        Log.write("write model=\(settings.model) tokens in=\(usage?["prompt_tokens"] as? Int ?? 0) "
+                  + "out=\(usage?["completion_tokens"] as? Int ?? 0) cost=$\(usage?["cost"] as? Double ?? 0)")
         return try CandidateDecoder.candidates(from: data)
     }
 

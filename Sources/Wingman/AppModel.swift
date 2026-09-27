@@ -68,13 +68,15 @@ final class AppModel: ObservableObject {
         settleTask = Task { [weak self] in
             try? await Task.sleep(for: .seconds(1))
             guard !Task.isCancelled, let self, self.seenFingerprint == print else { return }
-            self.analyze()
+            self.analyze(auto: true)
         }
     }
 
     // MARK: - Suggestions
 
-    func analyze() {
+    /// `auto` is the prefetch on a new message: drafts are written only when Jev says a reply is
+    /// expected, since the LLM costs about 35 times what the judgment does.
+    func analyze(auto: Bool = false) {
         guard let convo = conversation else { return }
         workTask?.cancel()
         shownFingerprint = Self.fingerprint(convo)
@@ -98,6 +100,11 @@ final class AppModel: ObservableObject {
             } catch {
                 // Writing without Jev's picks still helps; the panel says Jev was skipped.
                 Log.write("judge failed: \(error.localizedDescription)")
+            }
+            if auto, let judgment = self.judgment, judgment.needsReply < 0.5 {
+                self.phase = .idle
+                Log.write("drafts skipped needs_reply=\(String(format: "%.2f", judgment.needsReply))")
+                return
             }
             guard self.settings.hasWriterKey else {
                 // A TypeSafe key alone still answers "what do they want, how soon"; writing needs an LLM.
