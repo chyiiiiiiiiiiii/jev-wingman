@@ -31,7 +31,7 @@ enum Render {
             }
         }
         let settings = SettingsView(settings: Prefs.shared, model: AppModel())
-            .frame(height: 1180)
+            .frame(height: 1600)
             .background(Color(nsColor: .windowBackgroundColor))
         write(settings, appearance: NSAppearance(named: .darkAqua)!, to: url.appendingPathComponent("settings-dark.png"))
         for (name, appearance) in [("light", NSAppearance.Name.aqua), ("dark", .darkAqua)] {

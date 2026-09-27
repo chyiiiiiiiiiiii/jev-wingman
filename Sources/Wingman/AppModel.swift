@@ -30,6 +30,8 @@ final class AppModel: ObservableObject {
     private var workTask: Task<Void, Never>?
     private var noteTask: Task<Void, Never>?
     private var generation = 0            // drafts streaming in for an older request are dropped
+    private var draftedFor = ""           // the chat title the drafts on screen were written for
+    private var lastRead: (title: String, messages: [ChatMessage]) = ("", [])
 
     private var brain: Brain { Brain(settings: settings, app: app) }
 
@@ -89,6 +91,9 @@ final class AppModel: ObservableObject {
         }
         conversation = convo
         guard let convo else { return }
+        // Only messages that came in while this chat was open count; opening it or scrolling back does not.
+        let arrived = convo.title == lastRead.title ? Arrivals.new(since: lastRead.messages, in: convo.messages) : []
+        lastRead = (convo.title, convo.messages)
         let print = fingerprint(convo)
         guard print != seenFingerprint else { return }
         seenFingerprint = print
@@ -99,8 +104,10 @@ final class AppModel: ObservableObject {
             candidates = []
             judgment = nil
         }
-        // Prefetch once the other side's message has sat still, so ⌥Space opens instantly.
-        guard convo.awaitingReply, !settings.paused, !panelShown else { return }
+        // Prefetch once the other side's message has sat still, so ⌥Space opens instantly. With
+        // automatic analysis off, nothing leaves the Mac until the shortcut is pressed.
+        guard arrived.contains(where: { !$0.isMe }), convo.awaitingReply, !settings.paused, settings.autoAnalyze,
+              !panelShown else { return }
         settleTask = Task { [weak self] in
             try? await Task.sleep(for: .seconds(1))
             guard !Task.isCancelled, let self, self.seenFingerprint == print else { return }
@@ -117,6 +124,7 @@ final class AppModel: ObservableObject {
         guard let convo = conversation else { return }
         workTask?.cancel()
         generation += 1
+        draftedFor = convo.title
         let print = fingerprint(convo)
         shownFingerprint = print
         // ⌥Space after a skipped prefetch: Jev already read this exact conversation.
@@ -138,7 +146,7 @@ final class AppModel: ObservableObject {
                     guard !Task.isCancelled else { return }
                     self.judgment = judgment
                     self.judgedFingerprint = print
-                    Log.write("judge \(Int(Date().timeIntervalSince(started) * 1000))ms intent=\(judgment.intent)")
+                    Log.write("judge \(Int(Date().timeIntervalSince(started) * 1000))ms")
                 } catch {
                     // Writing without Jev's picks still helps.
                     Log.write("judge failed: \(error.localizedDescription)")
@@ -182,6 +190,7 @@ final class AppModel: ObservableObject {
         workTask?.cancel()
         let previous = candidates
         generation += 1
+        draftedFor = convo.title
         let current = generation
         phase = .thinking
         candidates = []
@@ -254,12 +263,12 @@ final class AppModel: ObservableObject {
     }
 
     func insert(_ index: Int) {
-        guard candidates.indices.contains(index), let pid = chatPID, let convo = conversation else { return }
+        guard candidates.indices.contains(index), let pid = chatPID else { return }
         let text = candidates[index].text
-        let app = app
+        let app = app, chat = draftedFor
         closePanel()
         Task { [weak self] in
-            let outcome = await Inserter.insert(text, app: app, expectedTitle: convo.title, pid: pid)
+            let outcome = await Inserter.insert(text, app: app, expectedTitle: chat, pid: pid)
             self?.flash(outcome.message)
         }
     }

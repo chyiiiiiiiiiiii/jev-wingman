@@ -19,6 +19,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var accessibilityEnabledFor: pid_t?
     private var hotkey: Hotkey?
     private var hotkeyObservation: AnyCancellable?
+    private var appsObservation: AnyCancellable?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         Log.write("launch trusted=\(AXIsProcessTrusted()) screenCapture=\(CGPreflightScreenCaptureAccess())")
@@ -37,6 +38,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 self.hotkey = nil
                 self.model.hotkeyLabel = Prefs.shared.hotkey.label
                 if ChatApp.frontmost != nil { self.registerHotkey() }
+            }
+        }
+        appsObservation = Prefs.shared.$disabledApps.dropFirst().sink { [weak self] _ in
+            DispatchQueue.main.async {
+                self?.watching = nil
+                self?.hotkey = nil
+                self?.model.chatLeft()
+                self?.frontmostChanged()
             }
         }
         if !AXIsProcessTrusted() {

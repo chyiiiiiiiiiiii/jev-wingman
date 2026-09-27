@@ -27,7 +27,7 @@ actor PixelReader {
             node.children.forEach(find)
         }
         find(snapshot.root)
-        guard let input, let (image, windowFrame) = await Self.capture(pid: pid) else { return nil }
+        guard let input, let (image, windowFrame) = await Self.capture(pid: pid, matching: snapshot.root.frame) else { return nil }
 
         // The chat pane is the column above the input box, under the header with the chat name.
         let header: CGFloat = 64
@@ -70,13 +70,14 @@ actor PixelReader {
 
     // MARK: - Capture and OCR
 
-    /// The app's largest on-screen window, captured at full resolution, with its frame in screen points.
-    static func capture(pid: pid_t) async -> (CGImage, CGRect)? {
+    /// The app's window at `frame` (the one read over accessibility), or its largest when none is given,
+    /// captured at full resolution, with its frame in screen points.
+    static func capture(pid: pid_t, matching frame: CGRect? = nil) async -> (CGImage, CGRect)? {
         guard CGPreflightScreenCaptureAccess(),
               let content = try? await SCShareableContent.excludingDesktopWindows(true, onScreenWindowsOnly: true),
               let window = content.windows
                 .filter({ $0.owningApplication?.processID == pid && $0.windowLayer == 0 && $0.frame.width > 200 })
-                .max(by: { $0.frame.width * $0.frame.height < $1.frame.width * $1.frame.height })
+                .min(by: { rank($0.frame, frame) < rank($1.frame, frame) })
         else { return nil }
         let filter = SCContentFilter(desktopIndependentWindow: window)
         let config = SCStreamConfiguration()
@@ -87,6 +88,13 @@ actor PixelReader {
         guard let image = try? await SCScreenshotManager.captureImage(contentFilter: filter, configuration: config)
         else { return nil }
         return (image, window.frame)
+    }
+
+    /// Distance from the wanted frame, or the largest window first when no frame is given.
+    private static func rank(_ candidate: CGRect, _ wanted: CGRect?) -> CGFloat {
+        guard let wanted else { return -candidate.width * candidate.height }
+        return abs(candidate.minX - wanted.minX) + abs(candidate.minY - wanted.minY)
+            + abs(candidate.width - wanted.width) + abs(candidate.height - wanted.height)
     }
 
     /// OCR lines inside `region` (window points), reusing the last result while the region's pixels are unchanged.

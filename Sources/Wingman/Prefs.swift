@@ -28,6 +28,12 @@ final class Prefs: ObservableObject {
         get { UserDefaults.standard.bool(forKey: "onboarded") || (hasWriterKey && !myName.isEmpty) }
         set { UserDefaults.standard.set(newValue, forKey: "onboarded") }
     }
+    /// Off: nothing is read or sent until the shortcut is pressed.
+    @Published var autoAnalyze: Bool { didSet { UserDefaults.standard.set(autoAnalyze, forKey: "autoAnalyze") } }
+    /// Apps Wingman leaves alone entirely: no reading, no shortcut.
+    @Published var disabledApps: Set<String> {
+        didSet { UserDefaults.standard.set(Array(disabledApps), forKey: "disabledApps") }
+    }
     @Published var hotkey: HotkeySetting {
         didSet { UserDefaults.standard.set(try? JSONEncoder().encode(hotkey), forKey: "hotkey") }
     }
@@ -43,11 +49,22 @@ final class Prefs: ObservableObject {
         model = UserDefaults.standard.string(forKey: "model") ?? Self.defaultModel
         myName = UserDefaults.standard.string(forKey: "myName") ?? ""
         paused = UserDefaults.standard.bool(forKey: "paused")
+        autoAnalyze = UserDefaults.standard.object(forKey: "autoAnalyze") as? Bool ?? true
+        disabledApps = Set(UserDefaults.standard.stringArray(forKey: "disabledApps") ?? [])
         hotkey = UserDefaults.standard.data(forKey: "hotkey")
             .flatMap { try? JSONDecoder().decode(HotkeySetting.self, from: $0) } ?? .standard
     }
 
     var hasWriterKey: Bool { !openRouterKey.isEmpty }
+
+    /// Keys, settings and the log, all gone. Chats were never stored, so there is nothing else.
+    static func eraseEverything() {
+        Keychain.set("", account: "openrouter")
+        Keychain.set("", account: "typesafe")
+        if let domain = Bundle.main.bundleIdentifier { UserDefaults.standard.removePersistentDomain(forName: domain) }
+        try? FileManager.default.removeItem(at: FileManager.default.homeDirectoryForCurrentUser
+            .appendingPathComponent("Library/Logs/Wingman.log"))
+    }
 
     /// Why a pasted value is not an API key, or nil when it looks like one. Keys have no spaces;
     /// pasting a whole command or sentence is the usual mistake.
@@ -78,6 +95,8 @@ enum Keychain {
         guard !value.isEmpty else { return }
         var add = query
         add[kSecValueData as String] = Data(value.utf8)
-        SecItemAdd(add as CFDictionary, nil)
+        add[kSecAttrAccessible as String] = kSecAttrAccessibleWhenUnlockedThisDeviceOnly   // not in backups or other Macs
+        let status = SecItemAdd(add as CFDictionary, nil)
+        if status != errSecSuccess { Log.write("keychain save failed \(status)") }
     }
 }

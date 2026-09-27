@@ -3,7 +3,7 @@
 
     scripts/bench-writers.py [model ...]
 
-Uses OPENROUTER_API_KEY, or the key Wingman stored in the Keychain (macOS asks once).
+Uses OPENROUTER_API_KEY from the environment.
 Prints a summary table and writes every draft to build/bench-writers.md.
 "Non-Taiwan" counts the spots OpenCC's s2twp rewrites: simplified glyphs and mainland
 wording (視頻→影片, 數據→資料). It over-reaches on a few words (權限→許可權), so read the drafts.
@@ -59,13 +59,11 @@ SCENARIOS = {
 
 
 def api_key() -> str:
+    # Environment only: reading Wingman's Keychain item from a script invites an "Always Allow" that lets
+    # any local process read the key silently afterwards.
     if key := os.environ.get("OPENROUTER_API_KEY"):
         return key
-    out = subprocess.run(["security", "find-generic-password", "-s", "com.moniit.wingman", "-a", "openrouter", "-w"],
-                         capture_output=True, text=True)
-    if out.returncode != 0 or not out.stdout.strip():
-        sys.exit("No OpenRouter key: set OPENROUTER_API_KEY or save it in Wingman's settings.")
-    return out.stdout.strip()
+    sys.exit("Set OPENROUTER_API_KEY for this run (e.g. OPENROUTER_API_KEY=sk-or-… scripts/bench-writers.py).")
 
 
 def prompt(lines: list[str], strategies: list[str]) -> str:

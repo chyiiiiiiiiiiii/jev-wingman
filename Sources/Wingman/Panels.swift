@@ -24,7 +24,7 @@ final class FloatingPanel: NSPanel {
     override var canBecomeKey: Bool { acceptsKey }
 
     override func sendEvent(_ event: NSEvent) {
-        if event.type == .keyDown, onKeyDown?(event) == true { return }
+        if event.type == .keyDown || event.type == .keyUp, onKeyDown?(event) == true { return }
         super.sendEvent(event)
     }
 }
@@ -103,8 +103,23 @@ final class PanelController: NSObject, NSWindowDelegate {
         }
     }
 
+    /// Inserting waits for the key's release: acting on the press left a held Return repeating into the
+    /// chat after the panel closed, where Return sends.
+    private var pressed: UInt16?
+
     private func handleKey(_ event: NSEvent) -> Bool {
-        let command = event.modifierFlags.contains(.command)
+        let insertKeys: Set<UInt16> = [18, 19, 20, 36, 76]
+        if insertKeys.contains(event.keyCode) && (!model.fieldFocused || event.modifierFlags.contains(.command)) {
+            if event.type == .keyDown {
+                if !event.isARepeat { pressed = event.keyCode }
+                return true
+            }
+            guard pressed == event.keyCode else { return true }
+            pressed = nil
+            if event.keyCode >= 18 && event.keyCode <= 20 { model.insert(Int(event.keyCode) - 18) } else { model.insertBest() }
+            return true
+        }
+        guard event.type == .keyDown else { return false }
         switch event.keyCode {
         case 53:  // Esc
             if model.fieldFocused && !model.direction.isEmpty {
@@ -112,12 +127,6 @@ final class PanelController: NSObject, NSWindowDelegate {
             } else {
                 model.closePanel()
             }
-            return true
-        case 18...20 where command || !model.fieldFocused:  // 1 2 3
-            model.insert(Int(event.keyCode) - 18)
-            return true
-        case 36 where !model.fieldFocused, 76 where !model.fieldFocused:  // Return, Enter: the recommended draft
-            model.insertBest()
             return true
         default:
             return false

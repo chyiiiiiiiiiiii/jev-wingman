@@ -96,9 +96,17 @@ struct SettingsView: View {
     @State private var testResult = ""
     @State private var testing = false
     @State private var customModel = false
+    @State private var confirmErase = false
     @State private var opensAtLogin = SMAppService.mainApp.status == .enabled
     private let tick = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
     private static let custom = "custom"
+
+    private func appEnabled(_ app: ChatApp) -> Binding<Bool> {
+        Binding(get: { !settings.disabledApps.contains(app.rawValue) },
+                set: { on in
+                    if on { settings.disabledApps.remove(app.rawValue) } else { settings.disabledApps.insert(app.rawValue) }
+                })
+    }
 
     /// A listed model shows as itself; anything else, or choosing 自訂, shows the free-text field.
     private var modelChoice: Binding<String> {
@@ -195,7 +203,7 @@ struct SettingsView: View {
                     }
                     .disabled(testing)
                 }
-                Label(L("聊天內容只會從這台 Mac 直接送到 OpenRouter 和 TypeSafe，不經過其他伺服器；key 存在這台 Mac 的鑰匙圈。"),
+                Label(L("key 只存在這台 Mac 的鑰匙圈，只會送到它所屬的服務。"),
                       systemImage: "lock")
                     .font(.caption).foregroundStyle(.secondary)
             } header: { Text(L("2. 連上 AI")) }
@@ -205,6 +213,47 @@ struct SettingsView: View {
                 Text(L("用來分辨 Slack、Discord 裡哪些訊息是你說的。各 App 顯示的名字不同時，用逗號分開，例如「Yii, Yii Chen」。LINE、Telegram 看氣泡位置，不需要名字。"))
                     .font(.caption).foregroundStyle(.secondary)
             } header: { Text(L("3. 你是誰")) }
+
+            Section {
+                VStack(alignment: .leading, spacing: 6) {
+                    Text(L("Wingman 沒有自己的伺服器，開發者收不到你的 key，也收不到聊天內容。")).fontWeight(.semibold)
+                    Text(L("送出去的只有你正在看的對話裡最近 20 則訊息、聊天室名稱和發言人名字：判斷送到 TypeSafe（承諾不拿來訓練模型），寫回覆送到 OpenRouter，而且只轉給不保留、不訓練的供應商。聊天內容不會存在這台 Mac 上，紀錄檔只記時間、次數和花費。"))
+                        .font(.caption).foregroundStyle(.secondary)
+                    HStack(spacing: 16) {
+                        Link(L("OpenRouter 隱私政策 ↗"), destination: URL(string: "https://openrouter.ai/privacy")!)
+                        Link(L("TypeSafe 隱私政策 ↗"), destination: URL(string: "https://typesafe.ai/legal/privacy-policy")!)
+                    }
+                    .font(.callout)
+                }
+                Toggle(isOn: $settings.autoAnalyze) {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(L("新訊息進來時自動分析"))
+                        Text(L("關掉後，只有你按快捷鍵時才會把對話送出去。")).font(.caption).foregroundStyle(.secondary)
+                    }
+                }
+                VStack(alignment: .leading, spacing: 6) {
+                    Text(L("在這些 App 使用 Wingman"))
+                    HStack(spacing: 14) {
+                        ForEach(ChatApp.allCases, id: \.self) { app in
+                            Toggle(app.name, isOn: appEnabled(app)).toggleStyle(.checkbox)
+                        }
+                    }
+                    Text(L("沒勾的 App，Wingman 完全不會讀取。")).font(.caption).foregroundStyle(.secondary)
+                }
+                HStack {
+                    Spacer()
+                    Button(L("清除 Wingman 的所有資料…"), role: .destructive) { confirmErase = true }
+                }
+            } header: { Text(L("隱私與控制")) }
+            .alert(L("清除所有資料？"), isPresented: $confirmErase) {
+                Button(L("清除並重新啟動"), role: .destructive) {
+                    Prefs.eraseEverything()
+                    Self.relaunch()
+                }
+                Button(L("取消"), role: .cancel) {}
+            } message: {
+                Text(L("會刪除鑰匙圈裡的 key、所有設定和紀錄檔，然後重新啟動 Wingman。聊天內容本來就不會存在這台 Mac 上。"))
+            }
 
             Section {
                 HotkeyRecorder(settings: settings)

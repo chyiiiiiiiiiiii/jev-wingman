@@ -1,5 +1,6 @@
 import AppKit
 import ApplicationServices
+import WingmanCore
 
 /// Puts a reply into Slack's composer by typing it, the way a person would, and never presses Enter.
 enum Inserter {
@@ -17,30 +18,39 @@ enum Inserter {
 
     @MainActor
     static func insert(_ text: String, app: ChatApp, expectedTitle: String, pid: pid_t) async -> Outcome {
-        // A newline would send the message; a reply is one paragraph anyway.
-        let line = text.components(separatedBy: .newlines).joined(separator: " ")
+        // A newline, or ETX, would send the message; a reply is one paragraph anyway.
+        let line = Typeable.text(text)
         NSRunningApplication(processIdentifier: pid)?.activate()
         try? await Task.sleep(for: .milliseconds(150))
 
         guard let reading = await Readers.read(app, pid: pid, myName: Prefs.storedMyName) else {
             return copy(line, L("找不到 %@ 的輸入框", "\(app.name)"))
         }
-        guard sameChat(reading.conversation.title, expectedTitle) else { return copy(line, L("聊天室已經切換")) }
+        guard ChatTitle.same(reading.conversation.title, expectedTitle, tolerant: app == .telegram) else {
+            return copy(line, L("聊天室已經切換"))
+        }
         guard let composer = reading.composer else {
             // Telegram exposes no input element, but its input box has focus whenever a chat is open.
+            // Keystrokes go to whichever app is in front, so type only if that is still Telegram.
+            guard ChatApp.frontmost?.pid == pid else { return copy(line, L("聊天室已經切換")) }
             type(line, pid: nil)
             return .typed
         }
         AXUIElementSetAttributeValue(composer, kAXFocusedAttribute as CFString, kCFBooleanTrue)
         try? await Task.sleep(for: .milliseconds(80))
+        // Keystrokes go to whatever has focus: if that is not the message box (a search field, a message
+        // being edited), type nothing.
+        guard focused(composer, pid: pid) else { return copy(line, L("填入沒有成功")) }
 
         let before = value(of: composer)
         type(line, pid: pid)
         try? await Task.sleep(for: .milliseconds(250))
-        if landed(line, in: value(of: composer), before: before) { return .inserted }
+        let after = value(of: composer)
+        if landed(line, in: after, before: before) { return .inserted }
 
         // Some builds drop events addressed to the process; the HID stream reaches the key window.
-        if ChatApp.frontmost?.pid == pid {
+        // Retry only if the first attempt changed nothing, so a draft is never typed twice.
+        if after == before, ChatApp.frontmost?.pid == pid, focused(composer, pid: pid) {
             type(line, pid: nil)
             try? await Task.sleep(for: .milliseconds(250))
             if landed(line, in: value(of: composer), before: before) { return .inserted }
@@ -50,9 +60,11 @@ enum Inserter {
     }
 
     /// OCR can read a chat name slightly differently between two captures; the start is enough.
-    private static func sameChat(_ now: String, _ before: String) -> Bool {
-        let a = now.filter { !$0.isWhitespace }, b = before.filter { !$0.isWhitespace }
-        return a == b || (!a.isEmpty && a.prefix(4) == b.prefix(4))
+    private static func focused(_ element: AXUIElement, pid: pid_t) -> Bool {
+        var focused: CFTypeRef?
+        AXUIElementCopyAttributeValue(AXUIElementCreateApplication(pid), kAXFocusedUIElementAttribute as CFString, &focused)
+        guard let focused, CFGetTypeID(focused) == AXUIElementGetTypeID() else { return false }
+        return CFEqual(focused, element)
     }
 
     private static func type(_ text: String, pid: pid_t?) {
@@ -86,8 +98,11 @@ enum Inserter {
     }
 
     private static func copy(_ text: String, _ reason: String) -> Outcome {
-        NSPasteboard.general.clearContents()
-        NSPasteboard.general.setString(text, forType: .string)
+        // This Mac only (not Universal Clipboard), and marked so clipboard managers skip it.
+        let board = NSPasteboard.general
+        board.prepareForNewContents(with: .currentHostOnly)
+        board.setString(text, forType: .string)
+        board.setString("", forType: NSPasteboard.PasteboardType("org.nspasteboard.ConcealedType"))
         return .copied(reason)
     }
 }

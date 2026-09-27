@@ -9,8 +9,22 @@ struct Brain {
         var errorDescription: String? {
             switch self {
             case .missingKey: L("還沒設定 OpenRouter API key")
-            case let .http(code, body): L("服務回應 %@：%@", "\(code)", "\(body.prefix(120))")
+            case let .http(code, body): Self.explain(code, body)
             case .nothingToAnswer: L("畫面上沒有可以回覆的訊息")
+            }
+        }
+
+        /// What went wrong in words, from the status alone. The body is read only to recognise a
+        /// model without zero-retention providers; it is never shown or logged, since it can quote
+        /// the request, which is someone's conversation.
+        static func explain(_ code: Int, _ body: String) -> String {
+            switch code {
+            case 401, 403: L("key 無效或沒有權限（%@）", "\(code)")
+            case 402: L("OpenRouter 餘額不足，請儲值（%@）", "\(code)")
+            case 404 where body.lowercased().contains("endpoint"): L("這個模型沒有「不保留資料」的供應商，請換一個模型（%@）", "\(code)")
+            case 429: L("請求太頻繁，稍等一下再試（%@）", "\(code)")
+            case 500...: L("服務暫時有問題，稍後再試（%@）", "\(code)")
+            default: L("服務回應 %@", "\(code)")
             }
         }
     }
@@ -140,7 +154,11 @@ struct Brain {
             "reasoning": ["enabled": false],   // thinking adds seconds and output tokens to a two-line reply
             // Slack threads are company data: keep them off hosts in mainland China, and try hosts
             // that were quick from Taiwan first (bench 2026-09-27: 2–4 s, cheapest host 9–17 s).
-            "provider": ["order": Self.preferredProviders, "ignore": Self.excludedProviders],
+            // Only providers that neither keep nor train on the text (zero data retention), and none in
+            // mainland China. Checked 2026-09-27: all three picker models still route (Fireworks, Google,
+            // Amazon Bedrock).
+            "provider": ["order": Self.preferredProviders, "ignore": Self.excludedProviders,
+                         "data_collection": "deny", "zdr": true],
             "messages": [["role": "system", "content": Self.writerRules(for: app)], ["role": "user", "content": user]],
         ]
         var request = try jsonRequest(URL(string: "https://openrouter.ai/api/v1/chat/completions")!,

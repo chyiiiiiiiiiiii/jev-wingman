@@ -53,9 +53,11 @@ enum ChatApp: String, CaseIterable {
         return allCases.first { $0.bundleIDs.contains(id) }
     }
 
+    /// The chat app in front, unless it is switched off in settings (then Wingman does not touch it).
     static var frontmost: (app: ChatApp, pid: pid_t)? {
         let running = NSWorkspace.shared.frontmostApplication
-        return matching(running).map { ($0, running!.processIdentifier) }
+        guard let app = matching(running), !Prefs.shared.disabledApps.contains(app.rawValue) else { return nil }
+        return (app, running!.processIdentifier)
     }
 }
 
@@ -65,12 +67,11 @@ struct Reading {
     var composer: AXUIElement?
 }
 
-/// messenger.com or facebook.com/messages; the title alone varies (a contact's name, a translation).
+/// messenger.com or facebook.com/messages, by exact host (evilmessenger.com is not Messenger).
 func isMessenger(_ window: AXUIElement) -> Bool {
-    if let url = AXSnapshot.pageURL(of: window), let host = url.host?.lowercased() {
-        return host.hasSuffix("messenger.com") || (host.hasSuffix("facebook.com") && url.path.hasPrefix("/messages"))
-    }
-    return AXSnapshot.title(of: window).localizedCaseInsensitiveContains("messenger")
+    guard let url = AXSnapshot.pageURL(of: window), let host = url.host?.lowercased() else { return false }
+    func within(_ domain: String) -> Bool { host == domain || host.hasSuffix("." + domain) }
+    return within("messenger.com") || (within("facebook.com") && url.path.hasPrefix("/messages"))
 }
 
 enum Readers {
@@ -89,8 +90,15 @@ enum Readers {
             return nil
         case .messenger:
             // Only a Messenger tab is read; any other page stops at its address (or title).
-            guard let window = AXSnapshot.windows(pid: pid).first, isMessenger(window) else { return nil }
-            AXSnapshot.enableWebAccessibility(pid: pid)
+            guard let window = AXSnapshot.windows(pid: pid).first else { return nil }
+            guard isMessenger(window) else {
+                // The page's address only appears once Chrome builds its tree; a tab titled Messenger may
+                // switch that on, and the next read checks the address before anything else.
+                if AXSnapshot.title(of: window).localizedCaseInsensitiveContains("messenger") {
+                    AXSnapshot.enableWebAccessibility(pid: pid)
+                }
+                return nil
+            }
             let snapshot = AXSnapshot(window: window, maxNodes: 8000)
             guard let convo = MessengerParser.parse(window: snapshot.root) else { return nil }
             return Reading(conversation: convo, composer: snapshot.elements[convo.composerHandle])

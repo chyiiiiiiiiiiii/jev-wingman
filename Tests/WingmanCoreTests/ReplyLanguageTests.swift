@@ -5,7 +5,7 @@ private let chineseThread = ["Google 釋出了新的 TTS 模型", "我拿來做�
 
 @Test func chineseWithEnglishTermsIsChinese() {
     // NLLanguageRecognizer said "en" and "ro" for these on 2026-09-27.
-    #expect(ReplyLanguage.pick(replyTo: "API 文件今天來得及更新嗎？", recent: chineseThread) == .chinese)
+    #expect(ReplyLanguage.pick(replyTo: "API 應該用streaming 嗎?", recent: chineseThread) == .chinese)
     #expect(ReplyLanguage.pick(replyTo: "PR 可以 merge 了嗎", recent: []) == .chinese)
 }
 
