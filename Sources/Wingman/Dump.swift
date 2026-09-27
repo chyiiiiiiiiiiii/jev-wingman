@@ -57,7 +57,7 @@ enum Dump {
 
     /// `--probe <bundle id> [--wait]`: role, DOM classes and redacted text of every labelled node in
     /// an app's window, to learn where a new app keeps its messages before writing its reader.
-    static func probe(bundleID: String, wait: Bool) -> Int32 {
+    static func probe(bundleID: String, wait: Bool, region: ClosedRange<Double> = 0.2...1, limit: Int = 260) -> Int32 {
         guard AXIsProcessTrusted(), let app = NSRunningApplication.runningApplications(withBundleIdentifier: bundleID).first
         else { print("Not trusted, or \(bundleID) is not running."); return 1 }
         AXSnapshot.enableWebAccessibility(pid: app.processIdentifier)
@@ -82,10 +82,10 @@ enum Dump {
         let show = { (s: String) in s.count <= 2 ? s : "\(s.prefix(2))…(\(s.count))" }
         var printed = 0
         func visit(_ node: UINode, _ depth: Int) {
-            guard printed < 260 else { return }
+            guard printed < limit else { return }
             let f = node.frame
             let x = (f.minX - root.frame.minX) / max(root.frame.width, 1), y = (f.minY - root.frame.minY) / max(root.frame.height, 1)
-            if (!node.classes.isEmpty || !node.text.isEmpty) && x > 0.2 && f.height > 1 {
+            if (!node.classes.isEmpty || !node.text.isEmpty) && region.contains(Double(x)) && f.height > 1 {
                 print(String(repeating: " ", count: min(depth, 24))
                       + String(format: "%@ x=%.2f y=%.2f %@ %@", node.role, x, y,
                                node.text.isEmpty ? "" : "“\(show(node.text))”", node.classes.prefix(3).joined(separator: ".")))
