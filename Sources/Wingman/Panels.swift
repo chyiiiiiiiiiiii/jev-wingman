@@ -52,7 +52,7 @@ final class PanelController {
     }
 
     func refresh() {
-        guard model.slackInFront, let composer = model.conversation?.composerFrame, composer.width > 0 else {
+        guard model.chatInFront, let composer = model.conversation?.composerFrame, composer.width > 0 else {
             pill.orderOut(nil)
             panel.orderOut(nil)
             return

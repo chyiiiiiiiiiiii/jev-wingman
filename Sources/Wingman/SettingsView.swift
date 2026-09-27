@@ -52,10 +52,22 @@ struct HotkeyRecorder: View {
     }
 }
 
+extension SettingsView {
+    /// Screen Recording only takes effect in a fresh process.
+    static func relaunch() {
+        let configuration = NSWorkspace.OpenConfiguration()
+        configuration.createsNewApplicationInstance = true
+        NSWorkspace.shared.openApplication(at: Bundle.main.bundleURL, configuration: configuration) { _, _ in
+            DispatchQueue.main.async { NSApp.terminate(nil) }
+        }
+    }
+}
+
 struct SettingsView: View {
     @ObservedObject var settings: Prefs
     @ObservedObject var model: AppModel
     @State private var trusted = AXIsProcessTrusted()
+    @State private var canCapture = CGPreflightScreenCaptureAccess()
     @State private var testResult = ""
     @State private var testing = false
     @State private var customModel = false
@@ -99,6 +111,25 @@ struct SettingsView: View {
             } header: { Text("1. 讓 Wingman 讀 Slack") }
 
             Section {
+                HStack {
+                    Image(systemName: canCapture ? "checkmark.circle.fill" : "circle.dashed")
+                        .foregroundStyle(canCapture ? .green : .secondary)
+                    Text(canCapture ? "已開啟「螢幕錄製」" : "LINE、Telegram 需要「螢幕錄製」")
+                    Spacer()
+                    if !canCapture {
+                        Button("打開系統設定") {
+                            CGRequestScreenCaptureAccess()
+                            NSWorkspace.shared.open(URL(string:
+                                "x-apple.systempreferences:com.apple.preference.security?Privacy_ScreenCapture")!)
+                        }
+                        Button("重新啟動 Wingman") { Self.relaunch() }
+                    }
+                }
+                Text("這兩個 App 不提供文字給其他程式讀，所以 Wingman 只截它們的視窗、在這台 Mac 上辨識文字，截圖不會上傳。開啟後要重新啟動 Wingman 才會生效。")
+                    .font(.caption).foregroundStyle(.secondary)
+            } header: { Text("LINE、Telegram（選用）") }
+
+            Section {
                 SecureField("OpenRouter API key（寫回覆用，sk-or-…）", text: trimmed($settings.openRouterKey))
                 if let problem = Prefs.keyProblem(settings.openRouterKey, prefix: "sk-or-") {
                     Text(problem).font(.caption).foregroundStyle(.red)
@@ -115,7 +146,7 @@ struct SettingsView: View {
                     Button(testing ? "測試中…" : "測試連線") {
                         testing = true
                         Task {
-                            testResult = await Brain(settings: settings).testConnection()
+                            testResult = await Brain(settings: settings, app: .slack).testConnection()
                             testing = false
                         }
                     }
@@ -153,7 +184,7 @@ struct SettingsView: View {
 
             Section {
                 HotkeyRecorder(settings: settings)
-                Text("Slack 收到訊息時，輸入框右上方會出現「✦ 3 個建議」。按 \(settings.hotkey.label) 或點它展開，按 Enter 填入 ★ 推薦的那句，或按 1、2、3 選一句，確認後自己按 Enter 送出。")
+                Text("在 Slack、LINE 或 Telegram 收到訊息時，輸入框右上方會出現「✦ 3 個建議」。按 \(settings.hotkey.label) 或點它展開，按 Enter 填入 ★ 推薦的那句，或按 1、2、3 選一句，確認後自己按 Enter 送出。")
                     .font(.callout)
             } header: { Text("怎麼用") }
 
@@ -179,6 +210,9 @@ struct SettingsView: View {
         .formStyle(.grouped)
         .frame(width: 540)
         .frame(minHeight: 480, maxHeight: .infinity)   // a grouped Form has no height of its own
-        .onReceive(tick) { _ in trusted = AXIsProcessTrusted() }
+        .onReceive(tick) { _ in
+            trusted = AXIsProcessTrusted()
+            canCapture = CGPreflightScreenCaptureAccess()
+        }
     }
 }

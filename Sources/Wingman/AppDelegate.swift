@@ -11,11 +11,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var statusItem: NSStatusItem!
     private var settingsWindow: NSWindow?
     private var timer: Timer?
+    private var watching: ChatApp?
+    private var askedForScreenCapture = false
     private var reading = false
     private var accessibilityEnabledFor: pid_t?
     private var hotkey: Hotkey?
     private var hotkeyObservation: AnyCancellable?
-    private let axQueue = DispatchQueue(label: "wingman.ax", qos: .userInitiated)
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         Log.write("launch trusted=\(AXIsProcessTrusted())")
@@ -33,7 +34,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 guard let self else { return }
                 self.hotkey = nil
                 self.model.hotkeyLabel = Prefs.shared.hotkey.label
-                if Slack.isFrontmost { self.registerHotkey() }
+                if ChatApp.frontmost != nil { self.registerHotkey() }
             }
         }
         if !AXIsProcessTrusted() {
@@ -55,38 +56,43 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     // MARK: - Watching Slack
 
     private func frontmostChanged() {
-        if Slack.isFrontmost {
-            if timer == nil {
-                timer = Timer.scheduledTimer(withTimeInterval: 0.7, repeats: true) { [weak self] _ in
+        if let front = ChatApp.frontmost {
+            if watching != front.app {
+                watching = front.app
+                timer?.invalidate()
+                timer = Timer.scheduledTimer(withTimeInterval: front.app.pollInterval, repeats: true) { [weak self] _ in
                     MainActor.assumeIsolated { self?.tick() }
                 }
                 tick()
+            }
+            if front.app.readsPixels && !CGPreflightScreenCaptureAccess() && !askedForScreenCapture {
+                askedForScreenCapture = true
+                CGRequestScreenCaptureAccess()     // macOS shows its prompt once
             }
             registerHotkey()
         } else if NSWorkspace.shared.frontmostApplication?.processIdentifier != ProcessInfo.processInfo.processIdentifier {
             timer?.invalidate()
             timer = nil
-            hotkey = nil     // ⌥Space belongs to other apps outside Slack
-            model.slackLeft()
+            watching = nil
+            hotkey = nil     // the shortcut belongs to other apps outside the chat apps
+            model.chatLeft()
         }
     }
 
     private func tick() {
-        guard !reading, AXIsProcessTrusted(), let slack = Slack.running, Slack.isFrontmost else { return }
-        let pid = slack.processIdentifier
-        if accessibilityEnabledFor != pid {
-            AXSnapshot.enableWebAccessibility(pid: pid)
-            accessibilityEnabledFor = pid
+        guard !reading, AXIsProcessTrusted(), let front = ChatApp.frontmost else { return }
+        if front.app == .slack && accessibilityEnabledFor != front.pid {
+            AXSnapshot.enableWebAccessibility(pid: front.pid)
+            accessibilityEnabledFor = front.pid
         }
         reading = true
         let me = Prefs.storedMyName
-        axQueue.async { [weak self] in
-            let convo = Slack.read(pid: pid, myName: me)?.0
-            DispatchQueue.main.async {
-                guard let self else { return }
-                self.reading = false
-                self.model.update(convo, pid: pid)
-            }
+        Task { [weak self] in
+            // Readers.read is nonisolated, so the accessibility walk and OCR run off the main actor.
+            let reading = await Readers.read(front.app, pid: front.pid, myName: me)
+            guard let self else { return }
+            self.reading = false
+            self.model.update(reading?.conversation, app: front.app, pid: front.pid)
         }
     }
 

@@ -17,6 +17,7 @@ struct Brain {
     }
 
     let settings: Prefs
+    let app: ChatApp
     static let contextLimit = 20
 
     func judge(_ convo: Conversation) async throws -> Judgment {
@@ -99,7 +100,7 @@ struct Brain {
 
     private func state(_ convo: Conversation, replyTo: ChatMessage) -> [String: Any] {
         [
-            "app": "Slack",
+            "app": app.name,
             "channel": convo.title,
             "in_thread": convo.isThread,
             "me": settings.myName.isEmpty ? "我" : settings.myName,
@@ -118,7 +119,7 @@ struct Brain {
             "\(m.isMe ? "\(me)（我）" : (m.sender ?? "（不明）"))：\(m.text)"
         }.joined(separator: "\n")
         let user = """
-        Slack \(convo.isThread ? "對話串" : "頻道") \(convo.title)
+        \(app.name)\(convo.isThread ? " 對話串" : "") \(convo.title)
         \(Self.languageRule(for: convo.messages.last(where: { !$0.isMe })?.text ?? ""))
         我的名字：\(me)
         最近的對話（由舊到新）：
@@ -135,7 +136,7 @@ struct Brain {
             // Slack threads are company data: keep them off hosts in mainland China, and try hosts
             // that were quick from Taiwan first (bench 2026-09-27: 2–4 s, cheapest host 9–17 s).
             "provider": ["order": Self.preferredProviders, "ignore": Self.excludedProviders],
-            "messages": [["role": "system", "content": Self.writerRules], ["role": "user", "content": user]],
+            "messages": [["role": "system", "content": Self.writerRules(for: app)], ["role": "user", "content": user]],
         ]
         let data = try await post(URL(string: "https://openrouter.ai/api/v1/chat/completions")!,
                                   key: settings.openRouterKey, body: body)
@@ -157,15 +158,15 @@ struct Brain {
     static let excludedProviders = ["DeepSeek", "StreamLake", "Alibaba", "SiliconFlow", "Baidu"]
     static let preferredProviders = ["Fireworks", "Together", "BaseTen", "DeepInfra"]
 
-    static let writerRules = """
-    你替使用者（「我」）起草要在 Slack 回給同事的訊息。
+    static func writerRules(for app: ChatApp) -> String { """
+    你替使用者（「我」）起草要在 \(app.name) 回覆的訊息。
     - 每則回覆就是我會直接送出的原文：不加引號、不加說明、不署名。
     - 用對方使用的語言回覆；中文一律用臺灣繁體中文與臺灣用語。
-    - 語氣像真人同事：自然、簡潔、有禮，不要客服腔，不要過度客套或堆砌表情符號。
+    - \(app.register)
     - 一則只寫一段，不換行，通常一到兩句。
     - 不要編造對話裡沒有的事實、數字、日期或承諾；需要但不知道時，留下像 [時間] 這樣的空格讓我自己填。
     - 只輸出 JSON 陣列，不要其他文字：[{"strategy": "<回法>", "text": "<回覆>"}]
-    """
+    """ }
 
     private func post(_ url: URL, key: String, body: [String: Any]) async throws -> Data {
         guard !key.isEmpty else { throw Failure.missingKey }

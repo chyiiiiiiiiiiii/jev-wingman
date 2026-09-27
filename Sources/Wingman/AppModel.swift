@@ -17,10 +17,11 @@ final class AppModel: ObservableObject {
     @Published var fieldFocused = false
     @Published var hotkeyLabel = "⌥Space"
     @Published var panelWidth: CGFloat = 480
-    @Published private(set) var slackInFront = false
+    @Published private(set) var chatInFront = false
+    private(set) var app: ChatApp = .slack
 
     let settings = Prefs.shared
-    private(set) var slackPID: pid_t?
+    private(set) var chatPID: pid_t?
     private var shownFingerprint = ""     // the conversation the suggestions belong to
     private var seenFingerprint = ""      // the conversation last read from screen
     private var judgedFingerprint = ""    // the conversation `judgment` is about
@@ -28,7 +29,7 @@ final class AppModel: ObservableObject {
     private var workTask: Task<Void, Never>?
     private var noteTask: Task<Void, Never>?
 
-    private var brain: Brain { Brain(settings: settings) }
+    private var brain: Brain { Brain(settings: settings, app: app) }
 
     /// Pill text; nil hides the pill.
     var pillText: String? {
@@ -52,17 +53,21 @@ final class AppModel: ObservableObject {
 
     // MARK: - Screen updates
 
-    func slackLeft() {
-        slackInFront = false
+    func chatLeft() {
+        chatInFront = false
         panelShown = false
     }
 
-    func update(_ convo: Conversation?, pid: pid_t) {
-        slackInFront = true
-        slackPID = pid
+    func update(_ convo: Conversation?, app: ChatApp, pid: pid_t) {
+        chatInFront = true
+        chatPID = pid
+        if app != self.app {
+            self.app = app
+            seenFingerprint = ""
+        }
         conversation = convo
         guard let convo else { return }
-        let print = Self.fingerprint(convo)
+        let print = fingerprint(convo)
         guard print != seenFingerprint else { return }
         seenFingerprint = print
         settleTask?.cancel()
@@ -84,11 +89,12 @@ final class AppModel: ObservableObject {
     // MARK: - Suggestions
 
     /// `auto` is the prefetch on a new message: drafts are written only when Jev says a reply is
-    /// expected, since the LLM costs about 35 times what the judgment does.
+    /// expected. A draft costs 2–3 Jev calls with DeepSeek V4.1 Flash and about 35 with Claude Haiku,
+    /// and chatter should not raise a pill either way.
     func analyze(auto: Bool = false) {
         guard let convo = conversation else { return }
         workTask?.cancel()
-        let print = Self.fingerprint(convo)
+        let print = fingerprint(convo)
         shownFingerprint = print
         // ⌥Space after a skipped prefetch: Jev already read this exact conversation.
         let reuseJudgment = !auto && judgment != nil && judgedFingerprint == print
@@ -188,7 +194,7 @@ final class AppModel: ObservableObject {
 
     func openPanel() {
         guard let convo = conversation else { return }
-        if Self.fingerprint(convo) != shownFingerprint || phase == .idle || phase == .skipped { analyze() }
+        if fingerprint(convo) != shownFingerprint || phase == .idle || phase == .skipped { analyze() }
         if case .failed = phase { analyze() }
         panelShown = true
     }
@@ -203,11 +209,12 @@ final class AppModel: ObservableObject {
     }
 
     func insert(_ index: Int) {
-        guard candidates.indices.contains(index), let pid = slackPID, let convo = conversation else { return }
+        guard candidates.indices.contains(index), let pid = chatPID, let convo = conversation else { return }
         let text = candidates[index].text
+        let app = app
         closePanel()
         Task { [weak self] in
-            let outcome = await Inserter.insert(text, expectedTitle: convo.title, pid: pid)
+            let outcome = await Inserter.insert(text, app: app, expectedTitle: convo.title, pid: pid)
             self?.flash(outcome.message)
         }
     }
@@ -222,8 +229,8 @@ final class AppModel: ObservableObject {
         }
     }
 
-    private static func fingerprint(_ convo: Conversation) -> String {
-        ([convo.title, convo.isThread ? "t" : "c"] + convo.messages.suffix(4).map { "\($0.sender ?? "")|\($0.text)" })
+    private func fingerprint(_ convo: Conversation) -> String {
+        ([app.rawValue, convo.title, convo.isThread ? "t" : "c"] + convo.messages.suffix(4).map { "\($0.sender ?? "")|\($0.text)" })
             .joined(separator: "\u{1f}")
     }
 }

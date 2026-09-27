@@ -1,6 +1,9 @@
 import AppKit
 
 let arguments = CommandLine.arguments
+if let index = arguments.firstIndex(of: "--probe"), index + 1 < arguments.count {
+    exit(Dump.probe(bundleID: arguments[index + 1], wait: arguments.contains("--wait")))
+}
 if arguments.contains("--dump") {
     exit(Dump.run(full: arguments.contains("--full"), trace: arguments.contains("--trace"),
               wait: arguments.contains("--wait")))

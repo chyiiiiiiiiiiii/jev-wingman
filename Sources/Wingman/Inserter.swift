@@ -4,28 +4,33 @@ import ApplicationServices
 /// Puts a reply into Slack's composer by typing it, the way a person would, and never presses Enter.
 enum Inserter {
     enum Outcome {
-        case inserted, copied(String)
+        case inserted, typed, copied(String)
 
         var message: String {
             switch self {
             case .inserted: "已填入，檢查後按 Enter 送出"
+            case .typed: "已輸入，看一下再按 Enter 送出"
             case let .copied(reason): "\(reason)，已複製到剪貼簿"
             }
         }
     }
 
     @MainActor
-    static func insert(_ text: String, expectedTitle: String, pid: pid_t) async -> Outcome {
+    static func insert(_ text: String, app: ChatApp, expectedTitle: String, pid: pid_t) async -> Outcome {
         // A newline would send the message; a reply is one paragraph anyway.
         let line = text.components(separatedBy: .newlines).joined(separator: " ")
         NSRunningApplication(processIdentifier: pid)?.activate()
         try? await Task.sleep(for: .milliseconds(150))
 
-        guard let (convo, snapshot) = Slack.read(pid: pid, myName: Prefs.storedMyName) else {
-            return copy(line, "找不到 Slack 的輸入框")
+        guard let reading = await Readers.read(app, pid: pid, myName: Prefs.storedMyName) else {
+            return copy(line, "找不到 \(app.name) 的輸入框")
         }
-        guard convo.title == expectedTitle else { return copy(line, "聊天室已經切換") }
-        let composer = snapshot.elements[convo.composerHandle]
+        guard sameChat(reading.conversation.title, expectedTitle) else { return copy(line, "聊天室已經切換") }
+        guard let composer = reading.composer else {
+            // Telegram exposes no input element, but its input box has focus whenever a chat is open.
+            type(line, pid: nil)
+            return .typed
+        }
         AXUIElementSetAttributeValue(composer, kAXFocusedAttribute as CFString, kCFBooleanTrue)
         try? await Task.sleep(for: .milliseconds(80))
 
@@ -35,13 +40,19 @@ enum Inserter {
         if landed(line, in: value(of: composer), before: before) { return .inserted }
 
         // Some builds drop events addressed to the process; the HID stream reaches the key window.
-        if Slack.isFrontmost {
+        if ChatApp.frontmost?.pid == pid {
             type(line, pid: nil)
             try? await Task.sleep(for: .milliseconds(250))
             if landed(line, in: value(of: composer), before: before) { return .inserted }
         }
         Log.write("insert not verified")
         return copy(line, "填入沒有成功")
+    }
+
+    /// OCR can read a chat name slightly differently between two captures; the start is enough.
+    private static func sameChat(_ now: String, _ before: String) -> Bool {
+        let a = now.filter { !$0.isWhitespace }, b = before.filter { !$0.isWhitespace }
+        return a == b || (!a.isEmpty && a.prefix(4) == b.prefix(4))
     }
 
     private static func type(_ text: String, pid: pid_t?) {
