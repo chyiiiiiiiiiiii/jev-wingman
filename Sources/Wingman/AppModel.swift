@@ -81,7 +81,7 @@ final class AppModel: ObservableObject {
         phase = .thinking
         candidates = []
         judgment = nil
-        guard settings.hasWriterKey else {
+        guard settings.hasWriterKey || !settings.typesafeKey.isEmpty else {
             phase = .failed(Brain.Failure.missingKey.localizedDescription)
             return
         }
@@ -98,6 +98,11 @@ final class AppModel: ObservableObject {
             } catch {
                 // Writing without Jev's picks still helps; the panel says Jev was skipped.
                 Log.write("judge failed: \(error.localizedDescription)")
+            }
+            guard self.settings.hasWriterKey else {
+                // A TypeSafe key alone still answers "what do they want, how soon"; writing needs an LLM.
+                self.phase = .failed("Jev 判斷好了。填入 OpenRouter key，就能幫你寫回覆")
+                return
             }
             do {
                 let written = try await self.brain.write(convo, strategies: picks, judgment: self.judgment)

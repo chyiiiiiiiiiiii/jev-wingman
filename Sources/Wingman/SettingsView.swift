@@ -31,7 +31,10 @@ struct SettingsView: View {
             } header: { Text("1. 讓 Wingman 讀 Slack") }
 
             Section {
-                SecureField("OpenRouter API key（sk-or-…）", text: $settings.openRouterKey)
+                SecureField("OpenRouter API key（寫回覆用，sk-or-…）", text: $settings.openRouterKey)
+                SecureField("TypeSafe API key（Jev 判斷用，選填）", text: $settings.typesafeKey)
+                Text("Jev 只做判斷、不會寫字，所以寫回覆需要 OpenRouter。有 TypeSafe key 時 Jev 直連 TypeSafe，沒有就透過 OpenRouter 呼叫。")
+                    .font(.caption).foregroundStyle(.secondary)
                 HStack {
                     Link("去 OpenRouter 申請 key ↗", destination: URL(string: "https://openrouter.ai/keys")!)
                     Spacer()
@@ -48,12 +51,11 @@ struct SettingsView: View {
                     Text(testResult).font(.caption).textSelection(.enabled)
                 }
                 DisclosureGroup("進階") {
-                    SecureField("TypeSafe API key（選填，填了 Jev 就直連 TypeSafe）", text: $settings.typesafeKey)
                     TextField("寫回覆的模型", text: $settings.model)
                     Text("聊天內容會直接從這台 Mac 送到 OpenRouter／TypeSafe，不經過其他伺服器。")
                         .font(.caption).foregroundStyle(.secondary)
                 }
-            } header: { Text("2. 連上 AI（一把 key 就夠）") }
+            } header: { Text("2. 連上 AI") }
 
             Section {
                 TextField("你在 Slack 顯示的名字", text: $settings.myName)
