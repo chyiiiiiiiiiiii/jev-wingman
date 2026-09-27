@@ -134,11 +134,11 @@ struct SettingsView: View {
                 if let problem = Prefs.keyProblem(settings.openRouterKey, prefix: "sk-or-") {
                     Text(problem).font(.caption).foregroundStyle(.red)
                 }
-                SecureField("TypeSafe API key（Jev 判斷用，選填）", text: trimmed($settings.typesafeKey))
+                SecureField("TypeSafe API key（判斷訊息用，選填）", text: trimmed($settings.typesafeKey))
                 if let problem = Prefs.keyProblem(settings.typesafeKey, prefix: "api") {
                     Text(problem).font(.caption).foregroundStyle(.red)
                 }
-                Text("Jev 只做判斷、不會寫字，所以寫回覆需要 OpenRouter。有 TypeSafe key 時 Jev 直連 TypeSafe，沒有就透過 OpenRouter 呼叫。")
+                Text("Wingman 用 TypeSafe 的 Jev 模型判斷訊息、挑出最推薦的回覆，用 OpenRouter 上的模型寫回覆。只填 OpenRouter 也能用；填了 TypeSafe key，判斷會快幾秒。")
                     .font(.caption).foregroundStyle(.secondary)
                 HStack {
                     Link("去 OpenRouter 申請 key ↗", destination: URL(string: "https://openrouter.ai/keys")!)

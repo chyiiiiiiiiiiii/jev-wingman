@@ -38,7 +38,7 @@ final class AppModel: ObservableObject {
         case .idle: return nil
         case .thinking: return "正在想怎麼回…"
         case .ready: return "✦ \(candidates.count) 個建議  \(hotkeyLabel)"
-        case .skipped: return "Jev：這則可以不回 · \(hotkeyLabel) 仍可產生"
+        case .skipped: return "這則可以不回 · \(hotkeyLabel) 仍可寫回覆"
         case .failed: return "⚠︎ 沒有產生建議  \(hotkeyLabel)"
         }
     }
@@ -129,7 +129,7 @@ final class AppModel: ObservableObject {
             }
             guard self.settings.hasWriterKey else {
                 // A TypeSafe key alone still answers "what do they want, how soon"; writing needs an LLM.
-                self.phase = .failed("Jev 判斷好了。填入 OpenRouter key，就能幫你寫回覆")
+                self.phase = .failed("這則訊息判斷好了。填入 OpenRouter key，就能幫你寫回覆")
                 return
             }
             do {

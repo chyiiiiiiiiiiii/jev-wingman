@@ -268,7 +268,7 @@ struct SuggestionView: View {
                     .frame(width: max(3, 48 * score))
             }
             .frame(width: 48, height: 4)
-            .help("Jev 評分 \(Int((score * 100).rounded()))%")
+            .help("推薦分數 \(Int((score * 100).rounded()))%")
         }
     }
 

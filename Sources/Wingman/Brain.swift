@@ -81,9 +81,9 @@ struct Brain {
             let body: [String: Any] = ["model": jevModel, "state": "今天可以開會嗎？",
                                        "questions": ["q": ["type": "noul", "instructions": "這是一個問題嗎？"]]]
             _ = try await post(jevURL, key: jevKey, body: body)
-            lines.append("✓ Jev 判斷可以用（\(Int(Date().timeIntervalSince(started) * 1000)) ms）")
+            lines.append("✓ 判斷訊息可以用（TypeSafe Jev，\(Int(Date().timeIntervalSince(started) * 1000)) ms）")
         } catch {
-            lines.append("✗ Jev：\(error.localizedDescription)")
+            lines.append("✗ 判斷訊息（TypeSafe Jev）：\(error.localizedDescription)")
         }
         return lines.joined(separator: "\n")
     }
