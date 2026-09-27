@@ -67,8 +67,24 @@ enum Dump {
         }
         if app.isElectron { AXSnapshot.enableWebAccessibility(pid: running.processIdentifier) }
         guard let reading = await Readers.read(app, pid: running.processIdentifier, myName: Prefs.storedMyName) else {
-            let title = AXSnapshot.windows(pid: running.processIdentifier).first.map(AXSnapshot.title(of:)) ?? "(no window)"
-            print("\(app.name): nothing read. Front window title starts “\(title.prefix(3))…” (\(title.count) chars)")
+            // Which gate stopped it: the window, its title, the tree, or the message box.
+            let windows = AXSnapshot.windows(pid: running.processIdentifier)
+            print("\(app.name): nothing read · \(windows.count) window(s)")
+            for window in windows.prefix(3) {
+                let title = AXSnapshot.title(of: window)
+                let root = AXSnapshot(window: window, maxNodes: 8000).root
+                var nodes = 0, inputs: [String] = []
+                func visit(_ node: UINode) {
+                    nodes += 1
+                    if ["AXTextArea", "AXTextField", "AXComboBox"].contains(node.role) {
+                        let label = [node.title, node.desc].max { $0.count < $1.count } ?? ""
+                        inputs.append("\(node.role) “\(label.prefix(4))…”(\(label.count))")
+                    }
+                    node.children.forEach(visit)
+                }
+                visit(root)
+                print("  window “\(title.prefix(10))”(\(title.count)) · \(nodes) nodes · inputs: \(inputs.isEmpty ? "none" : inputs.joined(separator: ", "))")
+            }
             return 1
         }
         let convo = reading.conversation
