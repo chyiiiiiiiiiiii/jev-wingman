@@ -110,7 +110,7 @@ struct OnboardingView: View {
                 Link(L("儲值 ↗"), destination: URL(string: "https://openrouter.ai/settings/credits")!)
             }
             .font(.callout)
-            SettingPurpose(L("判斷訊息：TypeSafe（選填）"), L("填了判斷會快幾秒；沒填也能用。"))
+            SettingPurpose(L("判斷訊息：TypeSafe 的 Jev（選填）"), L("填了判斷會快幾秒；沒填也能用。"))
             SecureField("TypeSafe API key", text: trimmedKey($settings.typesafeKey))
                 .textFieldStyle(.roundedBorder)
             HStack {

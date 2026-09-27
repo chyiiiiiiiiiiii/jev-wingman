@@ -46,7 +46,7 @@
  "按用量付費，先儲值（例如 US$5）就好；一次建議大約 US$0.0002。": "Pagas por uso: basta con recargar saldo (por ejemplo, US$5). Cada sugerencia cuesta unos US$0.0002.",
  "申請 key ↗": "Obtener clave ↗",
  "儲值 ↗": "Recargar saldo ↗",
- "判斷訊息：TypeSafe（選填）": "Analizar mensajes: TypeSafe (opcional)",
+ "判斷訊息：TypeSafe 的 Jev（選填）": "Analizar mensajes: Jev de TypeSafe (opcional)",
  "填了判斷會快幾秒；沒填也能用。": "Con ella, el análisis es unos segundos más rápido; sin ella también funciona.",
  "測試中…": "Probando…",
  "測試連線": "Probar conexión",
@@ -157,12 +157,13 @@
  "隱私與控制": "Privacidad y control",
  "key 只存在這台 Mac 的鑰匙圈，只會送到它所屬的服務。": "Las claves se quedan en el Llavero de este Mac y solo se envían al servicio al que pertenecen.",
  "互動音效": "Sonidos",
- "你在等的建議寫好時，和回覆填進輸入框時，輕輕響一聲。背景自動分析完成時不會出聲。": "Un sonido suave cuando están listas las sugerencias que esperas y cuando se inserta una respuesta. El análisis que termina en segundo plano no suena.",
+ "你在等的建議寫好時，和回覆填進輸入框時，輕輕響一聲。背景自動分析完成時不會出聲。音量跟著系統的提示音音量。": "Un sonido suave cuando están listas las sugerencias que esperas y cuando se inserta una respuesta. El análisis que termina en segundo plano no suena. El volumen sigue el volumen de alertas del Mac.",
  "音色": "Sonido",
  "試聽": "Escuchar",
  "音效": "Sonidos",
  "木質": "Madera",
  "水滴": "Gota",
  "玻璃": "Cristal",
- "輕觸": "Toque"
+ "輕觸": "Toque",
+ "系統設定裡的「播放使用者介面音效」是關的，所以不會出聲。": "“Reproducir efectos de sonido de la interfaz” está desactivado en Ajustes del Sistema, así que no suena nada."
 }

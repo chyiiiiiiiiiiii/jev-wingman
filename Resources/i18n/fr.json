@@ -46,7 +46,7 @@
  "按用量付費，先儲值（例如 US$5）就好；一次建議大約 US$0.0002。": "Paiement à l'usage : ajoutez un peu de crédit (US$5 par exemple). Une suggestion coûte environ US$0.0002.",
  "申請 key ↗": "Obtenir une clé ↗",
  "儲值 ↗": "Ajouter du crédit ↗",
- "判斷訊息：TypeSafe（選填）": "Analyse des messages : TypeSafe (facultatif)",
+ "判斷訊息：TypeSafe 的 Jev（選填）": "Analyse des messages : Jev de TypeSafe (facultatif)",
  "填了判斷會快幾秒；沒填也能用。": "Analyse plus rapide de quelques secondes ; fonctionne aussi sans.",
  "測試中…": "Test en cours…",
  "測試連線": "Tester la connexion",
@@ -157,12 +157,13 @@
  "隱私與控制": "Confidentialité et contrôle",
  "key 只存在這台 Mac 的鑰匙圈，只會送到它所屬的服務。": "Les clés restent dans le Trousseau de ce Mac et ne sont envoyées qu’au service concerné.",
  "互動音效": "Sons",
- "你在等的建議寫好時，和回覆填進輸入框時，輕輕響一聲。背景自動分析完成時不會出聲。": "Un son discret quand les suggestions que vous attendez sont prêtes et quand une réponse est insérée. L'analyse qui se termine en arrière-plan reste silencieuse.",
+ "你在等的建議寫好時，和回覆填進輸入框時，輕輕響一聲。背景自動分析完成時不會出聲。音量跟著系統的提示音音量。": "Un son discret quand les suggestions que vous attendez sont prêtes et quand une réponse est insérée. L'analyse qui se termine en arrière-plan reste silencieuse. Le volume suit celui des alertes du Mac.",
  "音色": "Son",
  "試聽": "Écouter",
  "音效": "Sons",
  "木質": "Bois",
  "水滴": "Goutte",
  "玻璃": "Verre",
- "輕觸": "Tapotement"
+ "輕觸": "Tapotement",
+ "系統設定裡的「播放使用者介面音效」是關的，所以不會出聲。": "« Émettre des effets sonores pour l'interface utilisateur » est désactivé dans Réglages Système, donc aucun son n'est joué."
 }

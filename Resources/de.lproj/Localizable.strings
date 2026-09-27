@@ -51,7 +51,7 @@
 "按用量付費，先儲值（例如 US$5）就好；一次建議大約 US$0.0002。" = "Bezahlung nach Nutzung: Lade etwas Guthaben auf (z. B. US$5). Ein Vorschlag kostet etwa US$0.0002.";
 "申請 key ↗" = "Schlüssel holen ↗";
 "儲值 ↗" = "Guthaben aufladen ↗";
-"判斷訊息：TypeSafe（選填）" = "Nachrichten analysieren: TypeSafe (optional)";
+"判斷訊息：TypeSafe 的 Jev（選填）" = "Nachrichten analysieren: Jev von TypeSafe (optional)";
 "填了判斷會快幾秒；沒填也能用。" = "Macht die Analyse ein paar Sekunden schneller; geht auch ohne.";
 "測試中…" = "Wird getestet…";
 "測試連線" = "Verbindung testen";
@@ -137,9 +137,10 @@
 "在 Slack、Discord、LINE、Telegram，或 Messenger、Instagram、Threads 網頁版收到訊息時，輸入框右上方會出現「✦ 3 個建議」。按 %@ 或點它展開，按 Enter 填入 ★ 推薦的那句，或按 1、2、3 選一句，確認後自己按 Enter 送出。" = "Kommt in Slack, Discord, LINE, Telegram oder in Messenger, Instagram oder Threads im Web eine Nachricht an, erscheint über dem Eingabefeld „✦ 3 Vorschläge“. Drücke %@ oder klicke darauf, dann Enter für die ★-Antwort oder 1, 2, 3 zum Auswählen. Prüfe sie und drücke selbst Enter zum Senden.";
 "怎麼用" = "So funktioniert’s";
 "互動音效" = "Töne";
-"你在等的建議寫好時，和回覆填進輸入框時，輕輕響一聲。背景自動分析完成時不會出聲。" = "Ein leiser Ton, wenn Vorschläge fertig sind, auf die du wartest, und wenn eine Antwort eingefügt wurde. Analysen, die im Hintergrund fertig werden, bleiben still.";
+"你在等的建議寫好時，和回覆填進輸入框時，輕輕響一聲。背景自動分析完成時不會出聲。音量跟著系統的提示音音量。" = "Ein leiser Ton, wenn Vorschläge fertig sind, auf die du wartest, und wenn eine Antwort eingefügt wurde. Analysen, die im Hintergrund fertig werden, bleiben still. Die Lautstärke folgt der Hinweislautstärke des Mac.";
 "音色" = "Klang";
 "試聽" = "Anhören";
+"系統設定裡的「播放使用者介面音效」是關的，所以不會出聲。" = "„Toneffekte der Benutzeroberfläche wiedergeben“ ist in den Systemeinstellungen aus, daher ist nichts zu hören.";
 "音效" = "Töne";
 "登入 Mac 時自動開啟 Wingman" = "Wingman bei der Anmeldung öffnen";
 "開機後就在背景待命，平常不用自己打開。" = "Läuft nach dem Start im Hintergrund, du musst es nie selbst öffnen.";

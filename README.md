@@ -1,6 +1,10 @@
 # Wingman
 
+**Reply suggestions built on [Jev](https://typesafe.ai/blog/introducing-system-one-models-and-jev), TypeSafe's new System One decision model.**
+
 A macOS menu-bar companion that reads the chat in front of you and suggests three replies. You pick one, Wingman types it into the message box, and you press Enter yourself. It never sends anything on its own.
+
+Jev does the deciding and an LLM only does the writing. Jev does not write prose: it answers questions with fixed answers (what does this message want, does it need a reply, how soon, which way of replying fits) in about 0.3 s, with a probability for each answer. That split is why a suggestion takes seconds and costs about US$0.0002.
 
 [繁體中文說明](README.zh-TW.md)
 
@@ -42,8 +46,8 @@ Slack, Discord, Messenger, Instagram and Threads have been read on real chats. L
 Requirements: macOS 14 or later, Xcode 16 or later, and `brew install opencc` (used at build time to generate Simplified Chinese).
 
 ```bash
-git clone https://github.com/chyiiiiiiiiiiii/wingman.git
-cd wingman
+git clone https://github.com/chyiiiiiiiiiiii/jev-wingman.git
+cd jev-wingman
 ./scripts/install.sh
 ```
 

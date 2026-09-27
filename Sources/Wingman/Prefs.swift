@@ -68,13 +68,15 @@ final class Prefs: ObservableObject {
 
     var hasWriterKey: Bool { !openRouterKey.isEmpty }
 
-    /// Keys, settings and the log, all gone. Chats were never stored, so there is nothing else.
+    /// Keys, settings, the log and the cached sounds, all gone. Chats were never stored, so there is nothing else.
+    @MainActor
     static func eraseEverything() {
         Keychain.set("", account: "openrouter")
         Keychain.set("", account: "typesafe")
         if let domain = Bundle.main.bundleIdentifier { UserDefaults.standard.removePersistentDomain(forName: domain) }
         try? FileManager.default.removeItem(at: FileManager.default.homeDirectoryForCurrentUser
             .appendingPathComponent("Library/Logs/Wingman.log"))
+        try? FileManager.default.removeItem(at: Sounds.folder)
     }
 
     /// Why a pasted value is not an API key, or nil when it looks like one. Keys have no spaces;

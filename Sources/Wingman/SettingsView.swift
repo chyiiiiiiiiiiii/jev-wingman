@@ -99,6 +99,7 @@ struct SettingsView: View {
     @State private var customModel = false
     @State private var confirmErase = false
     @State private var opensAtLogin = SMAppService.mainApp.status == .enabled
+    @State private var systemSounds = Sounds.systemAllowsThem
     private let tick = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
     private static let custom = "custom"
 
@@ -176,7 +177,7 @@ struct SettingsView: View {
                 }
                 .font(.callout)
 
-                SettingPurpose(L("判斷訊息：TypeSafe（選填）"),
+                SettingPurpose(L("判斷訊息：TypeSafe 的 Jev（選填）"),
                         L("判斷對方想要什麼、需不需要回、有多急，並從 3 句裡挑出最推薦的那句。沒填也能用，會改透過 OpenRouter 呼叫，每次建議大約慢 2–4 秒。"))
                 SecureField("TypeSafe API key", text: trimmedKey($settings.typesafeKey))
                 if let problem = Prefs.keyProblem(settings.typesafeKey, prefix: "api") {
@@ -273,7 +274,7 @@ struct SettingsView: View {
                 Toggle(isOn: $settings.soundsOn) {
                     VStack(alignment: .leading, spacing: 2) {
                         Text(L("互動音效"))
-                        Text(L("你在等的建議寫好時，和回覆填進輸入框時，輕輕響一聲。背景自動分析完成時不會出聲。"))
+                        Text(L("你在等的建議寫好時，和回覆填進輸入框時，輕輕響一聲。背景自動分析完成時不會出聲。音量跟著系統的提示音音量。"))
                             .font(.caption).foregroundStyle(.secondary)
                     }
                 }
@@ -286,6 +287,17 @@ struct SettingsView: View {
                 }
                 .disabled(!settings.soundsOn)
                 .onChange(of: settings.soundVoice) { _, voice in preview(voice) }
+                if settings.soundsOn && !systemSounds {
+                    HStack {
+                        Text(L("系統設定裡的「播放使用者介面音效」是關的，所以不會出聲。"))
+                            .font(.caption).foregroundStyle(.orange)
+                        Spacer()
+                        Button(L("打開系統設定")) {
+                            NSWorkspace.shared.open(URL(string: "x-apple.systempreferences:com.apple.Sound-Settings.extension")!)
+                        }
+                        .controlSize(.small)
+                    }
+                }
             } header: { Text(L("音效")) }
 
             Section {
@@ -318,6 +330,7 @@ struct SettingsView: View {
         .onReceive(tick) { _ in
             trusted = AXIsProcessTrusted()
             canCapture = CGPreflightScreenCaptureAccess()
+            systemSounds = Sounds.systemAllowsThem
         }
     }
 }

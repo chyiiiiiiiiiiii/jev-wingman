@@ -1,6 +1,10 @@
 # Wingman
 
+**建立在 [Jev](https://typesafe.ai/blog/introducing-system-one-models-and-jev) 上的回覆建議。Jev 是 TypeSafe 最新推出的 System One 決策模型。**
+
 Wingman 是一個常駐在 macOS 選單列的小工具。它會讀你眼前的聊天，幫你想好 3 句回覆；你選一句，它幫你填進輸入框，最後由你自己按 Enter 送出。它不會自動送出任何訊息。
+
+判斷交給 Jev，LLM 只負責寫字。Jev 不寫文章，而是在約 0.3 秒內回答有固定選項的問題，並給出每個答案的機率：這則訊息想要什麼、要不要回、多急、用哪種回法最合適。這樣分工，一次建議只要幾秒，花費大約 US$0.0002。
 
 [English](README.md)
 
@@ -48,8 +52,8 @@ Slack、Discord、Messenger、Instagram、Threads 都已經在真實聊天中讀
 需求：macOS 14 以上、Xcode 16 以上，以及 `brew install opencc`（建置時用來產生簡體中文）。
 
 ```bash
-git clone https://github.com/chyiiiiiiiiiiii/wingman.git
-cd wingman
+git clone https://github.com/chyiiiiiiiiiiii/jev-wingman.git
+cd jev-wingman
 ./scripts/install.sh
 ```
 
