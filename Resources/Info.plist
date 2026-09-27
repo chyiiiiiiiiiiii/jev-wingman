@@ -23,6 +23,12 @@
     <key>LSUIElement</key>
     <true/>
     <key>CFBundleDevelopmentRegion</key>
-    <string>zh_TW</string>
+    <string>en</string>
+    <key>CFBundleLocalizations</key>
+    <array>
+        <string>en</string>
+        <string>zh-Hant</string>
+        <string>zh-Hans</string>
+    </array>
 </dict>
 </plist>

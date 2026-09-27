@@ -8,9 +8,9 @@ enum Inserter {
 
         var message: String {
             switch self {
-            case .inserted: "已填入，檢查後按 Enter 送出"
-            case .typed: "已輸入，看一下再按 Enter 送出"
-            case let .copied(reason): "\(reason)，已複製到剪貼簿"
+            case .inserted: L("已填入，檢查後按 Enter 送出")
+            case .typed: L("已輸入，看一下再按 Enter 送出")
+            case let .copied(reason): L("%@，已複製到剪貼簿", "\(reason)")
             }
         }
     }
@@ -23,9 +23,9 @@ enum Inserter {
         try? await Task.sleep(for: .milliseconds(150))
 
         guard let reading = await Readers.read(app, pid: pid, myName: Prefs.storedMyName) else {
-            return copy(line, "找不到 \(app.name) 的輸入框")
+            return copy(line, L("找不到 %@ 的輸入框", "\(app.name)"))
         }
-        guard sameChat(reading.conversation.title, expectedTitle) else { return copy(line, "聊天室已經切換") }
+        guard sameChat(reading.conversation.title, expectedTitle) else { return copy(line, L("聊天室已經切換")) }
         guard let composer = reading.composer else {
             // Telegram exposes no input element, but its input box has focus whenever a chat is open.
             type(line, pid: nil)
@@ -46,7 +46,7 @@ enum Inserter {
             if landed(line, in: value(of: composer), before: before) { return .inserted }
         }
         Log.write("insert not verified")
-        return copy(line, "填入沒有成功")
+        return copy(line, L("填入沒有成功"))
     }
 
     /// OCR can read a chat name slightly differently between two captures; the start is enough.

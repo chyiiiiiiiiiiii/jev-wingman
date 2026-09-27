@@ -140,7 +140,7 @@ struct PillView: View {
             .font(.system(size: 12, weight: .medium))
             .foregroundStyle(model.phase == .skipped || model.phase == .idle ? .secondary : .primary)
             .opacity(model.phase == .idle && model.note == nil ? 0.7 : 1)
-            .help("Wingman：按 \(model.hotkeyLabel) 或點這裡，幫你想回覆")
+            .help(L("Wingman：按 %@ 或點這裡，幫你想回覆", "\(model.hotkeyLabel)"))
             .padding(.horizontal, 10)
             .padding(.vertical, 5)
             .background(.regularMaterial, in: Capsule())
@@ -162,14 +162,14 @@ struct SuggestionView: View {
             content
             Divider()
             HStack(spacing: 6) {
-                ForEach(["更短", "更委婉", "更正式", "更熱情"], id: \.self) { chip in
+                ForEach([L("更短"), L("更委婉"), L("更正式"), L("更熱情")], id: \.self) { chip in
                     Button(chip) { model.rewrite(chip) }
                         .buttonStyle(.bordered)
                         .controlSize(.small)
                         .disabled(!rewritable)
                 }
             }
-            TextField("說說你想怎麼回，例如「跟他說週五前給」，按 Enter 重寫", text: $model.direction)
+            TextField(L("說說你想怎麼回，例如「跟他說週五前給」，按 Enter 重寫"), text: $model.direction)
                 .textFieldStyle(.roundedBorder)
                 .focused($fieldFocused)
                 .onSubmit { model.rewrite(model.direction) }
@@ -195,11 +195,11 @@ struct SuggestionView: View {
 
     /// What the keys do right now.
     private var hint: String {
-        if fieldFocused { return "Enter 重寫 · ⌘1–3 填入 · Esc 清除" }
+        if fieldFocused { return L("Enter 重寫 · ⌘1–3 填入 · Esc 清除") }
         switch model.phase {
-        case .ready: return "Enter 填入 ★ 推薦 · 1–3 選一句 · Esc 關閉 · 不會自動送出"
-        case .failed: return "Esc 關閉"
-        default: return "正在寫，好了就能按 Enter 或 1–3 填入 · Esc 關閉"
+        case .ready: return L("Enter 填入 ★ 推薦 · 1–3 選一句 · Esc 關閉 · 不會自動送出")
+        case .failed: return L("Esc 關閉")
+        default: return L("正在寫，好了就能按 Enter 或 1–3 填入 · Esc 關閉")
         }
     }
 
@@ -211,7 +211,7 @@ struct SuggestionView: View {
                 Image(systemName: "xmark.circle.fill").font(.system(size: 16)).foregroundStyle(.secondary)
             }
             .buttonStyle(.plain)
-            .help("關閉（Esc）")
+            .help(L("關閉（Esc）"))
         }
     }
 
@@ -220,16 +220,16 @@ struct SuggestionView: View {
             if let j = model.judgment {
                 HStack(spacing: 6) {
                     Circle().fill(Self.urgencyColor(j.urgency)).frame(width: 8, height: 8)
-                    Text(j.intent).fontWeight(.semibold)
+                    Text(L(j.intent)).fontWeight(.semibold)     // Jev answers with the Chinese option name
                     Text("·").foregroundStyle(.secondary)
-                    Text(j.needsReply < 0.35 ? "可以不回" : Self.urgencyText(j.urgency)).foregroundStyle(.secondary)
+                    Text(j.needsReply < 0.35 ? L("可以不回") : Self.urgencyText(j.urgency)).foregroundStyle(.secondary)
                 }
                 .font(.system(size: 13))
             } else {
                 Text("Wingman").font(.system(size: 13, weight: .semibold))
             }
             if let replyTo = model.replyTo {
-                Text("回覆 \(replyTo.sender ?? "對方")：\(replyTo.text)")
+                Text(L("回覆 %@：%@", "\(replyTo.sender ?? L("對方"))", "\(replyTo.text)"))
                     .font(.system(size: 12))
                     .foregroundStyle(.secondary)
                     .lineLimit(2)
@@ -244,7 +244,7 @@ struct SuggestionView: View {
         if case let .failed(reason) = model.phase {
             VStack(alignment: .leading, spacing: 6) {
                 Text(reason).foregroundStyle(.red).font(.system(size: 12))
-                Button("再試一次") { model.analyze() }.controlSize(.small)
+                Button(L("再試一次")) { model.analyze() }.controlSize(.small)
             }
         } else {
             VStack(alignment: .leading, spacing: 4) {
@@ -269,13 +269,13 @@ struct SuggestionView: View {
 
     private var status: String {
         switch model.phase {
-        case .ready where model.ranking: return "正在挑最推薦的一句…"
+        case .ready where model.ranking: return L("正在挑最推薦的一句…")
         case .ready:
             if let best = model.bestIndex, let score = model.candidates[best].score, score < 0.5 {
-                return "幾句都可以，挑你喜歡的語氣"
+                return L("幾句都可以，挑你喜歡的語氣")
             }
-            return "★ 是最推薦的一句"
-        default: return model.judgment == nil ? "正在讀對話、判斷怎麼回…" : "正在寫回覆…"
+            return L("★ 是最推薦的一句")
+        default: return model.judgment == nil ? L("正在讀對話、判斷怎麼回…") : L("正在寫回覆…")
         }
     }
 
@@ -291,17 +291,17 @@ struct SuggestionView: View {
                 // Fixed height: the ★ badge and the score bar arrive later without pushing the text down.
                 HStack(spacing: 6) {
                     if best {
-                        Text("★ 最推薦")
+                        Text(L("★ 最推薦"))
                             .font(.system(size: 11, weight: .bold))
                             .foregroundStyle(.white)
                             .padding(.horizontal, 6)
                             .padding(.vertical, 1)
                             .background(Self.brand, in: Capsule())
                     } else if let score = candidate.score, score >= 0.25 {
-                        Text("也不錯").font(.system(size: 11, weight: .medium)).foregroundStyle(.secondary)
+                        Text(L("也不錯")).font(.system(size: 11, weight: .medium)).foregroundStyle(.secondary)
                     }
                     if !candidate.strategy.isEmpty {
-                        Text(candidate.strategy).font(.system(size: 11)).foregroundStyle(.secondary)
+                        Text(L(candidate.strategy)).font(.system(size: 11)).foregroundStyle(.secondary)
                     }
                     Spacer(minLength: 0)
                     ScoreBar(score: candidate.score ?? 0, highlighted: best)
@@ -340,7 +340,7 @@ struct SuggestionView: View {
                     .frame(width: max(3, 48 * score))
             }
             .frame(width: 48, height: 4)
-            .help("推薦分數 \(Int((score * 100).rounded()))%")
+            .help(L("推薦分數 %@%%", "\(Int((score * 100).rounded()))"))
         }
     }
 
@@ -355,10 +355,10 @@ struct SuggestionView: View {
 
     private static func urgencyText(_ urgency: Double) -> String {
         switch urgency {
-        case 2.5...: "對方正在等，建議馬上回"
-        case 1.5...: "最好一小時內回"
-        case 0.5...: "今天內回就好"
-        default: "不急"
+        case 2.5...: L("對方正在等，建議馬上回")
+        case 1.5...: L("最好一小時內回")
+        case 0.5...: L("今天內回就好")
+        default: L("不急")
         }
     }
 }

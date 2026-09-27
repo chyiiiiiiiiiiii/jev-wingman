@@ -12,9 +12,9 @@ final class Prefs: ObservableObject {
     /// Picked by scripts/bench-writers.py on 2026-09-27: speed, cost, Taiwan wording, and whether
     /// the drafts invent times and facts the thread never gave.
     static let writerModels: [(id: String, label: String)] = [
-        ("deepseek/deepseek-v4.1-flash", "DeepSeek V4.1 Flash：最快、台灣用語最道地（推薦）"),
-        ("google/gemini-3.1-flash-lite", "Gemini 3.1 Flash-Lite：快，偶爾用「數據」這類大陸用語"),
-        ("anthropic/claude-haiku-4.5", "Claude Haiku 4.5：穩，但貴約 10 倍"),
+        ("deepseek/deepseek-v4.1-flash", L("DeepSeek V4.1 Flash：最快、台灣用語最道地（推薦）")),
+        ("google/gemini-3.1-flash-lite", L("Gemini 3.1 Flash-Lite：快，偶爾用「數據」這類大陸用語")),
+        ("anthropic/claude-haiku-4.5", L("Claude Haiku 4.5：穩，但貴約 10 倍")),
     ]
 
     @Published var openRouterKey: String { didSet { Keychain.set(openRouterKey, account: "openrouter") } }
@@ -53,8 +53,8 @@ final class Prefs: ObservableObject {
     static func keyProblem(_ value: String, prefix: String) -> String? {
         let trimmed = value.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return nil }
-        if trimmed.contains(where: \.isWhitespace) { return "這不像 key：中間有空白，可能貼到整段指令或文字了" }
-        if !trimmed.hasPrefix(prefix) { return "這不像 key：應該以 \(prefix) 開頭" }
+        if trimmed.contains(where: \.isWhitespace) { return L("這不像 key：中間有空白，可能貼到整段指令或文字了") }
+        if !trimmed.hasPrefix(prefix) { return L("這不像 key：應該以 %@ 開頭", "\(prefix)") }
         return nil
     }
 }

@@ -123,17 +123,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// A menu bar app has no menus, yet ⌘V, ⌘C and ⌘A in text fields are the Edit menu's key
     /// equivalents; without it nothing can be pasted into settings or the suggestion panel.
     private static func mainMenu() -> NSMenu {
-        let edit = NSMenu(title: "編輯")
-        edit.addItem(withTitle: "還原", action: Selector(("undo:")), keyEquivalent: "z")
-        edit.addItem(withTitle: "重做", action: Selector(("redo:")), keyEquivalent: "Z")
+        let edit = NSMenu(title: L("編輯"))
+        edit.addItem(withTitle: L("還原"), action: Selector(("undo:")), keyEquivalent: "z")
+        edit.addItem(withTitle: L("重做"), action: Selector(("redo:")), keyEquivalent: "Z")
         edit.addItem(.separator())
-        edit.addItem(withTitle: "剪下", action: #selector(NSText.cut(_:)), keyEquivalent: "x")
-        edit.addItem(withTitle: "拷貝", action: #selector(NSText.copy(_:)), keyEquivalent: "c")
-        edit.addItem(withTitle: "貼上", action: #selector(NSText.paste(_:)), keyEquivalent: "v")
-        edit.addItem(withTitle: "全選", action: #selector(NSText.selectAll(_:)), keyEquivalent: "a")
+        edit.addItem(withTitle: L("剪下"), action: #selector(NSText.cut(_:)), keyEquivalent: "x")
+        edit.addItem(withTitle: L("拷貝"), action: #selector(NSText.copy(_:)), keyEquivalent: "c")
+        edit.addItem(withTitle: L("貼上"), action: #selector(NSText.paste(_:)), keyEquivalent: "v")
+        edit.addItem(withTitle: L("全選"), action: #selector(NSText.selectAll(_:)), keyEquivalent: "a")
         let app = NSMenu(title: "Wingman")
-        app.addItem(withTitle: "關閉視窗", action: #selector(NSWindow.performClose(_:)), keyEquivalent: "w")
-        app.addItem(withTitle: "結束 Wingman", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
+        app.addItem(withTitle: L("關閉視窗"), action: #selector(NSWindow.performClose(_:)), keyEquivalent: "w")
+        app.addItem(withTitle: L("結束 Wingman"), action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
         let menu = NSMenu()
         for submenu in [app, edit] {
             let item = NSMenuItem()
@@ -155,11 +155,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let pause = NSMenuItem(title: "", action: #selector(togglePause), keyEquivalent: "")
         pause.target = self
         menu.addItem(pause)
-        let settings = NSMenuItem(title: "設定…", action: #selector(showSettings), keyEquivalent: ",")
+        let settings = NSMenuItem(title: L("設定…"), action: #selector(showSettings), keyEquivalent: ",")
         settings.target = self
         menu.addItem(settings)
         menu.addItem(.separator())
-        menu.addItem(NSMenuItem(title: "結束 Wingman", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q"))
+        menu.addItem(NSMenuItem(title: L("結束 Wingman"), action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q"))
         menu.delegate = self
         statusItem.menu = menu
     }
@@ -175,7 +175,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             self?.onboardingWindow = nil
         }
         let window = NSWindow(contentViewController: NSHostingController(rootView: view))
-        window.title = "歡迎使用 Wingman"
+        window.title = L("歡迎使用 Wingman")
         window.styleMask = [.titled, .closable, .miniaturizable]
         window.isReleasedWhenClosed = false
         window.center()
@@ -189,7 +189,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             let controller = NSHostingController(rootView: SettingsView(settings: Prefs.shared, model: model))
             controller.sizingOptions = [.minSize]
             let window = NSWindow(contentViewController: controller)
-            window.title = "Wingman 設定"
+            window.title = L("Wingman 設定")
             window.styleMask = [.titled, .closable, .miniaturizable, .resizable]
             window.delegate = self
             window.setContentSize(NSSize(width: 540, height: 720))
@@ -213,7 +213,7 @@ extension AppDelegate: NSWindowDelegate {
 extension AppDelegate: NSMenuDelegate {
     nonisolated func menuNeedsUpdate(_ menu: NSMenu) {
         MainActor.assumeIsolated {
-            menu.items.first?.title = Prefs.shared.paused ? "繼續提供建議" : "暫停建議"
+            menu.items.first?.title = Prefs.shared.paused ? L("繼續提供建議") : L("暫停建議")
         }
     }
 }

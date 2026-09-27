@@ -39,10 +39,10 @@ final class AppModel: ObservableObject {
         switch phase {
         // Nothing to suggest yet, but this chat is being read: a quiet mark says so and is a place to click.
         case .idle: return conversation == nil ? nil : "✦ \(hotkeyLabel)"
-        case .thinking: return "正在想怎麼回…"
-        case .ready: return "✦ \(candidates.count) 個建議  \(hotkeyLabel)"
-        case .skipped: return "這則可以不回 · \(hotkeyLabel) 仍可寫回覆"
-        case .failed: return "⚠︎ 沒有產生建議  \(hotkeyLabel)"
+        case .thinking: return L("正在想怎麼回…")
+        case .ready: return L("✦ %@ 個建議  %@", "\(candidates.count)", "\(hotkeyLabel)")
+        case .skipped: return L("這則可以不回 · %@ 仍可寫回覆", "\(hotkeyLabel)")
+        case .failed: return L("⚠︎ 沒有產生建議  %@", "\(hotkeyLabel)")
         }
     }
 
@@ -152,7 +152,7 @@ final class AppModel: ObservableObject {
             }
             guard self.settings.hasWriterKey else {
                 // A TypeSafe key alone still answers "what do they want, how soon"; writing needs an LLM.
-                self.phase = .failed("這則訊息判斷好了。填入 OpenRouter key，就能幫你寫回覆")
+                self.phase = .failed(L("這則訊息判斷好了。填入 OpenRouter key，就能幫你寫回覆"))
                 return
             }
             let current = self.generation

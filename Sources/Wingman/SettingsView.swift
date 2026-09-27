@@ -39,11 +39,11 @@ struct HotkeyRecorder: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
             HStack {
-                Text("展開建議的快捷鍵")
+                Text(L("展開建議的快捷鍵"))
                 Spacer()
-                Button(recording ? "請按下新的組合…（Esc 取消）" : settings.hotkey.label) { recording ? stop() : start() }
+                Button(recording ? L("請按下新的組合…（Esc 取消）") : settings.hotkey.label) { recording ? stop() : start() }
                 if settings.hotkey != .standard && !recording {
-                    Button("還原") { settings.hotkey = .standard }.controlSize(.small)
+                    Button(L("還原")) { settings.hotkey = .standard }.controlSize(.small)
                 }
             }
             if let problem { Text(problem).font(.caption).foregroundStyle(.red) }
@@ -58,11 +58,11 @@ struct HotkeyRecorder: View {
             defer { stop() }
             if event.keyCode == 53 { return nil }
             guard let setting = HotkeySetting(event: event) else {
-                problem = "要搭配 ⌘、⌥ 或 ⌃，不然會吃掉一般打字"
+                problem = L("要搭配 ⌘、⌥ 或 ⌃，不然會吃掉一般打字")
                 return nil
             }
             if setting != settings.hotkey && !Hotkey.isFree(setting) {
-                problem = "\(setting.label) 已經被其他 App 用了，換一組試試"
+                problem = L("%@ 已經被其他 App 用了，換一組試試", "\(setting.label)")
                 return nil
             }
             settings.hotkey = setting
@@ -116,77 +116,77 @@ struct SettingsView: View {
                 HStack {
                     Image(systemName: trusted ? "checkmark.circle.fill" : "exclamationmark.circle.fill")
                         .foregroundStyle(trusted ? .green : .orange)
-                    Text(trusted ? "已開啟「輔助使用」" : "需要開啟「輔助使用」")
+                    Text(trusted ? L("已開啟「輔助使用」") : L("需要開啟「輔助使用」"))
                     Spacer()
                     if !trusted {
-                        Button("打開系統設定") {
+                        Button(L("打開系統設定")) {
                             NSWorkspace.shared.open(URL(string:
                                 "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility")!)
                         }
                     }
                 }
-                Text("用來讀 Slack、Discord、Messenger 網頁版的對話，並把你選的回覆填進輸入框。瀏覽器裡只讀 Messenger 分頁，其他網頁不讀。在清單裡把 Wingman 打開，這裡會自動打勾。Wingman 只讀你正在看的對話，不會自動送出任何訊息。")
+                Text(L("用來讀 Slack、Discord、Messenger 網頁版的對話，並把你選的回覆填進輸入框。瀏覽器裡只讀 Messenger 分頁，其他網頁不讀。在清單裡把 Wingman 打開，這裡會自動打勾。Wingman 只讀你正在看的對話，不會自動送出任何訊息。"))
                     .font(.caption).foregroundStyle(.secondary)
-            } header: { Text("1. 讓 Wingman 讀聊天內容") }
+            } header: { Text(L("1. 讓 Wingman 讀聊天內容")) }
 
             Section {
                 HStack {
                     Image(systemName: canCapture ? "checkmark.circle.fill" : "circle.dashed")
                         .foregroundStyle(canCapture ? .green : .secondary)
-                    Text(canCapture ? "已開啟「螢幕錄製」" : "LINE、Telegram 需要「螢幕錄製」")
+                    Text(canCapture ? L("已開啟「螢幕錄製」") : L("LINE、Telegram 需要「螢幕錄製」"))
                     Spacer()
                     if !canCapture {
-                        Button("打開系統設定") {
+                        Button(L("打開系統設定")) {
                             CGRequestScreenCaptureAccess()
                             NSWorkspace.shared.open(URL(string:
                                 "x-apple.systempreferences:com.apple.preference.security?Privacy_ScreenCapture")!)
                         }
-                        Button("重新啟動 Wingman") { Self.relaunch() }
+                        Button(L("重新啟動 Wingman")) { Self.relaunch() }
                     }
                 }
-                Text("這兩個 App 不提供文字給其他程式讀，所以 Wingman 只截它們的視窗、在這台 Mac 上辨識文字，截圖不會上傳。開啟後要重新啟動 Wingman 才會生效。")
+                Text(L("這兩個 App 不提供文字給其他程式讀，所以 Wingman 只截它們的視窗、在這台 Mac 上辨識文字，截圖不會上傳。開啟後要重新啟動 Wingman 才會生效。"))
                     .font(.caption).foregroundStyle(.secondary)
-            } header: { Text("LINE、Telegram（選用）") }
+            } header: { Text(L("LINE、Telegram（選用）")) }
 
             Section {
-                SettingPurpose("寫回覆：OpenRouter（必填）",
-                        "請 AI 寫出 3 句候選回覆。按用量付費，要先在 OpenRouter 儲值（例如 US$5）；一次建議大約 US$0.0002。")
+                SettingPurpose(L("寫回覆：OpenRouter（必填）"),
+                        L("請 AI 寫出 3 句候選回覆。按用量付費，要先在 OpenRouter 儲值（例如 US$5）；一次建議大約 US$0.0002。"))
                 SecureField("OpenRouter API key（sk-or-v1-…）", text: trimmedKey($settings.openRouterKey))
                 if let problem = Prefs.keyProblem(settings.openRouterKey, prefix: "sk-or-") {
                     Text(problem).font(.caption).foregroundStyle(.red)
                 }
                 HStack(spacing: 16) {
-                    Link("申請 key ↗", destination: URL(string: "https://openrouter.ai/keys")!)
-                    Link("儲值 ↗", destination: URL(string: "https://openrouter.ai/settings/credits")!)
+                    Link(L("申請 key ↗"), destination: URL(string: "https://openrouter.ai/keys")!)
+                    Link(L("儲值 ↗"), destination: URL(string: "https://openrouter.ai/settings/credits")!)
                 }
                 .font(.callout)
 
-                SettingPurpose("判斷訊息：TypeSafe（選填）",
-                        "判斷對方想要什麼、需不需要回、有多急，並從 3 句裡挑出最推薦的那句。沒填也能用，會改透過 OpenRouter 呼叫，每次建議大約慢 2–4 秒。")
+                SettingPurpose(L("判斷訊息：TypeSafe（選填）"),
+                        L("判斷對方想要什麼、需不需要回、有多急，並從 3 句裡挑出最推薦的那句。沒填也能用，會改透過 OpenRouter 呼叫，每次建議大約慢 2–4 秒。"))
                 SecureField("TypeSafe API key", text: trimmedKey($settings.typesafeKey))
                 if let problem = Prefs.keyProblem(settings.typesafeKey, prefix: "api") {
                     Text(problem).font(.caption).foregroundStyle(.red)
                 }
-                Link("申請 key ↗", destination: URL(string: "https://console.typesafe.ai/keys")!)
+                Link(L("申請 key ↗"), destination: URL(string: "https://console.typesafe.ai/keys")!)
                     .font(.callout)
 
-                Picker("寫回覆的模型", selection: modelChoice) {
+                Picker(L("寫回覆的模型"), selection: modelChoice) {
                     ForEach(Prefs.writerModels, id: \.id) { Text($0.label).tag($0.id) }
-                    Text("自訂…").tag(Self.custom)
+                    Text(L("自訂…")).tag(Self.custom)
                 }
                 if modelChoice.wrappedValue == Self.custom {
-                    TextField("OpenRouter 模型 ID，例如 openai/gpt-5.4-mini", text: $settings.model)
+                    TextField(L("OpenRouter 模型 ID，例如 openai/gpt-5.4-mini"), text: $settings.model)
                 }
-                Text("推薦的那個最快、用台灣用語，不確定的時間會留 [時間] 讓你自己填，不會替你亂承諾。")
+                Text(L("推薦的那個最快、用台灣用語，不確定的時間會留 [時間] 讓你自己填，不會替你亂承諾。"))
                     .font(.caption).foregroundStyle(.secondary)
 
                 HStack(alignment: .top) {
-                    Text(testResult.isEmpty ? "填好 key 後按「測試連線」，確認都能用。" : testResult)
+                    Text(testResult.isEmpty ? L("填好 key 後按「測試連線」，確認都能用。") : testResult)
                         .font(.caption)
                         .foregroundStyle(testResult.isEmpty ? .secondary : .primary)
                         .textSelection(.enabled)
                     Spacer()
-                    Button(testing ? "測試中…" : "測試連線") {
+                    Button(testing ? L("測試中…") : L("測試連線")) {
                         testing = true
                         Task {
                             testResult = await Brain(settings: settings, app: .slack).testConnection()
@@ -195,28 +195,28 @@ struct SettingsView: View {
                     }
                     .disabled(testing)
                 }
-                Label("聊天內容只會從這台 Mac 直接送到 OpenRouter 和 TypeSafe，不經過其他伺服器；key 存在這台 Mac 的鑰匙圈。",
+                Label(L("聊天內容只會從這台 Mac 直接送到 OpenRouter 和 TypeSafe，不經過其他伺服器；key 存在這台 Mac 的鑰匙圈。"),
                       systemImage: "lock")
                     .font(.caption).foregroundStyle(.secondary)
-            } header: { Text("2. 連上 AI") }
+            } header: { Text(L("2. 連上 AI")) }
 
             Section {
-                TextField("你在聊天 App 裡顯示的名字", text: $settings.myName)
-                Text("用來分辨 Slack、Discord 裡哪些訊息是你說的。各 App 顯示的名字不同時，用逗號分開，例如「Yii, Yii Chen」。LINE、Telegram 看氣泡位置，不需要名字。")
+                TextField(L("你在聊天 App 裡顯示的名字"), text: $settings.myName)
+                Text(L("用來分辨 Slack、Discord 裡哪些訊息是你說的。各 App 顯示的名字不同時，用逗號分開，例如「Yii, Yii Chen」。LINE、Telegram 看氣泡位置，不需要名字。"))
                     .font(.caption).foregroundStyle(.secondary)
-            } header: { Text("3. 你是誰") }
+            } header: { Text(L("3. 你是誰")) }
 
             Section {
                 HotkeyRecorder(settings: settings)
-                Text("在 Slack、Discord、LINE、Telegram 或 Messenger 網頁版收到訊息時，輸入框右上方會出現「✦ 3 個建議」。按 \(settings.hotkey.label) 或點它展開，按 Enter 填入 ★ 推薦的那句，或按 1、2、3 選一句，確認後自己按 Enter 送出。")
+                Text(L("在 Slack、Discord、LINE、Telegram 或 Messenger 網頁版收到訊息時，輸入框右上方會出現「✦ 3 個建議」。按 %@ 或點它展開，按 Enter 填入 ★ 推薦的那句，或按 1、2、3 選一句，確認後自己按 Enter 送出。", "\(settings.hotkey.label)"))
                     .font(.callout)
-            } header: { Text("怎麼用") }
+            } header: { Text(L("怎麼用")) }
 
             Section {
                 Toggle(isOn: $opensAtLogin) {
                     VStack(alignment: .leading, spacing: 2) {
-                        Text("登入 Mac 時自動開啟 Wingman")
-                        Text("開機後就在背景待命，平常不用自己打開。").font(.caption).foregroundStyle(.secondary)
+                        Text(L("登入 Mac 時自動開啟 Wingman"))
+                        Text(L("開機後就在背景待命，平常不用自己打開。")).font(.caption).foregroundStyle(.secondary)
                     }
                 }
                     .onChange(of: opensAtLogin) { _, on in
@@ -228,10 +228,10 @@ struct SettingsView: View {
                         }
                     }
                 HStack {
-                    Text("關掉這個視窗後 Wingman 會繼續在背景運作。要再打開設定：點選單列的泡泡圖示，或從 Launchpad／Spotlight 再開一次 Wingman。")
+                    Text(L("關掉這個視窗後 Wingman 會繼續在背景運作。要再打開設定：點選單列的泡泡圖示，或從 Launchpad／Spotlight 再開一次 Wingman。"))
                         .font(.caption).foregroundStyle(.secondary)
                     Spacer()
-                    Button("完成") { NSApp.keyWindow?.performClose(nil) }
+                    Button(L("完成")) { NSApp.keyWindow?.performClose(nil) }
                         .keyboardShortcut(.defaultAction)
                 }
             }

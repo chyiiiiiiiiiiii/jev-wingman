@@ -8,9 +8,9 @@ struct Brain {
 
         var errorDescription: String? {
             switch self {
-            case .missingKey: "還沒設定 OpenRouter API key"
-            case let .http(code, body): "服務回應 \(code)：\(body.prefix(120))"
-            case .nothingToAnswer: "畫面上沒有可以回覆的訊息"
+            case .missingKey: L("還沒設定 OpenRouter API key")
+            case let .http(code, body): L("服務回應 %@：%@", "\(code)", "\(body.prefix(120))")
+            case .nothingToAnswer: L("畫面上沒有可以回覆的訊息")
             }
         }
     }
@@ -49,7 +49,7 @@ struct Brain {
                onDrafts: @escaping Drafts) async throws -> [Candidate] {
         let asks = strategies.map { "- \($0)：\(ReplyQuestions.description(ofStrategy: $0))" }.joined(separator: "\n")
         var brief = strategies.isEmpty
-            ? "請寫三則回法不同的回覆，strategy 欄位用兩到六個字描述那一則的回法。"
+            ? "請寫三則回法不同的回覆，strategy 欄位用兩到六個字描述那一則的回法\(Self.labelLanguage)。"
             : "請依照下面每一種回法各寫一則回覆，順序不變：\n\(asks)"
         if let judgment {
             brief = "對方的意圖：\(judgment.intent)。\n" + brief
@@ -65,7 +65,7 @@ struct Brain {
         我想這樣回：「\(direction)」
         之前的草稿（可參考，不必沿用）：
         \(drafts)
-        請照我的意思寫三則不同說法的回覆，strategy 欄位用兩到六個字描述那一則的差別。
+        請照我的意思寫三則不同說法的回覆，strategy 欄位用兩到六個字描述那一則的差別\(Self.labelLanguage)。
         """
         return try await complete(convo, brief: brief, onDrafts: onDrafts)
     }
@@ -74,21 +74,21 @@ struct Brain {
     func testConnection() async -> String {
         var lines: [String] = []
         if settings.openRouterKey.isEmpty {
-            lines.append("✗ 還沒填 OpenRouter key")
+            lines.append(L("✗ 還沒填 OpenRouter key"))
         } else {
             var request = URLRequest(url: URL(string: "https://openrouter.ai/api/v1/key")!, timeoutInterval: 15)
             request.setValue("Bearer \(settings.openRouterKey)", forHTTPHeaderField: "Authorization")
             let code = ((try? await URLSession.shared.data(for: request))?.1 as? HTTPURLResponse)?.statusCode ?? 0
-            lines.append(code == 200 ? "✓ OpenRouter key 可以用" : "✗ OpenRouter 回應 \(code)，請檢查 key")
+            lines.append(code == 200 ? L("✓ OpenRouter key 可以用") : L("✗ OpenRouter 回應 %@，請檢查 key", "\(code)"))
         }
         let started = Date()
         do {
             let body: [String: Any] = ["model": jevModel, "state": "今天可以開會嗎？",
                                        "questions": ["q": ["type": "noul", "instructions": "這是一個問題嗎？"]]]
             _ = try await post(jevURL, key: jevKey, body: body)
-            lines.append("✓ 判斷訊息可以用（TypeSafe Jev，\(Int(Date().timeIntervalSince(started) * 1000)) ms）")
+            lines.append(L("✓ 判斷訊息可以用（TypeSafe Jev，%@ ms）", "\(Int(Date().timeIntervalSince(started) * 1000))"))
         } catch {
-            lines.append("✗ 判斷訊息（TypeSafe Jev）：\(error.localizedDescription)")
+            lines.append(L("✗ 判斷訊息（TypeSafe Jev）：%@", "\(error.localizedDescription)"))
         }
         return lines.joined(separator: "\n")
     }
@@ -184,6 +184,15 @@ struct Brain {
         case .japanese: return "對方用日文，請用日文回覆。"
         case .korean: return "對方用韓文，請用韓文回覆。"
         case .theirs: return "對方這則不是中文，請用對方訊息的語言回覆。"
+        }
+    }
+
+    /// Strategy labels the model makes up are shown as they come, so ask for the interface's language.
+    static var labelLanguage: String {
+        switch interfaceLanguage {
+        case "en": "，用英文寫"
+        case "zh-Hans": "，用簡體中文寫"
+        default: ""
         }
     }
 
