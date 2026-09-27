@@ -119,10 +119,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     @objc private func showSettings() {
         if settingsWindow == nil {
-            let window = NSWindow(contentViewController: NSHostingController(
-                rootView: SettingsView(settings: Prefs.shared, model: model)))
+            let controller = NSHostingController(rootView: SettingsView(settings: Prefs.shared, model: model))
+            controller.sizingOptions = [.minSize]
+            let window = NSWindow(contentViewController: controller)
             window.title = "Wingman 設定"
-            window.styleMask = [.titled, .closable]
+            window.styleMask = [.titled, .closable, .resizable]
+            window.setContentSize(NSSize(width: 540, height: 720))
             window.isReleasedWhenClosed = false
             window.center()
             settingsWindow = window

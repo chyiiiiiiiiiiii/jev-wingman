@@ -77,7 +77,8 @@ struct SettingsView: View {
             } header: { Text("怎麼用") }
         }
         .formStyle(.grouped)
-        .frame(width: 520)
+        .frame(width: 540)
+        .frame(minHeight: 480, maxHeight: .infinity)   // a grouped Form has no height of its own
         .onReceive(tick) { _ in trusted = AXIsProcessTrusted() }
     }
 }
