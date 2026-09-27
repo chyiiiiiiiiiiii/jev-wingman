@@ -5,11 +5,12 @@
 
 Uses OPENROUTER_API_KEY, or the key Wingman stored in the Keychain (macOS asks once).
 Prints a summary table and writes every draft to build/bench-writers.md.
-"Non-Taiwan" counts characters OpenCC's s2twp changes: simplified glyphs and
-mainland wording (視頻→影片, 軟件→軟體) both show up there.
+"Non-Taiwan" counts the spots OpenCC's s2twp rewrites: simplified glyphs and mainland
+wording (視頻→影片, 數據→資料). It over-reaches on a few words (權限→許可權), so read the drafts.
 """
 from __future__ import annotations
 
+import difflib
 import json
 import os
 import re
@@ -76,6 +77,8 @@ def prompt(lines: list[str], strategies: list[str]) -> str:
 def call(key: str, model: str, user: str) -> dict:
     body = {"model": model, "temperature": 0.7, "max_tokens": 700, "usage": {"include": True},
             "reasoning": {"enabled": False},
+            "provider": {"order": ["Fireworks", "Together", "BaseTen", "DeepInfra"],
+                         "ignore": ["DeepSeek", "StreamLake", "Alibaba", "SiliconFlow", "Baidu"]},  # as Brain.swift
             "messages": [{"role": "system", "content": RULES}, {"role": "user", "content": user}]}
     request = urllib.request.Request("https://openrouter.ai/api/v1/chat/completions", data=json.dumps(body).encode(),
                                      headers={"Authorization": f"Bearer {key}", "Content-Type": "application/json",
@@ -107,8 +110,9 @@ def drafts(content: str) -> list[str] | None:
 
 
 def non_taiwan(text: str) -> int:
+    """Number of spots OpenCC rewrites; counted as edits so one changed word counts once."""
     converted = subprocess.run(["opencc", "-c", "s2twp"], input=text, capture_output=True, text=True).stdout
-    return sum(a != b for a, b in zip(text, converted)) + abs(len(text) - len(converted))
+    return sum(op != "equal" for op, *_ in difflib.SequenceMatcher(None, text, converted).get_opcodes())
 
 
 def main() -> None:

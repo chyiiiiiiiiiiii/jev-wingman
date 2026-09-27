@@ -118,6 +118,10 @@ struct Brain {
             "temperature": 0.7,
             "max_tokens": 700,
             "usage": ["include": true],   // OpenRouter then reports the charge in the response
+            "reasoning": ["enabled": false],   // thinking adds seconds and output tokens to a two-line reply
+            // Slack threads are company data: keep them off hosts in mainland China, and try hosts
+            // that were quick from Taiwan first (bench 2026-09-27: 2–4 s, cheapest host 9–17 s).
+            "provider": ["order": Self.preferredProviders, "ignore": Self.excludedProviders],
             "messages": [["role": "system", "content": Self.writerRules], ["role": "user", "content": user]],
         ]
         let data = try await post(URL(string: "https://openrouter.ai/api/v1/chat/completions")!,
@@ -127,6 +131,9 @@ struct Brain {
                   + "out=\(usage?["completion_tokens"] as? Int ?? 0) cost=$\(usage?["cost"] as? Double ?? 0)")
         return try CandidateDecoder.candidates(from: data)
     }
+
+    static let excludedProviders = ["DeepSeek", "StreamLake", "Alibaba", "SiliconFlow", "Baidu"]
+    static let preferredProviders = ["Fireworks", "Together", "BaseTen", "DeepInfra"]
 
     static let writerRules = """
     你替使用者（「我」）起草要在 Slack 回給同事的訊息。

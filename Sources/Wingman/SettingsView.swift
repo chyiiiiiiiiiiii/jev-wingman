@@ -9,7 +9,19 @@ struct SettingsView: View {
     @State private var trusted = AXIsProcessTrusted()
     @State private var testResult = ""
     @State private var testing = false
+    @State private var customModel = false
     private let tick = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
+    private static let custom = "custom"
+
+    /// A listed model shows as itself; anything else, or choosing 自訂, shows the free-text field.
+    private var modelChoice: Binding<String> {
+        Binding(
+            get: { customModel || !Prefs.writerModels.contains { $0.id == settings.model } ? Self.custom : settings.model },
+            set: { choice in
+                customModel = choice == Self.custom
+                if !customModel { settings.model = choice }
+            })
+    }
 
     var body: some View {
         Form {
@@ -50,8 +62,14 @@ struct SettingsView: View {
                 if !testResult.isEmpty {
                     Text(testResult).font(.caption).textSelection(.enabled)
                 }
+                Picker("寫回覆的模型", selection: modelChoice) {
+                    ForEach(Prefs.writerModels, id: \.id) { Text($0.label).tag($0.id) }
+                    Text("自訂…").tag(Self.custom)
+                }
+                if modelChoice.wrappedValue == Self.custom {
+                    TextField("OpenRouter 模型 ID，例如 openai/gpt-5.4-mini", text: $settings.model)
+                }
                 DisclosureGroup("進階") {
-                    TextField("寫回覆的模型", text: $settings.model)
                     Text("聊天內容會直接從這台 Mac 送到 OpenRouter／TypeSafe，不經過其他伺服器。")
                         .font(.caption).foregroundStyle(.secondary)
                 }

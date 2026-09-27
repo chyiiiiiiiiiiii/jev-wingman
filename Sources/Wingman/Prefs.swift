@@ -5,7 +5,15 @@ import Security
 /// which keeps a developer's shell keys out of the Keychain entirely.
 final class Prefs: ObservableObject {
     static let shared = Prefs()
-    static let defaultModel = "anthropic/claude-haiku-4.5"
+    static let defaultModel = "deepseek/deepseek-v4.1-flash"
+
+    /// Picked by scripts/bench-writers.py on 2026-09-27: speed, cost, Taiwan wording, and whether
+    /// the drafts invent times and facts the thread never gave.
+    static let writerModels: [(id: String, label: String)] = [
+        ("deepseek/deepseek-v4.1-flash", "DeepSeek V4.1 Flash：最快、台灣用語最道地（推薦）"),
+        ("google/gemini-3.1-flash-lite", "Gemini 3.1 Flash-Lite：快，偶爾用「數據」這類大陸用語"),
+        ("anthropic/claude-haiku-4.5", "Claude Haiku 4.5：穩，但貴約 10 倍"),
+    ]
 
     @Published var openRouterKey: String { didSet { Keychain.set(openRouterKey, account: "openrouter") } }
     @Published var typesafeKey: String { didSet { Keychain.set(typesafeKey, account: "typesafe") } }
