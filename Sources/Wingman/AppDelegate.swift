@@ -19,7 +19,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var hotkeyObservation: AnyCancellable?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
-        Log.write("launch trusted=\(AXIsProcessTrusted())")
+        Log.write("launch trusted=\(AXIsProcessTrusted()) screenCapture=\(CGPreflightScreenCaptureAccess())")
         NSApp.mainMenu = Self.mainMenu()
         panels = PanelController(model: model)
         setUpStatusItem()
@@ -81,7 +81,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     private func tick() {
         guard !reading, AXIsProcessTrusted(), let front = ChatApp.frontmost else { return }
-        if front.app == .slack && accessibilityEnabledFor != front.pid {
+        if !front.app.readsPixels && accessibilityEnabledFor != front.pid {     // Electron: Slack, Discord
             AXSnapshot.enableWebAccessibility(pid: front.pid)
             accessibilityEnabledFor = front.pid
         }

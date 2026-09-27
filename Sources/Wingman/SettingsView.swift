@@ -169,22 +169,28 @@ struct SettingsView: View {
             } header: { Text("2. 連上 AI") }
 
             Section {
-                TextField("你在 Slack 顯示的名字", text: $settings.myName)
+                TextField("你在聊天 App 裡顯示的名字", text: $settings.myName)
                 let senders = Array(Set(model.conversation?.messages.compactMap(\.sender) ?? [])).sorted()
                 if !senders.isEmpty {
                     HStack {
                         Text("是其中一個嗎？").font(.caption).foregroundStyle(.secondary)
                         ForEach(senders, id: \.self) { name in
-                            Button(name) { settings.myName = name }.controlSize(.small)
+                            Button(name) {
+                                let names = settings.myName.split(separator: ",").map { $0.trimmingCharacters(in: .whitespaces) }
+                                if !names.contains(name) {
+                                    settings.myName = (names.filter { !$0.isEmpty } + [name]).joined(separator: ", ")
+                                }
+                            }.controlSize(.small)
                         }
                     }
                 }
-                Text("用來分辨哪些訊息是你自己說的。").font(.caption).foregroundStyle(.secondary)
+                Text("用來分辨 Slack、Discord 裡哪些訊息是你說的。各 App 顯示的名字不同時，用逗號分開，例如「Yii, Yii Chen」。LINE、Telegram 看氣泡位置，不需要名字。")
+                    .font(.caption).foregroundStyle(.secondary)
             } header: { Text("3. 你是誰") }
 
             Section {
                 HotkeyRecorder(settings: settings)
-                Text("在 Slack、LINE 或 Telegram 收到訊息時，輸入框右上方會出現「✦ 3 個建議」。按 \(settings.hotkey.label) 或點它展開，按 Enter 填入 ★ 推薦的那句，或按 1、2、3 選一句，確認後自己按 Enter 送出。")
+                Text("在 Slack、Discord、LINE 或 Telegram 收到訊息時，輸入框右上方會出現「✦ 3 個建議」。按 \(settings.hotkey.label) 或點它展開，按 Enter 填入 ★ 推薦的那句，或按 1、2、3 選一句，確認後自己按 Enter 送出。")
                     .font(.callout)
             } header: { Text("怎麼用") }
 

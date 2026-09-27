@@ -4,11 +4,12 @@ import WingmanCore
 
 /// A chat app Wingman can read, and how it talks.
 enum ChatApp: String, CaseIterable {
-    case slack, line, telegram
+    case slack, discord, line, telegram
 
     var name: String {
         switch self {
         case .slack: "Slack"
+        case .discord: "Discord"
         case .line: "LINE"
         case .telegram: "Telegram"
         }
@@ -17,13 +18,14 @@ enum ChatApp: String, CaseIterable {
     var bundleIDs: [String] {
         switch self {
         case .slack: ["com.tinyspeck.slackmacgap"]
+        case .discord: ["com.hnc.Discord"]
         case .line: ["jp.naver.line.mac"]
         case .telegram: ["ru.keepcoder.Telegram", "org.telegram.desktop"]
         }
     }
 
     /// LINE and Telegram draw their messages without exposing text, so they are read from pixels.
-    var readsPixels: Bool { self != .slack }
+    var readsPixels: Bool { self == .line || self == .telegram }
 
     /// Reading pixels costs a capture and, when the chat changed, an OCR pass.
     var pollInterval: TimeInterval { readsPixels ? 1.2 : 0.7 }
@@ -32,6 +34,7 @@ enum ChatApp: String, CaseIterable {
     var register: String {
         switch self {
         case .slack: "這是工作用的 Slack：語氣像真人同事，自然、簡潔、有禮，不要客服腔，不要過度客套或堆砌表情符號。"
+        case .discord: "這是 Discord 社群頻道：語氣輕鬆自然，像社群裡的成員在聊天，簡短，不要客服腔，也不要過度熱情或堆砌表情符號。"
         case .line, .telegram: "這是日常通訊軟體：語氣像平常傳訊息，自然口語、簡短，可以用常見的語助詞，但不要裝熟、不要過度可愛或堆砌表情符號。"
         }
     }
@@ -59,6 +62,14 @@ enum Readers {
         case .slack:
             guard let (convo, snapshot) = Slack.read(pid: pid, myName: myName) else { return nil }
             return Reading(conversation: convo, composer: snapshot.elements[convo.composerHandle])
+        case .discord:
+            for window in AXSnapshot.windows(pid: pid) {
+                let snapshot = AXSnapshot(window: window)
+                if let convo = DiscordParser.parse(window: snapshot.root, myName: myName) {
+                    return Reading(conversation: convo, composer: snapshot.elements[convo.composerHandle])
+                }
+            }
+            return nil
         case .line: return await PixelReader.shared.readLine(pid: pid)
         case .telegram: return await PixelReader.shared.readTelegram(pid: pid)
         }
