@@ -3,7 +3,7 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 ./scripts/build-app.sh
-pkill -x Wingman || true
+pkill -x Wingman && sleep 1 || true   # LaunchServices refuses to open an app that is still quitting (-600)
 rm -rf /Applications/Wingman.app
 cp -R build/Wingman.app /Applications/Wingman.app
 open /Applications/Wingman.app
