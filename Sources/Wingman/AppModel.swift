@@ -59,9 +59,10 @@ final class AppModel: ObservableObject {
     /// Sample state for `Wingman --render`, so panel changes can be looked at before shipping.
     /// A made-up chat for `--render`, in Chinese under a Chinese interface and in English otherwise,
     /// since drafts follow the chat's language.
-    func loadSample(phase: Phase, drafts: Int = 3, scored: Bool = true) {
+    func loadSample(phase: Phase, drafts: Int = 3, scored: Bool = true, note: String? = nil) {
         let chinese = interfaceLanguage.hasPrefix("zh")
         chatInFront = true
+        self.note = note
         conversation = Conversation(
             title: chinese ? "#開發" : "#dev", isThread: true,
             messages: [ChatMessage(sender: "Mia", time: chinese ? "中午 12:39" : "12:39 PM",

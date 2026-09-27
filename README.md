@@ -8,7 +8,7 @@ Jev does the deciding and an LLM only does the writing. Jev does not write prose
 
 [繁體中文說明](README.zh-TW.md)
 
-![Wingman's suggestion panel](docs/panel-en.png)
+![A message arrives, ⌥Space opens three suggestions, ★ marks the best, Enter types it into the message box](docs/demo-en.gif)
 
 ## How it works
 
@@ -74,6 +74,7 @@ build/Wingman.app/Contents/MacOS/Wingman --render /tmp/wingman   # the panel, on
 /Applications/Wingman.app/Contents/MacOS/Wingman --dump --app instagram   # what a reader sees now (redacted)
 /Applications/Wingman.app/Contents/MacOS/Wingman --probe com.hnc.Discord --wait   # an app's accessibility tree
 OPENROUTER_API_KEY=… scripts/bench-writers.py                     # compare writer models on made-up threads
+scripts/make-demo.py                                               # the GIFs at the top of the READMEs (needs ffmpeg)
 ```
 
 - `Sources/WingmanCore`: pure logic with tests (Slack, Discord, Messenger, Instagram and Threads parsers, which web pages are read, OCR bubble parser, Jev and LLM decoders, language and safety rules, the sounds).

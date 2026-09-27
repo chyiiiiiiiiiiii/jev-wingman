@@ -12,6 +12,9 @@ if let index = arguments.firstIndex(of: "--probe"), index + 1 < arguments.count 
     exit(Dump.probe(bundleID: arguments[index + 1], wait: arguments.contains("--wait"), region: region, limit: limit,
                     host: host))
 }
+if let index = arguments.firstIndex(of: "--render-demo"), index + 1 < arguments.count {
+    exit(MainActor.assumeIsolated { Render.demo(to: arguments[index + 1]) })
+}
 if let index = arguments.firstIndex(of: "--render"), index + 1 < arguments.count {
     exit(MainActor.assumeIsolated { Render.run(to: arguments[index + 1]) })
 }

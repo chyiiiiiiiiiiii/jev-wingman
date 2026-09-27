@@ -8,7 +8,7 @@ Wingman 是一個常駐在 macOS 選單列的小工具。它會讀你眼前的�
 
 [English](README.md)
 
-![Wingman 的建議面板](docs/panel-zh-Hant.png)
+![訊息進來，按 ⌥Space 打開 3 句建議，★ 標出最推薦的一句，按 Enter 填進輸入框](docs/demo-zh-Hant.gif)
 
 ## 運作方式
 
@@ -80,6 +80,7 @@ build/Wingman.app/Contents/MacOS/Wingman --render /tmp/wingman   # 把面板、�
 /Applications/Wingman.app/Contents/MacOS/Wingman --dump --app instagram   # 現在讀到了什麼（文字會遮掉）
 /Applications/Wingman.app/Contents/MacOS/Wingman --probe com.hnc.Discord --wait   # 看某個 App 的畫面結構
 OPENROUTER_API_KEY=… scripts/bench-writers.py                     # 用虛構對話比較寫回覆的模型
+scripts/make-demo.py                                               # 產生 README 最上面的 GIF（需要 ffmpeg）
 ```
 
 - `Sources/WingmanCore`：純邏輯，都有測試（Slack、Discord、Messenger、Instagram、Threads 的解析、哪些網頁可以讀、截圖辨識的氣泡分析、Jev 與 LLM 回應的解碼、語言與安全規則、音效）。
