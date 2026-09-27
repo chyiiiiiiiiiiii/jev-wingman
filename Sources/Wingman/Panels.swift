@@ -252,6 +252,8 @@ struct SuggestionView: View {
                     .font(.system(size: 11)).foregroundStyle(.secondary)
                     .frame(height: 14, alignment: .leading)
                     .contentTransition(.opacity)
+                // A slot is as tall as what it holds: a skeleton keeps two lines' room while writing, and
+                // a shorter draft settles in with an animated collapse rather than leaving a gap.
                 ForEach(0..<3, id: \.self) { slot in
                     ZStack(alignment: .topLeading) {
                         if slot < model.candidates.count {
@@ -260,14 +262,10 @@ struct SuggestionView: View {
                             SkeletonRow().transition(.opacity)
                         }
                     }
-                    .frame(minHeight: Self.rowHeight, alignment: .topLeading)
                 }
             }
         }
     }
-
-    /// Two lines of draft; a skeleton row is the same height, so a draft replacing it moves nothing.
-    static let rowHeight: CGFloat = 70
 
     private var status: String {
         switch model.phase {

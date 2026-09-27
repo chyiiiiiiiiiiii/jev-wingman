@@ -67,8 +67,8 @@ final class AppModel: ObservableObject {
         if drafts > 0 {
             candidates = [
                 Candidate(strategy: "直接答應", text: "可以，我下午把新的欄位補上，好了再跟你說", score: 0.12),
-                Candidate(strategy: "先問用途", text: "你說的是 v2 的文件，還是整份都要改？我先確認範圍", score: 0.71),
-                Candidate(strategy: "提醒音源", text: "可以，但要等後端的欄位定案，大概明天", score: 0.17),
+                Candidate(strategy: "簡短回應", text: "今天來得及", score: 0.17),
+                Candidate(strategy: "表達感謝", text: "謝謝提醒，我現在就改", score: 0.71),
             ].prefix(drafts).map { scored ? $0 : Candidate(strategy: $0.strategy, text: $0.text) }
         }
     }
