@@ -65,7 +65,18 @@ enum Dump {
             print("5 秒後讀取，請切到 \(app.name)…")
             try? await Task.sleep(for: .seconds(5))
         }
-        if app.isElectron { AXSnapshot.enableWebAccessibility(pid: running.processIdentifier) }
+        if app.isElectron || app.isBrowser {
+            // Chromium builds the page tree a moment after it is asked; watch it arrive.
+            AXSnapshot.enableWebAccessibility(pid: running.processIdentifier)
+            var counts: [String] = []
+            for _ in 0..<6 {
+                try? await Task.sleep(for: .seconds(1))
+                let window = AXSnapshot.windows(pid: running.processIdentifier).first
+                let size = window.map { AXSnapshot(window: $0, maxNodes: 8000).elements.count } ?? 0
+                counts.append("\(size)\(window.flatMap(AXSnapshot.pageURL(of:)) == nil ? "" : "+page")")
+            }
+            print("nodes over 6 s after enabling: " + counts.joined(separator: " → "))
+        }
         guard let reading = await Readers.read(app, pid: running.processIdentifier, myName: Prefs.storedMyName) else {
             // Which gate stopped it: the window, its title, the tree, or the message box.
             let windows = AXSnapshot.windows(pid: running.processIdentifier)
