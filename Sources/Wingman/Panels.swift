@@ -114,6 +114,7 @@ struct PillView: View {
     var body: some View {
         Text(model.pillText ?? "")
             .font(.system(size: 12, weight: .medium))
+            .foregroundStyle(model.phase == .skipped ? .secondary : .primary)
             .padding(.horizontal, 10)
             .padding(.vertical, 5)
             .background(.regularMaterial, in: Capsule())
@@ -182,7 +183,7 @@ struct SuggestionView: View {
 
     @ViewBuilder private var content: some View {
         switch model.phase {
-        case .idle, .thinking:
+        case .idle, .thinking, .skipped:
             HStack(spacing: 8) {
                 ProgressView().controlSize(.small)
                 Text(model.judgment == nil ? "正在讀對話、判斷怎麼回…" : "正在寫回覆…").foregroundStyle(.secondary)

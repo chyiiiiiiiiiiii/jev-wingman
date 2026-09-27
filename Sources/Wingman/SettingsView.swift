@@ -4,6 +4,54 @@ import Combine
 import ServiceManagement
 import SwiftUI
 
+/// Click, then press the new combination. Esc cancels; plain keys are refused.
+struct HotkeyRecorder: View {
+    @ObservedObject var settings: Prefs
+    @State private var recording = false
+    @State private var monitor: Any?
+    @State private var problem: String?
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            HStack {
+                Text("展開建議的快捷鍵")
+                Spacer()
+                Button(recording ? "請按下新的組合…（Esc 取消）" : settings.hotkey.label) { recording ? stop() : start() }
+                if settings.hotkey != .standard && !recording {
+                    Button("還原") { settings.hotkey = .standard }.controlSize(.small)
+                }
+            }
+            if let problem { Text(problem).font(.caption).foregroundStyle(.red) }
+        }
+        .onDisappear(perform: stop)
+    }
+
+    private func start() {
+        problem = nil
+        recording = true
+        monitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { event in
+            defer { stop() }
+            if event.keyCode == 53 { return nil }
+            guard let setting = HotkeySetting(event: event) else {
+                problem = "要搭配 ⌘、⌥ 或 ⌃，不然會吃掉一般打字"
+                return nil
+            }
+            if setting != settings.hotkey && !Hotkey.isFree(setting) {
+                problem = "\(setting.label) 已經被其他 App 用了，換一組試試"
+                return nil
+            }
+            settings.hotkey = setting
+            return nil
+        }
+    }
+
+    private func stop() {
+        if let monitor { NSEvent.removeMonitor(monitor) }
+        monitor = nil
+        recording = false
+    }
+}
+
 struct SettingsView: View {
     @ObservedObject var settings: Prefs
     @ObservedObject var model: AppModel
@@ -104,7 +152,8 @@ struct SettingsView: View {
             } header: { Text("3. 你是誰") }
 
             Section {
-                Text("Slack 收到訊息時，輸入框右上方會出現「✦ 3 個建議」。按 \(model.hotkeyLabel) 或點它展開，按 1、2、3 填進輸入框，確認後自己按 Enter 送出。")
+                HotkeyRecorder(settings: settings)
+                Text("Slack 收到訊息時，輸入框右上方會出現「✦ 3 個建議」。按 \(settings.hotkey.label) 或點它展開，按 Enter 填入 ★ 推薦的那句，或按 1、2、3 選一句，確認後自己按 Enter 送出。")
                     .font(.callout)
             } header: { Text("怎麼用") }
 

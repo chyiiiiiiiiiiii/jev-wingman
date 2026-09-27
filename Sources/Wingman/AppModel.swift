@@ -4,7 +4,7 @@ import WingmanCore
 /// What Wingman knows about the Slack conversation in front of the user, and what it suggests.
 @MainActor
 final class AppModel: ObservableObject {
-    enum Phase: Equatable { case idle, thinking, ready, failed(String) }
+    enum Phase: Equatable { case idle, thinking, ready, skipped, failed(String) }
 
     @Published private(set) var conversation: Conversation?
     @Published private(set) var phase: Phase = .idle
@@ -37,6 +37,7 @@ final class AppModel: ObservableObject {
         case .idle: return nil
         case .thinking: return "正在想怎麼回…"
         case .ready: return "✦ \(candidates.count) 個建議  \(hotkeyLabel)"
+        case .skipped: return "Jev：這則可以不回 · \(hotkeyLabel) 仍可產生"
         case .failed: return "⚠︎ 沒有產生建議  \(hotkeyLabel)"
         }
     }
@@ -116,7 +117,7 @@ final class AppModel: ObservableObject {
             }
             let picks = self.judgment?.strategies.prefix(3).map(\.name) ?? []
             if auto, let judgment = self.judgment, judgment.needsReply < 0.5 {
-                self.phase = .idle
+                self.phase = .skipped
                 Log.write("drafts skipped needs_reply=\(String(format: "%.2f", judgment.needsReply))")
                 return
             }
@@ -187,7 +188,7 @@ final class AppModel: ObservableObject {
 
     func openPanel() {
         guard let convo = conversation else { return }
-        if Self.fingerprint(convo) != shownFingerprint || phase == .idle { analyze() }
+        if Self.fingerprint(convo) != shownFingerprint || phase == .idle || phase == .skipped { analyze() }
         if case .failed = phase { analyze() }
         panelShown = true
     }

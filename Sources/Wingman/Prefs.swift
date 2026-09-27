@@ -20,6 +20,9 @@ final class Prefs: ObservableObject {
     @Published var model: String { didSet { UserDefaults.standard.set(model, forKey: "model") } }
     @Published var myName: String { didSet { UserDefaults.standard.set(myName, forKey: "myName") } }
     @Published var paused: Bool { didSet { UserDefaults.standard.set(paused, forKey: "paused") } }
+    @Published var hotkey: HotkeySetting {
+        didSet { UserDefaults.standard.set(try? JSONEncoder().encode(hotkey), forKey: "hotkey") }
+    }
 
     static var storedMyName: String? {
         UserDefaults.standard.string(forKey: "myName").flatMap { $0.isEmpty ? nil : $0 }
@@ -32,6 +35,8 @@ final class Prefs: ObservableObject {
         model = UserDefaults.standard.string(forKey: "model") ?? Self.defaultModel
         myName = UserDefaults.standard.string(forKey: "myName") ?? ""
         paused = UserDefaults.standard.bool(forKey: "paused")
+        hotkey = UserDefaults.standard.data(forKey: "hotkey")
+            .flatMap { try? JSONDecoder().decode(HotkeySetting.self, from: $0) } ?? .standard
     }
 
     var hasWriterKey: Bool { !openRouterKey.isEmpty }

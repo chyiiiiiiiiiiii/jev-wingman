@@ -1,6 +1,7 @@
 import AppKit
 import ApplicationServices
 import Carbon.HIToolbox
+import Combine
 import SwiftUI
 
 @MainActor
@@ -13,6 +14,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var reading = false
     private var accessibilityEnabledFor: pid_t?
     private var hotkey: Hotkey?
+    private var hotkeyObservation: AnyCancellable?
     private let axQueue = DispatchQueue(label: "wingman.ax", qos: .userInitiated)
 
     func applicationDidFinishLaunching(_ notification: Notification) {
@@ -24,6 +26,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             forName: NSWorkspace.didActivateApplicationNotification, object: nil, queue: .main
         ) { [weak self] _ in
             MainActor.assumeIsolated { self?.frontmostChanged() }
+        }
+        model.hotkeyLabel = Prefs.shared.hotkey.label
+        hotkeyObservation = Prefs.shared.$hotkey.dropFirst().sink { [weak self] _ in
+            DispatchQueue.main.async {
+                guard let self else { return }
+                self.hotkey = nil
+                self.model.hotkeyLabel = Prefs.shared.hotkey.label
+                if Slack.isFrontmost { self.registerHotkey() }
+            }
         }
         if !AXIsProcessTrusted() {
             AXIsProcessTrustedWithOptions([kAXTrustedCheckOptionPrompt.takeUnretainedValue(): true] as CFDictionary)
@@ -81,16 +92,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     private func registerHotkey() {
         guard hotkey == nil else { return }
-        let toggle: () -> Void = { [weak self] in
+        let setting = Prefs.shared.hotkey
+        hotkey = Hotkey(keyCode: setting.keyCode, modifiers: setting.modifiers, id: 1) { [weak self] in
             MainActor.assumeIsolated { self?.model.togglePanel() }
         }
-        if let key = Hotkey(keyCode: kVK_Space, modifiers: optionKey, id: 1, handler: toggle) {
-            hotkey = key
-            model.hotkeyLabel = "⌥Space"
-        } else {
-            hotkey = Hotkey(keyCode: kVK_Space, modifiers: optionKey | controlKey, id: 2, handler: toggle)
-            model.hotkeyLabel = "⌃⌥Space"
-        }
+        model.hotkeyLabel = setting.label
+        if hotkey == nil { Log.write("hotkey \(setting.label) is taken") }
     }
 
     /// A menu bar app has no menus, yet ⌘V, ⌘C and ⌘A in text fields are the Edit menu's key
