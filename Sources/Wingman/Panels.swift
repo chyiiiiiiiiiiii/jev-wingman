@@ -212,11 +212,17 @@ struct SuggestionView: View {
             Text("\(index + 1)")
                 .font(.system(size: 12, weight: .bold, design: .rounded))
                 .frame(width: 20, height: 20)
-                .background(Color.accentColor.opacity(best ? 0.35 : 0.15), in: RoundedRectangle(cornerRadius: 5))
+                .foregroundStyle(best ? .white : .primary)
+                .background(best ? Self.brand : Color.accentColor.opacity(0.15), in: RoundedRectangle(cornerRadius: 5))
             VStack(alignment: .leading, spacing: 2) {
                 HStack(spacing: 6) {
                     if best {
-                        Text("★ 最推薦").font(.system(size: 11, weight: .semibold)).foregroundStyle(Color.accentColor)
+                        Text("★ 最推薦")
+                            .font(.system(size: 11, weight: .bold))
+                            .foregroundStyle(.white)
+                            .padding(.horizontal, 6)
+                            .padding(.vertical, 1)
+                            .background(Self.brand, in: Capsule())
                     } else if let score = candidate.score, score >= 0.25 {
                         Text("也不錯").font(.system(size: 11, weight: .medium)).foregroundStyle(.secondary)
                     }
@@ -237,13 +243,17 @@ struct SuggestionView: View {
             Spacer(minLength: 0)
         }
         .padding(8)
-        .background(best ? Color.accentColor.opacity(0.10) : hovered == index ? Color.accentColor.opacity(0.06) : .clear,
+        .background(best ? Self.brand.opacity(0.12) : hovered == index ? Color.accentColor.opacity(0.06) : .clear,
                     in: RoundedRectangle(cornerRadius: 8))
-        .overlay(RoundedRectangle(cornerRadius: 8).strokeBorder(best ? Color.accentColor.opacity(0.5) : .clear))
+        .overlay(RoundedRectangle(cornerRadius: 8).strokeBorder(best ? Self.brand.opacity(0.8) : .clear))
         .contentShape(Rectangle())
         .onHover { hovered = $0 ? index : (hovered == index ? nil : hovered) }
         .onTapGesture { model.insert(index) }
     }
+
+    /// The icon's indigo, not the system accent: white text on it stays legible (about 6:1) on the
+    /// dark material, where accent-coloured text on an accent-tinted row did not.
+    static let brand = Color(red: 0.31, green: 0.27, blue: 0.90)
 
     /// Jev's score as a bar only: its probabilities run to extremes (99 / 0 / 1), and a bare "0%"
     /// beside a sensible draft reads as "wrong". The number is in the tooltip.
@@ -254,7 +264,7 @@ struct SuggestionView: View {
         var body: some View {
             ZStack(alignment: .leading) {
                 Capsule().fill(Color.secondary.opacity(0.2))
-                Capsule().fill(highlighted ? Color.accentColor : Color.secondary.opacity(0.6))
+                Capsule().fill(highlighted ? SuggestionView.brand : Color.secondary.opacity(0.6))
                     .frame(width: max(3, 48 * score))
             }
             .frame(width: 48, height: 4)
