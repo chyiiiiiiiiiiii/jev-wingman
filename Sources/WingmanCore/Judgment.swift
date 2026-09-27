@@ -3,6 +3,11 @@ import Foundation
 public struct Strategy: Equatable {
     public var name: String
     public var probability: Double
+
+    public init(name: String, probability: Double) {
+        self.name = name
+        self.probability = probability
+    }
 }
 
 public struct Judgment: Equatable {
@@ -14,6 +19,14 @@ public struct Judgment: Equatable {
     public var urgency: Double
     /// Every reply strategy, most probable first.
     public var strategies: [Strategy]
+
+    public init(intent: String, intentConfidence: Double, needsReply: Double, urgency: Double, strategies: [Strategy]) {
+        self.intent = intent
+        self.intentConfidence = intentConfidence
+        self.needsReply = needsReply
+        self.urgency = urgency
+        self.strategies = strategies
+    }
 }
 
 public enum JevDecoder {

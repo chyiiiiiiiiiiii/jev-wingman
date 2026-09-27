@@ -5,6 +5,8 @@ import Security
 /// which keeps a developer's shell keys out of the Keychain entirely.
 final class Prefs: ObservableObject {
     static let shared = Prefs()
+    /// Off for `--render`: an unsigned debug build reading the Keychain waits on a permission prompt.
+    nonisolated(unsafe) static var usesKeychain = true
     static let defaultModel = "deepseek/deepseek-v4.1-flash"
 
     /// Picked by scripts/bench-writers.py on 2026-09-27: speed, cost, Taiwan wording, and whether
@@ -30,8 +32,8 @@ final class Prefs: ObservableObject {
 
     private init() {
         let env = ProcessInfo.processInfo.environment
-        openRouterKey = env["OPENROUTER_API_KEY"] ?? Keychain.get(account: "openrouter") ?? ""
-        typesafeKey = env["TYPESAFE_API_KEY"] ?? Keychain.get(account: "typesafe") ?? ""
+        openRouterKey = env["OPENROUTER_API_KEY"] ?? (Self.usesKeychain ? Keychain.get(account: "openrouter") : nil) ?? ""
+        typesafeKey = env["TYPESAFE_API_KEY"] ?? (Self.usesKeychain ? Keychain.get(account: "typesafe") : nil) ?? ""
         model = UserDefaults.standard.string(forKey: "model") ?? Self.defaultModel
         myName = UserDefaults.standard.string(forKey: "myName") ?? ""
         paused = UserDefaults.standard.bool(forKey: "paused")

@@ -51,6 +51,25 @@ final class AppModel: ObservableObject {
         return candidates.indices.max { (candidates[$0].score ?? 0) < (candidates[$1].score ?? 0) }
     }
 
+    /// Sample state for `Wingman --render`, so panel changes can be looked at before shipping.
+    func loadSample(phase: Phase) {
+        chatInFront = true
+        conversation = Conversation(
+            title: "#開發", isThread: true,
+            messages: [ChatMessage(sender: "Mia", time: "中午 12:39", text: "API 文件今天來得及更新嗎？")],
+            draft: "", composerHandle: -1, composerFrame: CGRect(x: 0, y: 0, width: 560, height: 40))
+        judgment = Judgment(intent: "問資訊", intentConfidence: 0.9, needsReply: 0.8, urgency: 1.2,
+                            strategies: [])
+        self.phase = phase
+        if phase == .ready {
+            candidates = [
+                Candidate(strategy: "直接答應", text: "可以，我下午把新的欄位補上，好了再跟你說", score: 0.12),
+                Candidate(strategy: "先問用途", text: "你說的是 v2 的文件，還是整份都要改？我先確認範圍", score: 0.71),
+                Candidate(strategy: "提醒音源", text: "可以，但要等後端的欄位定案，大概明天", score: 0.17),
+            ]
+        }
+    }
+
     // MARK: - Screen updates
 
     func chatLeft() {

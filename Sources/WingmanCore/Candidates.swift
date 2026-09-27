@@ -5,6 +5,12 @@ public struct Candidate: Equatable {
     public var text: String
     /// Jev's probability that this is the draft to send; nil until ranked.
     public var score: Double?
+
+    public init(strategy: String, text: String, score: Double? = nil) {
+        self.strategy = strategy
+        self.text = text
+        self.score = score
+    }
 }
 
 public enum CandidateDecoder {
