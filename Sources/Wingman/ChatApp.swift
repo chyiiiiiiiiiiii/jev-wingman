@@ -65,6 +65,14 @@ struct Reading {
     var composer: AXUIElement?
 }
 
+/// messenger.com or facebook.com/messages; the title alone varies (a contact's name, a translation).
+func isMessenger(_ window: AXUIElement) -> Bool {
+    if let url = AXSnapshot.pageURL(of: window), let host = url.host?.lowercased() {
+        return host.hasSuffix("messenger.com") || (host.hasSuffix("facebook.com") && url.path.hasPrefix("/messages"))
+    }
+    return AXSnapshot.title(of: window).localizedCaseInsensitiveContains("messenger")
+}
+
 enum Readers {
     static func read(_ app: ChatApp, pid: pid_t, myName: String?) async -> Reading? {
         switch app {
@@ -80,9 +88,8 @@ enum Readers {
             }
             return nil
         case .messenger:
-            // Only a Messenger tab is read; any other page stops at its title.
-            guard let window = AXSnapshot.windows(pid: pid).first,
-                  AXSnapshot.title(of: window).localizedCaseInsensitiveContains("messenger") else { return nil }
+            // Only a Messenger tab is read; any other page stops at its address (or title).
+            guard let window = AXSnapshot.windows(pid: pid).first, isMessenger(window) else { return nil }
             AXSnapshot.enableWebAccessibility(pid: pid)
             let snapshot = AXSnapshot(window: window, maxNodes: 8000)
             guard let convo = MessengerParser.parse(window: snapshot.root) else { return nil }

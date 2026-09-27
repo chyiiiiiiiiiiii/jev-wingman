@@ -59,6 +59,26 @@ struct AXSnapshot {
         return nil
     }
 
+    /// The address of the page a browser window shows: its web area's AXURL, found within a few levels.
+    static func pageURL(of window: AXUIElement) -> URL? {
+        var queue = [window], visited = 0
+        while !queue.isEmpty, visited < 400 {
+            let element = queue.removeFirst()
+            visited += 1
+            var role: CFTypeRef?
+            AXUIElementCopyAttributeValue(element, kAXRoleAttribute as CFString, &role)
+            if role as? String == "AXWebArea" {
+                var url: CFTypeRef?
+                AXUIElementCopyAttributeValue(element, kAXURLAttribute as CFString, &url)
+                return url as? URL
+            }
+            var children: CFTypeRef?
+            AXUIElementCopyAttributeValue(element, kAXChildrenAttribute as CFString, &children)
+            queue += (children as? [AXUIElement]) ?? []
+        }
+        return nil
+    }
+
     static func title(of window: AXUIElement) -> String {
         var value: CFTypeRef?
         AXUIElementCopyAttributeValue(window, kAXTitleAttribute as CFString, &value)

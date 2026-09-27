@@ -83,7 +83,9 @@ enum Dump {
                     node.children.forEach(visit)
                 }
                 visit(root)
-                print("  window “\(title.prefix(10))”(\(title.count)) · \(nodes) nodes · inputs: \(inputs.isEmpty ? "none" : inputs.joined(separator: ", "))")
+                let page = AXSnapshot.pageURL(of: window).map { "\($0.host ?? "?")\($0.path.prefix(10))" } ?? "no page"
+                print("  window “\(title.prefix(10))”(\(title.count)) · \(page) · Messenger: \(isMessenger(window)) · "
+                      + "\(nodes) nodes · inputs: \(inputs.isEmpty ? "none" : inputs.joined(separator: ", "))")
             }
             return 1
         }
