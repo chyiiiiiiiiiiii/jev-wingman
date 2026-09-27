@@ -125,7 +125,9 @@ struct PillView: View {
     var body: some View {
         Text(model.pillText ?? "")
             .font(.system(size: 12, weight: .medium))
-            .foregroundStyle(model.phase == .skipped ? .secondary : .primary)
+            .foregroundStyle(model.phase == .skipped || model.phase == .idle ? .secondary : .primary)
+            .opacity(model.phase == .idle && model.note == nil ? 0.7 : 1)
+            .help("Wingman：按 \(model.hotkeyLabel) 或點這裡，幫你想回覆")
             .padding(.horizontal, 10)
             .padding(.vertical, 5)
             .background(.regularMaterial, in: Capsule())

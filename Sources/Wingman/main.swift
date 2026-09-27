@@ -13,6 +13,18 @@ if let index = arguments.firstIndex(of: "--probe"), index + 1 < arguments.count 
 if let index = arguments.firstIndex(of: "--render"), index + 1 < arguments.count {
     exit(MainActor.assumeIsolated { Render.run(to: arguments[index + 1]) })
 }
+if arguments.contains("--dump"), let index = arguments.firstIndex(of: "--app"), index + 1 < arguments.count,
+   let app = ChatApp(rawValue: arguments[index + 1].lowercased()) {
+    let wait = arguments.contains("--wait")
+    let done = DispatchSemaphore(value: 0)
+    var status: Int32 = 1
+    Task.detached {
+        status = await Dump.read(app: app, wait: wait)
+        done.signal()
+    }
+    done.wait()
+    exit(status)
+}
 if arguments.contains("--dump") {
     exit(Dump.run(full: arguments.contains("--full"), trace: arguments.contains("--trace"),
               wait: arguments.contains("--wait")))

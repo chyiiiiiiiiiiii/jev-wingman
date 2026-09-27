@@ -37,7 +37,8 @@ final class AppModel: ObservableObject {
     var pillText: String? {
         if let note { return note }
         switch phase {
-        case .idle: return nil
+        // Nothing to suggest yet, but this chat is being read: a quiet mark says so and is a place to click.
+        case .idle: return conversation == nil ? nil : "✦ \(hotkeyLabel)"
         case .thinking: return "正在想怎麼回…"
         case .ready: return "✦ \(candidates.count) 個建議  \(hotkeyLabel)"
         case .skipped: return "這則可以不回 · \(hotkeyLabel) 仍可寫回覆"

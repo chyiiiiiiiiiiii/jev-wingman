@@ -55,6 +55,31 @@ enum Dump {
         return 0
     }
 
+    /// `--dump --app <slack|discord|line|telegram|messenger> [--wait]`: what the app's reader sees now.
+    static func read(app: ChatApp, wait: Bool) async -> Int32 {
+        guard AXIsProcessTrusted() else { print("Accessibility is not granted to this process."); return 1 }
+        guard let running = NSWorkspace.shared.runningApplications.first(where: { ChatApp.matching($0) == app }) else {
+            print("\(app.name) is not running."); return 1
+        }
+        if wait {
+            print("5 秒後讀取，請切到 \(app.name)…")
+            try? await Task.sleep(for: .seconds(5))
+        }
+        if app.isElectron { AXSnapshot.enableWebAccessibility(pid: running.processIdentifier) }
+        guard let reading = await Readers.read(app, pid: running.processIdentifier, myName: Prefs.storedMyName) else {
+            let title = AXSnapshot.windows(pid: running.processIdentifier).first.map(AXSnapshot.title(of:)) ?? "(no window)"
+            print("\(app.name): nothing read. Front window title starts “\(title.prefix(3))…” (\(title.count) chars)")
+            return 1
+        }
+        let convo = reading.conversation
+        let show = { (s: String) in s.count <= 2 ? s : "\(s.prefix(2))…(\(s.count))" }
+        print("\(app.name): “\(show(convo.title))” · \(convo.messages.count) messages · composer \(reading.composer == nil ? "none" : "found") · awaiting reply \(convo.awaitingReply)")
+        for message in convo.messages.suffix(12) {
+            print("  [\(message.isMe ? "me" : (message.sender.map(show) ?? "them"))] \(show(message.text))")
+        }
+        return 0
+    }
+
     /// `--probe <bundle id> [--wait]`: role, DOM classes and redacted text of every labelled node in
     /// an app's window, to learn where a new app keeps its messages before writing its reader.
     static func probe(bundleID: String, wait: Bool, region: ClosedRange<Double> = 0.2...1, limit: Int = 260) -> Int32 {

@@ -15,6 +15,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var watching: ChatApp?
     private var askedForScreenCapture = false
     private var reading = false
+    private var lastReadState = ""
     private var accessibilityEnabledFor: pid_t?
     private var hotkey: Hotkey?
     private var hotkeyObservation: AnyCancellable?
@@ -95,7 +96,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             let reading = await Readers.read(front.app, pid: front.pid, myName: me)
             guard let self else { return }
             self.reading = false
-            self.model.update(reading?.conversation, app: front.app, pid: front.pid)
+            let convo = reading?.conversation
+            let state = convo.map { "ok messages=\($0.messages.count) last=\($0.messages.last.map { $0.isMe ? "me" : "them" } ?? "-")" }
+                ?? "nothing"
+            if state != self.lastReadState {    // log changes only; no message text
+                self.lastReadState = state
+                Log.write("read \(front.app.rawValue) \(state)")
+            }
+            self.model.update(convo, app: front.app, pid: front.pid)
             if front.app.isBrowser {
                 if reading == nil { self.hotkey = nil } else { self.registerHotkey() }
             }
