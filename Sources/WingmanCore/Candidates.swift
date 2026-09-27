@@ -22,7 +22,11 @@ public enum CandidateDecoder {
               let message = ((root["choices"] as? [[String: Any]])?.first)?["message"] as? [String: Any],
               let content = message["content"] as? String
         else { throw Malformed() }
+        return try candidates(fromContent: content)
+    }
 
+    /// The drafts in a model's reply text (the envelope already removed, as when streaming).
+    public static func candidates(fromContent content: String) throws -> [Candidate] {
         let items = jsonSlices(of: content).lazy.compactMap(items(in:)).first ?? []
         let candidates = items.compactMap { item -> Candidate? in
             let text = (item["text"] as? String ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
@@ -48,5 +52,35 @@ public enum CandidateDecoder {
         guard let value = try? JSONSerialization.jsonObject(with: Data(json.utf8)) else { return nil }
         if let array = value as? [[String: Any]] { return array }
         return (value as? [String: Any])?["candidates"] as? [[String: Any]]
+    }
+}
+
+extension CandidateDecoder {
+    /// The drafts already complete in a reply that is still streaming, in the order they were written.
+    public static func completed(inPartial content: String) -> [Candidate] {
+        // Every object that has closed so far, found by brace depth outside of strings; the ones
+        // carrying a text are drafts (a {"candidates": …} wrapper closes last and has none).
+        var drafts: [Candidate] = []
+        var starts: [String.Index] = []
+        var inString = false, escaped = false
+        var index = content.startIndex
+        while index < content.endIndex {
+            let character = content[index]
+            if inString {
+                if escaped { escaped = false }
+                else if character == "\\" { escaped = true }
+                else if character == "\"" { inString = false }
+            } else if character == "\"" {
+                inString = true
+            } else if character == "{" {
+                starts.append(index)
+            } else if character == "}", let start = starts.popLast(),
+                      let object = try? JSONSerialization.jsonObject(with: Data(content[start...index].utf8)) as? [String: Any],
+                      let text = (object["text"] as? String)?.trimmingCharacters(in: .whitespacesAndNewlines), !text.isEmpty {
+                drafts.append(Candidate(strategy: object["strategy"] as? String ?? "", text: text))
+            }
+            index = content.index(after: index)
+        }
+        return drafts
     }
 }

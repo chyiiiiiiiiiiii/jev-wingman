@@ -36,3 +36,14 @@ private func completion(_ content: String) -> Data {
         try CandidateDecoder.candidates(from: completion("抱歉，我無法協助這個請求。"))
     }
 }
+
+@Test func picksCompletedDraftsOutOfAReplyStillStreaming() {
+    let partial = #"```json\n[{"strategy":"直接答應","text":"可以，用 {name} 那個版本，\"今天\"下班前發"},{"strategy":"先問清"#
+
+    #expect(CandidateDecoder.completed(inPartial: partial) == [
+        Candidate(strategy: "直接答應", text: #"可以，用 {name} 那個版本，"今天"下班前發"#),
+    ])
+    #expect(CandidateDecoder.completed(inPartial: partial + #"楚","text":"是哪個客戶？"}"#).map(\.text)
+            == [#"可以，用 {name} 那個版本，"今天"下班前發"#, "是哪個客戶？"])
+    #expect(CandidateDecoder.completed(inPartial: #"{"candidates": [{"strategy": "a", "text": "好"}"#).map(\.text) == ["好"])
+}

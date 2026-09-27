@@ -225,11 +225,15 @@ struct SuggestionView: View {
     @ViewBuilder private var content: some View {
         switch model.phase {
         case .idle, .thinking, .skipped:
-            // Skeleton rows the size of drafts, so the panel keeps its height when they arrive.
+            // Drafts appear as they are written; skeleton rows hold the rest of the space so the
+            // panel keeps its height.
             VStack(alignment: .leading, spacing: 4) {
                 Text(model.judgment == nil ? "正在讀對話、判斷怎麼回…" : "正在寫回覆…")
                     .font(.system(size: 11)).foregroundStyle(.secondary)
-                ForEach(0..<3, id: \.self) { _ in SkeletonRow() }
+                ForEach(Array(model.candidates.enumerated()), id: \.offset) { index, candidate in
+                    candidateRow(index, candidate).transition(Motion.arrival(0))
+                }
+                ForEach(0..<max(0, 3 - model.candidates.count), id: \.self) { _ in SkeletonRow() }
             }
         case let .failed(reason):
             VStack(alignment: .leading, spacing: 6) {

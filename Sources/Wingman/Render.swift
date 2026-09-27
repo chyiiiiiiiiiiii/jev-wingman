@@ -13,16 +13,17 @@ enum Render {
         try? FileManager.default.createDirectory(at: url, withIntermediateDirectories: true)
         for (name, appearance, backdrop) in [("light", NSAppearance.Name.aqua, NSColor(white: 0.96, alpha: 1)),
                                              ("dark", .darkAqua, NSColor(red: 0.11, green: 0.11, blue: 0.13, alpha: 1))] {
-            for phase in [AppModel.Phase.ready, .thinking] {
+            for (state, phase, drafts) in [("ready", AppModel.Phase.ready, 3), ("thinking", .thinking, 0),
+                                           ("streaming", .thinking, 1)] {
                 let model = AppModel()
-                model.loadSample(phase: phase)
+                model.loadSample(phase: phase, drafts: drafts)
                 let view = VStack(alignment: .trailing, spacing: 16) {
                     PillView(model: model)
                     SuggestionView(model: model)
                 }
                 .padding(24)
                 .background(Color(nsColor: backdrop))
-                let file = url.appendingPathComponent("panel-\(name)-\(phase == .ready ? "ready" : "thinking").png")
+                let file = url.appendingPathComponent("panel-\(name)-\(state).png")
                 write(view, appearance: NSAppearance(named: appearance)!, to: file)
                 print(file.path)
             }

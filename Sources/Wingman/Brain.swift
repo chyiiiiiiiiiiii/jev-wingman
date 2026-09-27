@@ -41,8 +41,12 @@ struct Brain {
         return try JevDecoder.scores(from: data, for: drafts)
     }
 
+    /// Called with the drafts finished so far while the model is still writing.
+    typealias Drafts = @Sendable ([Candidate]) async -> Void
+
     /// One reply per strategy, in the given order.
-    func write(_ convo: Conversation, strategies: [String], judgment: Judgment?) async throws -> [Candidate] {
+    func write(_ convo: Conversation, strategies: [String], judgment: Judgment?,
+               onDrafts: @escaping Drafts) async throws -> [Candidate] {
         let asks = strategies.map { "- \($0)：\(ReplyQuestions.description(ofStrategy: $0))" }.joined(separator: "\n")
         var brief = strategies.isEmpty
             ? "請寫三則回法不同的回覆，strategy 欄位用兩到六個字描述那一則的回法。"
@@ -50,11 +54,12 @@ struct Brain {
         if let judgment {
             brief = "對方的意圖：\(judgment.intent)。\n" + brief
         }
-        return try await complete(convo, brief: brief)
+        return try await complete(convo, brief: brief, onDrafts: onDrafts)
     }
 
     /// Rewrites along the user's own direction ("更短", or "跟他說週五前給").
-    func rewrite(_ convo: Conversation, direction: String, previous: [Candidate]) async throws -> [Candidate] {
+    func rewrite(_ convo: Conversation, direction: String, previous: [Candidate],
+                 onDrafts: @escaping Drafts) async throws -> [Candidate] {
         let drafts = previous.map { "- \($0.text)" }.joined(separator: "\n")
         let brief = """
         我想這樣回：「\(direction)」
@@ -62,7 +67,7 @@ struct Brain {
         \(drafts)
         請照我的意思寫三則不同說法的回覆，strategy 欄位用兩到六個字描述那一則的差別。
         """
-        return try await complete(convo, brief: brief)
+        return try await complete(convo, brief: brief, onDrafts: onDrafts)
     }
 
     /// One line per service, for the settings window.
@@ -111,7 +116,7 @@ struct Brain {
         ]
     }
 
-    private func complete(_ convo: Conversation, brief: String) async throws -> [Candidate] {
+    private func complete(_ convo: Conversation, brief: String, onDrafts: Drafts) async throws -> [Candidate] {
         guard !settings.openRouterKey.isEmpty else { throw Failure.missingKey }
         let me = settings.myName.isEmpty ? "我" : settings.myName
         let transcript = convo.messages.suffix(Self.contextLimit).map { m in
@@ -130,6 +135,7 @@ struct Brain {
             "model": settings.model,
             "temperature": 0.7,
             "max_tokens": 700,
+            "stream": true,     // drafts show up one by one instead of all after 2–4 s
             "usage": ["include": true],   // OpenRouter then reports the charge in the response
             "reasoning": ["enabled": false],   // thinking adds seconds and output tokens to a two-line reply
             // Slack threads are company data: keep them off hosts in mainland China, and try hosts
@@ -137,12 +143,36 @@ struct Brain {
             "provider": ["order": Self.preferredProviders, "ignore": Self.excludedProviders],
             "messages": [["role": "system", "content": Self.writerRules(for: app)], ["role": "user", "content": user]],
         ]
-        let data = try await post(URL(string: "https://openrouter.ai/api/v1/chat/completions")!,
-                                  key: settings.openRouterKey, body: body)
-        let usage = (try? JSONSerialization.jsonObject(with: data) as? [String: Any])?["usage"] as? [String: Any]
+        var request = try jsonRequest(URL(string: "https://openrouter.ai/api/v1/chat/completions")!,
+                                      key: settings.openRouterKey, body: body)
+        request.timeoutInterval = 45
+        let (bytes, response) = try await URLSession.shared.bytes(for: request)
+        let code = (response as? HTTPURLResponse)?.statusCode ?? 0
+        guard code == 200 else {
+            var reply = Data()
+            for try await byte in bytes where reply.count < 2000 { reply.append(byte) }
+            throw Failure.http(code, String(decoding: reply, as: UTF8.self))
+        }
+        // Server-sent events: "data: {chunk}" lines, then "data: [DONE]"; the last chunk carries usage.
+        var content = "", shown = 0
+        var usage: [String: Any]?
+        for try await line in bytes.lines where line.hasPrefix("data: ") {
+            let payload = line.dropFirst(6)
+            if payload == "[DONE]" { break }
+            guard let chunk = try? JSONSerialization.jsonObject(with: Data(payload.utf8)) as? [String: Any] else { continue }
+            if let reported = chunk["usage"] as? [String: Any] { usage = reported }
+            let delta = ((chunk["choices"] as? [[String: Any]])?.first?["delta"] as? [String: Any])?["content"] as? String
+            guard let delta else { continue }
+            content += delta
+            let drafts = CandidateDecoder.completed(inPartial: content)
+            if drafts.count > shown {
+                shown = drafts.count
+                await onDrafts(drafts)
+            }
+        }
         Log.write("write model=\(settings.model) tokens in=\(usage?["prompt_tokens"] as? Int ?? 0) "
                   + "out=\(usage?["completion_tokens"] as? Int ?? 0) cost=$\(usage?["cost"] as? Double ?? 0)")
-        return try CandidateDecoder.candidates(from: data)
+        return try CandidateDecoder.candidates(fromContent: content)
     }
 
     /// Say which language answers; left to themselves, models drift with whatever the thread is in.
@@ -170,7 +200,7 @@ struct Brain {
     - 只輸出 JSON 陣列，不要其他文字：[{"strategy": "<回法>", "text": "<回覆>"}]
     """ }
 
-    private func post(_ url: URL, key: String, body: [String: Any]) async throws -> Data {
+    private func jsonRequest(_ url: URL, key: String, body: [String: Any]) throws -> URLRequest {
         guard !key.isEmpty else { throw Failure.missingKey }
         var request = URLRequest(url: url, timeoutInterval: 30)
         request.httpMethod = "POST"
@@ -178,6 +208,11 @@ struct Brain {
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.setValue("Wingman", forHTTPHeaderField: "X-Title")
         request.httpBody = try JSONSerialization.data(withJSONObject: body)
+        return request
+    }
+
+    private func post(_ url: URL, key: String, body: [String: Any]) async throws -> Data {
+        let request = try jsonRequest(url, key: key, body: body)
         let (data, response) = try await URLSession.shared.data(for: request)
         let code = (response as? HTTPURLResponse)?.statusCode ?? 0
         guard code == 200 else { throw Failure.http(code, String(decoding: data, as: UTF8.self)) }

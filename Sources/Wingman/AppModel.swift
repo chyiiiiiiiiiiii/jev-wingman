@@ -29,6 +29,7 @@ final class AppModel: ObservableObject {
     private var settleTask: Task<Void, Never>?
     private var workTask: Task<Void, Never>?
     private var noteTask: Task<Void, Never>?
+    private var generation = 0            // drafts streaming in for an older request are dropped
 
     private var brain: Brain { Brain(settings: settings, app: app) }
 
@@ -53,7 +54,7 @@ final class AppModel: ObservableObject {
     }
 
     /// Sample state for `Wingman --render`, so panel changes can be looked at before shipping.
-    func loadSample(phase: Phase) {
+    func loadSample(phase: Phase, drafts: Int = 3) {
         chatInFront = true
         conversation = Conversation(
             title: "#開發", isThread: true,
@@ -62,12 +63,12 @@ final class AppModel: ObservableObject {
         judgment = Judgment(intent: "問資訊", intentConfidence: 0.9, needsReply: 0.8, urgency: 1.2,
                             strategies: [])
         self.phase = phase
-        if phase == .ready {
+        if drafts > 0 {
             candidates = [
                 Candidate(strategy: "直接答應", text: "可以，我下午把新的欄位補上，好了再跟你說", score: 0.12),
                 Candidate(strategy: "先問用途", text: "你說的是 v2 的文件，還是整份都要改？我先確認範圍", score: 0.71),
                 Candidate(strategy: "提醒音源", text: "可以，但要等後端的欄位定案，大概明天", score: 0.17),
-            ]
+            ].prefix(drafts).map { phase == .ready ? $0 : Candidate(strategy: $0.strategy, text: $0.text) }
         }
     }
 
@@ -114,6 +115,7 @@ final class AppModel: ObservableObject {
     func analyze(auto: Bool = false) {
         guard let convo = conversation else { return }
         workTask?.cancel()
+        generation += 1
         let print = fingerprint(convo)
         shownFingerprint = print
         // ⌥Space after a skipped prefetch: Jev already read this exact conversation.
@@ -152,8 +154,11 @@ final class AppModel: ObservableObject {
                 self.phase = .failed("這則訊息判斷好了。填入 OpenRouter key，就能幫你寫回覆")
                 return
             }
+            let current = self.generation
             do {
-                let written = try await self.brain.write(convo, strategies: picks, judgment: self.judgment)
+                let written = try await self.brain.write(convo, strategies: picks, judgment: self.judgment) { drafts in
+                    await self.show(drafts, for: current)
+                }
                 guard !Task.isCancelled else { return }
                 withAnimation(Motion.reveal) {
                     self.candidates = Array(written.prefix(3))
@@ -174,11 +179,16 @@ final class AppModel: ObservableObject {
         guard let convo = conversation, !direction.isEmpty else { return }
         workTask?.cancel()
         let previous = candidates
+        generation += 1
+        let current = generation
         phase = .thinking
+        candidates = []
         workTask = Task { [weak self] in
             guard let self else { return }
             do {
-                let written = try await self.brain.rewrite(convo, direction: direction, previous: previous)
+                let written = try await self.brain.rewrite(convo, direction: direction, previous: previous) { drafts in
+                    await self.show(drafts, for: current)
+                }
                 guard !Task.isCancelled else { return }
                 self.candidates = Array(written.prefix(3))
                 self.phase = .ready
@@ -189,6 +199,12 @@ final class AppModel: ObservableObject {
                 self.phase = .failed(error.localizedDescription)
             }
         }
+    }
+
+    /// Drafts finished while the rest are still being written; ignored once a newer request started.
+    private func show(_ drafts: [Candidate], for request: Int) {
+        guard request == generation, phase == .thinking else { return }
+        withAnimation(Motion.reveal) { candidates = Array(drafts.prefix(3)) }
     }
 
     /// Scores arrive after the drafts; numbers stay put so a key already on its way hits the draft it meant.
