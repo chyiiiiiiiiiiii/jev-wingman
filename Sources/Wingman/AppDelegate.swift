@@ -33,6 +33,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         frontmostChanged()
     }
 
+    /// Opening the app again (Finder, Spotlight, Launchpad) brings up settings: the menu bar
+    /// icon can hide behind the notch when the bar is crowded.
+    func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
+        showSettings()
+        return true
+    }
+
     // MARK: - Watching Slack
 
     private func frontmostChanged() {
