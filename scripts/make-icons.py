@@ -16,7 +16,7 @@ from PIL import Image, ImageChops, ImageDraw, ImageFilter
 
 ROOT = Path(__file__).resolve().parent.parent
 CANVAS, BODY, RADIUS = 1024, 824, 185     # Apple's macOS icon template
-MARK_WIDTH = 0.66                          # of the body
+MARK_BOX = (0.66, 0.60)                    # widest and tallest the mark may be, as parts of the body
 
 
 def stroke_mask(art: Image.Image) -> Image.Image:
@@ -28,8 +28,8 @@ def stroke_mask(art: Image.Image) -> Image.Image:
 
 def app_icon(art: Image.Image, mark: tuple[int, int, int, int]) -> Image.Image:
     crop = art.convert("RGB").crop(mark)
-    width = int(BODY * MARK_WIDTH)
-    crop = crop.resize((width, round(crop.height * width / crop.width)), Image.LANCZOS)
+    scale = min(BODY * MARK_BOX[0] / crop.width, BODY * MARK_BOX[1] / crop.height)
+    crop = crop.resize((round(crop.width * scale), round(crop.height * scale)), Image.LANCZOS)
 
     body = Image.new("RGB", (BODY, BODY))
     top, bottom = (255, 255, 255), (240, 242, 247)
