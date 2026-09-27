@@ -59,6 +59,12 @@ struct AXSnapshot {
         return nil
     }
 
+    static func title(of window: AXUIElement) -> String {
+        var value: CFTypeRef?
+        AXUIElementCopyAttributeValue(window, kAXTitleAttribute as CFString, &value)
+        return value as? String ?? ""
+    }
+
     init(window: AXUIElement, maxNodes: Int = 5000) {
         var elements: [AXUIElement] = []
         func build(_ element: AXUIElement) -> UINode {

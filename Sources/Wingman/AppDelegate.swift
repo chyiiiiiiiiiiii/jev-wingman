@@ -72,7 +72,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 askedForScreenCapture = true
                 CGRequestScreenCaptureAccess()     // macOS shows its prompt once
             }
-            registerHotkey()
+            if !front.app.isBrowser { registerHotkey() }     // a browser gets it once a Messenger tab is read
         } else if NSWorkspace.shared.frontmostApplication?.processIdentifier != ProcessInfo.processInfo.processIdentifier {
             timer?.invalidate()
             timer = nil
@@ -84,7 +84,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     private func tick() {
         guard !reading, AXIsProcessTrusted(), let front = ChatApp.frontmost else { return }
-        if !front.app.readsPixels && accessibilityEnabledFor != front.pid {     // Electron: Slack, Discord
+        if front.app.isElectron && accessibilityEnabledFor != front.pid {
             AXSnapshot.enableWebAccessibility(pid: front.pid)
             accessibilityEnabledFor = front.pid
         }
@@ -96,6 +96,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             guard let self else { return }
             self.reading = false
             self.model.update(reading?.conversation, app: front.app, pid: front.pid)
+            if front.app.isBrowser {
+                if reading == nil { self.hotkey = nil } else { self.registerHotkey() }
+            }
         }
     }
 
