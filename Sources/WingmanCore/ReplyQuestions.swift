@@ -31,6 +31,9 @@ public enum ReplyQuestions {
 
     public static var strategyOrder: [String] { strategies.map(\.0) }
 
+    public static let rankInstructions = "`me` 要回覆 `reply_to`。下面哪一則草稿最適合直接送出？"
+        + "考慮它有沒有回應對方真正的意思、語氣是否得體，以及有沒有做出對話裡沒有根據的承諾。"
+
     public static func description(ofStrategy name: String) -> String {
         strategies.first { $0.0 == name }?.1 ?? name
     }

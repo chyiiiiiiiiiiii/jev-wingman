@@ -1,4 +1,5 @@
 import Foundation
+import NaturalLanguage
 import WingmanCore
 
 /// Jev picks how to answer; an LLM writes one reply per pick.
@@ -27,6 +28,17 @@ struct Brain {
         let tokens = usage?["input_tokens"] as? Int ?? 0
         Log.write("jev tokens in=\(tokens) cost=$\(String(format: "%.6f", Double(tokens) * 0.042 / 1_000_000))")
         return try JevDecoder.judgment(from: data, strategyOrder: ReplyQuestions.strategyOrder)
+    }
+
+    /// Jev's pick among the drafts, as a probability per draft in the order given.
+    func rank(_ convo: Conversation, drafts: [String]) async throws -> [Double] {
+        guard let replyTo = convo.messages.last(where: { !$0.isMe }) else { throw Failure.nothingToAnswer }
+        let criteria = Dictionary(drafts.map { ($0, NSNull()) }, uniquingKeysWith: { first, _ in first })
+        let body: [String: Any] = ["model": jevModel, "state": state(convo, replyTo: replyTo),
+                                   "questions": ["best": ["type": "choice", "instructions": ReplyQuestions.rankInstructions,
+                                                          "criteria": criteria]]]
+        let data = try await post(jevURL, key: jevKey, body: body)
+        return try JevDecoder.scores(from: data, for: drafts)
     }
 
     /// One reply per strategy, in the given order.
@@ -107,6 +119,7 @@ struct Brain {
         }.joined(separator: "\n")
         let user = """
         Slack \(convo.isThread ? "對話串" : "頻道") \(convo.title)
+        \(Self.languageRule(for: convo.messages.last(where: { !$0.isMe })?.text ?? ""))
         我的名字：\(me)
         最近的對話（由舊到新）：
         \(transcript)
@@ -130,6 +143,15 @@ struct Brain {
         Log.write("write model=\(settings.model) tokens in=\(usage?["prompt_tokens"] as? Int ?? 0) "
                   + "out=\(usage?["completion_tokens"] as? Int ?? 0) cost=$\(usage?["cost"] as? Double ?? 0)")
         return try CandidateDecoder.candidates(from: data)
+    }
+
+    /// Models drift back to Chinese in a Chinese workspace unless told which language answers.
+    static func languageRule(for text: String) -> String {
+        switch NLLanguageRecognizer.dominantLanguage(for: text) {
+        case .english?: "對方用英文，請用英文回覆。"
+        case .japanese?: "對方用日文，請用日文回覆。"
+        default: "請用臺灣繁體中文回覆。"
+        }
     }
 
     static let excludedProviders = ["DeepSeek", "StreamLake", "Alibaba", "SiliconFlow", "Baidu"]

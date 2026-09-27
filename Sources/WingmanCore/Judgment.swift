@@ -37,3 +37,14 @@ public enum JevDecoder {
                         needsReply: needsReply, urgency: urgency, strategies: strategies)
     }
 }
+
+extension JevDecoder {
+    /// Probability Jev gives each draft of being the one to send, aligned with `drafts`.
+    public static func scores(from data: Data, for drafts: [String]) throws -> [Double] {
+        guard let root = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let best = (root["answers"] as? [String: Any])?["best"] as? [String: Any],
+              let probabilities = best["probabilities"] as? [String: Double]
+        else { throw Malformed() }
+        return drafts.map { probabilities[$0] ?? 0 }
+    }
+}

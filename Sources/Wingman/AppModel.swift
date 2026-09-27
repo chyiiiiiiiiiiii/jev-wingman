@@ -11,6 +11,7 @@ final class AppModel: ObservableObject {
     @Published private(set) var judgment: Judgment?
     @Published private(set) var candidates: [Candidate] = []
     @Published private(set) var note: String?
+    @Published private(set) var ranking = false
     @Published var panelShown = false
     @Published var direction = ""
     @Published var fieldFocused = false
@@ -22,6 +23,7 @@ final class AppModel: ObservableObject {
     private(set) var slackPID: pid_t?
     private var shownFingerprint = ""     // the conversation the suggestions belong to
     private var seenFingerprint = ""      // the conversation last read from screen
+    private var judgedFingerprint = ""    // the conversation `judgment` is about
     private var settleTask: Task<Void, Never>?
     private var workTask: Task<Void, Never>?
     private var noteTask: Task<Void, Never>?
@@ -40,6 +42,12 @@ final class AppModel: ObservableObject {
     }
 
     var replyTo: ChatMessage? { conversation?.messages.last { !$0.isMe } }
+
+    /// The draft Jev rates highest, once ranking has come back.
+    var bestIndex: Int? {
+        guard candidates.contains(where: { $0.score != nil }) else { return nil }
+        return candidates.indices.max { (candidates[$0].score ?? 0) < (candidates[$1].score ?? 0) }
+    }
 
     // MARK: - Screen updates
 
@@ -79,10 +87,14 @@ final class AppModel: ObservableObject {
     func analyze(auto: Bool = false) {
         guard let convo = conversation else { return }
         workTask?.cancel()
-        shownFingerprint = Self.fingerprint(convo)
+        let print = Self.fingerprint(convo)
+        shownFingerprint = print
+        // ⌥Space after a skipped prefetch: Jev already read this exact conversation.
+        let reuseJudgment = !auto && judgment != nil && judgedFingerprint == print
         phase = .thinking
         candidates = []
-        judgment = nil
+        ranking = false
+        if !reuseJudgment { judgment = nil }
         guard settings.hasWriterKey || !settings.typesafeKey.isEmpty else {
             phase = .failed(Brain.Failure.missingKey.localizedDescription)
             return
@@ -90,17 +102,19 @@ final class AppModel: ObservableObject {
         workTask = Task { [weak self] in
             guard let self else { return }
             let started = Date()
-            var picks: [String] = []
-            do {
-                let judgment = try await self.brain.judge(convo)
-                guard !Task.isCancelled else { return }
-                self.judgment = judgment
-                picks = judgment.strategies.prefix(3).map(\.name)
-                Log.write("judge \(Int(Date().timeIntervalSince(started) * 1000))ms intent=\(judgment.intent)")
-            } catch {
-                // Writing without Jev's picks still helps; the panel says Jev was skipped.
-                Log.write("judge failed: \(error.localizedDescription)")
+            if !reuseJudgment {
+                do {
+                    let judgment = try await self.brain.judge(convo)
+                    guard !Task.isCancelled else { return }
+                    self.judgment = judgment
+                    self.judgedFingerprint = print
+                    Log.write("judge \(Int(Date().timeIntervalSince(started) * 1000))ms intent=\(judgment.intent)")
+                } catch {
+                    // Writing without Jev's picks still helps.
+                    Log.write("judge failed: \(error.localizedDescription)")
+                }
             }
+            let picks = self.judgment?.strategies.prefix(3).map(\.name) ?? []
             if auto, let judgment = self.judgment, judgment.needsReply < 0.5 {
                 self.phase = .idle
                 Log.write("drafts skipped needs_reply=\(String(format: "%.2f", judgment.needsReply))")
@@ -117,6 +131,7 @@ final class AppModel: ObservableObject {
                 self.candidates = Array(written.prefix(3))
                 self.phase = .ready
                 Log.write("suggest \(Int(Date().timeIntervalSince(started) * 1000))ms candidates=\(written.count)")
+                await self.rankCandidates(convo)
             } catch {
                 guard !Task.isCancelled else { return }
                 self.phase = .failed(error.localizedDescription)
@@ -139,10 +154,28 @@ final class AppModel: ObservableObject {
                 self.candidates = Array(written.prefix(3))
                 self.phase = .ready
                 self.direction = ""
+                await self.rankCandidates(convo)
             } catch {
                 guard !Task.isCancelled else { return }
                 self.phase = .failed(error.localizedDescription)
             }
+        }
+    }
+
+    /// Scores arrive after the drafts; numbers stay put so a key already on its way hits the draft it meant.
+    private func rankCandidates(_ convo: Conversation) async {
+        let drafts = candidates.map(\.text)
+        guard drafts.count > 1 else { return }
+        ranking = true
+        defer { ranking = false }
+        let started = Date()
+        do {
+            let scores = try await brain.rank(convo, drafts: drafts)
+            guard !Task.isCancelled, candidates.map(\.text) == drafts else { return }
+            for index in candidates.indices { candidates[index].score = scores[index] }
+            Log.write("rank \(Int(Date().timeIntervalSince(started) * 1000))ms")
+        } catch {
+            Log.write("rank failed: \(error.localizedDescription)")
         }
     }
 
@@ -162,6 +195,10 @@ final class AppModel: ObservableObject {
     func closePanel() {
         panelShown = false
         fieldFocused = false
+    }
+
+    func insertBest() {
+        insert(bestIndex ?? 0)
     }
 
     func insert(_ index: Int) {

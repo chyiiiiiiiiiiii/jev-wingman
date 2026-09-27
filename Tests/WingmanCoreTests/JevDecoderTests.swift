@@ -31,3 +31,17 @@ private let offered = ["直接答應", "答應但附條件", "給進度和時間
         try JevDecoder.judgment(from: Data(#"{"error":"rate limited"}"#.utf8), strategyOrder: offered)
     }
 }
+
+// Recorded from api.typesafe.ai on 2026-09-27: which of three drafts best answers "感恩 :)".
+private let recordedRanking = #"""
+{"model":"jev-1.13.0","answers":{"best":{"type":"choice","choice":"不客氣，有需要再跟我說！","confidence":0.98,"probabilities":{"不客氣，有需要再跟我說！":0.99,"沒問題，我回去就開始處理，整理好會馬上跟你回報。":0.0,"想先確認一下，這兩份附件是要我一起彙整進大家的資訊裡，還是先參考就好？":0.01}}},"usage":{"input_tokens":525,"output_tokens":119}}
+"""#
+
+@Test func scoresEachDraftInTheOrderItWasShown() throws {
+    let drafts = ["沒問題，我回去就開始處理，整理好會馬上跟你回報。", "不客氣，有需要再跟我說！",
+                  "想先確認一下，這兩份附件是要我一起彙整進大家的資訊裡，還是先參考就好？", "Jev 沒看過的草稿"]
+
+    let scores = try JevDecoder.scores(from: Data(recordedRanking.utf8), for: drafts)
+
+    #expect(scores == [0.0, 0.99, 0.01, 0.0])
+}

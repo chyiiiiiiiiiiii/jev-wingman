@@ -92,6 +92,9 @@ final class PanelController {
         case 18...20 where command || !model.fieldFocused:  // 1 2 3
             model.insert(Int(event.keyCode) - 18)
             return true
+        case 36 where !model.fieldFocused, 76 where !model.fieldFocused:  // Return, Enter: the recommended draft
+            model.insertBest()
+            return true
         default:
             return false
         }
@@ -142,7 +145,8 @@ struct SuggestionView: View {
                 .textFieldStyle(.roundedBorder)
                 .focused($fieldFocused)
                 .onSubmit { model.rewrite(model.direction) }
-            Text(fieldFocused ? "Enter 重寫 · ⌘1–3 填入 · Esc 清除" : "1–3 填入 · 點輸入框寫你的意思 · Esc 關閉 · 不會自動送出")
+            Text(fieldFocused ? "Enter 重寫 · ⌘1–3 填入 · Esc 清除"
+                              : "Enter 填入 ★ 推薦 · 1–3 選一句 · Esc 關閉 · 不會自動送出")
                 .font(.caption)
                 .foregroundStyle(.secondary)
         }
@@ -191,6 +195,9 @@ struct SuggestionView: View {
             }
         case .ready:
             VStack(alignment: .leading, spacing: 4) {
+                if let best = model.bestIndex, let score = model.candidates[best].score, score < 0.5 {
+                    Text("幾句都可以，挑你喜歡的語氣").font(.system(size: 11)).foregroundStyle(.secondary)
+                }
                 ForEach(Array(model.candidates.enumerated()), id: \.offset) { index, candidate in
                     candidateRow(index, candidate)
                 }
@@ -199,14 +206,28 @@ struct SuggestionView: View {
     }
 
     private func candidateRow(_ index: Int, _ candidate: Candidate) -> some View {
-        HStack(alignment: .top, spacing: 10) {
+        let best = model.bestIndex == index
+        return HStack(alignment: .top, spacing: 10) {
             Text("\(index + 1)")
                 .font(.system(size: 12, weight: .bold, design: .rounded))
                 .frame(width: 20, height: 20)
-                .background(Color.accentColor.opacity(0.15), in: RoundedRectangle(cornerRadius: 5))
+                .background(Color.accentColor.opacity(best ? 0.35 : 0.15), in: RoundedRectangle(cornerRadius: 5))
             VStack(alignment: .leading, spacing: 2) {
-                if !candidate.strategy.isEmpty {
-                    Text(candidate.strategy).font(.system(size: 11)).foregroundStyle(.secondary)
+                HStack(spacing: 6) {
+                    if best {
+                        Text("★ 最推薦").font(.system(size: 11, weight: .semibold)).foregroundStyle(Color.accentColor)
+                    } else if let score = candidate.score, score >= 0.25 {
+                        Text("也不錯").font(.system(size: 11, weight: .medium)).foregroundStyle(.secondary)
+                    }
+                    if !candidate.strategy.isEmpty {
+                        Text(candidate.strategy).font(.system(size: 11)).foregroundStyle(.secondary)
+                    }
+                    Spacer(minLength: 0)
+                    if let score = candidate.score {
+                        ScoreBar(score: score, highlighted: best)
+                    } else if model.ranking {
+                        Text("評分中…").font(.system(size: 11)).foregroundStyle(.tertiary)
+                    }
                 }
                 Text(candidate.text)
                     .font(.system(size: 13))
@@ -215,10 +236,29 @@ struct SuggestionView: View {
             Spacer(minLength: 0)
         }
         .padding(8)
-        .background(hovered == index ? Color.accentColor.opacity(0.08) : .clear, in: RoundedRectangle(cornerRadius: 8))
+        .background(best ? Color.accentColor.opacity(0.10) : hovered == index ? Color.accentColor.opacity(0.06) : .clear,
+                    in: RoundedRectangle(cornerRadius: 8))
+        .overlay(RoundedRectangle(cornerRadius: 8).strokeBorder(best ? Color.accentColor.opacity(0.5) : .clear))
         .contentShape(Rectangle())
         .onHover { hovered = $0 ? index : (hovered == index ? nil : hovered) }
         .onTapGesture { model.insert(index) }
+    }
+
+    /// Jev's score as a bar only: its probabilities run to extremes (99 / 0 / 1), and a bare "0%"
+    /// beside a sensible draft reads as "wrong". The number is in the tooltip.
+    private struct ScoreBar: View {
+        let score: Double
+        let highlighted: Bool
+
+        var body: some View {
+            ZStack(alignment: .leading) {
+                Capsule().fill(Color.secondary.opacity(0.2))
+                Capsule().fill(highlighted ? Color.accentColor : Color.secondary.opacity(0.6))
+                    .frame(width: max(3, 48 * score))
+            }
+            .frame(width: 48, height: 4)
+            .help("Jev 評分 \(Int((score * 100).rounded()))%")
+        }
     }
 
     private static func urgencyColor(_ urgency: Double) -> Color {
