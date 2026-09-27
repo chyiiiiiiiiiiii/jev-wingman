@@ -57,20 +57,32 @@ final class AppModel: ObservableObject {
     }
 
     /// Sample state for `Wingman --render`, so panel changes can be looked at before shipping.
+    /// A made-up chat for `--render`, in Chinese under a Chinese interface and in English otherwise,
+    /// since drafts follow the chat's language.
     func loadSample(phase: Phase, drafts: Int = 3, scored: Bool = true) {
+        let chinese = interfaceLanguage.hasPrefix("zh")
         chatInFront = true
         conversation = Conversation(
-            title: "#開發", isThread: true,
-            messages: [ChatMessage(sender: "Mia", time: "中午 12:39", text: "API 文件今天來得及更新嗎？")],
+            title: chinese ? "#開發" : "#dev", isThread: true,
+            messages: [ChatMessage(sender: "Mia", time: chinese ? "中午 12:39" : "12:39 PM",
+                                   text: chinese ? "API 文件今天來得及更新嗎？" : "Can we get the API docs updated today?")],
             draft: "", composerHandle: -1, composerFrame: CGRect(x: 0, y: 0, width: 560, height: 40))
-        judgment = Judgment(intent: "問資訊", intentConfidence: 0.9, needsReply: 0.8, urgency: 1.2,
+        judgment = Judgment(intent: "催進度或要時間", intentConfidence: 0.9, needsReply: 0.9, urgency: 1.2,
                             strategies: [])
         self.phase = phase
         if drafts > 0 {
             candidates = [
-                Candidate(strategy: "直接答應", text: "可以，我下午把新的欄位補上，好了再跟你說", score: 0.12),
-                Candidate(strategy: "簡短回應", text: "今天來得及", score: 0.17),
-                Candidate(strategy: "表達感謝", text: "謝謝提醒，我現在就改", score: 0.71),
+                Candidate(strategy: "給進度和時間",
+                          text: chinese ? "來得及，我下午把新的欄位補上，好了跟你說"
+                                        : "Yes, I'm adding the new fields this afternoon. I'll ping you when it's up.",
+                          score: 0.68),
+                Candidate(strategy: "答應但附條件",
+                          text: chinese ? "可以，但後端的欄位要先定案，三點前給我就行"
+                                        : "Should be fine, as long as the backend fields are final by 3.",
+                          score: 0.21),
+                Candidate(strategy: "先問清楚",
+                          text: chinese ? "只改 v2 的部分，還是整份都要更新？" : "Just the v2 endpoints, or the whole doc?",
+                          score: 0.11),
             ].prefix(drafts).map { scored ? $0 : Candidate(strategy: $0.strategy, text: $0.text) }
         }
     }
