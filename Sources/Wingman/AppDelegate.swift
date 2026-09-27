@@ -105,6 +105,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         edit.addItem(withTitle: "貼上", action: #selector(NSText.paste(_:)), keyEquivalent: "v")
         edit.addItem(withTitle: "全選", action: #selector(NSText.selectAll(_:)), keyEquivalent: "a")
         let app = NSMenu(title: "Wingman")
+        app.addItem(withTitle: "關閉視窗", action: #selector(NSWindow.performClose(_:)), keyEquivalent: "w")
         app.addItem(withTitle: "結束 Wingman", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
         let menu = NSMenu()
         for submenu in [app, edit] {
@@ -146,7 +147,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             controller.sizingOptions = [.minSize]
             let window = NSWindow(contentViewController: controller)
             window.title = "Wingman 設定"
-            window.styleMask = [.titled, .closable, .resizable]
+            window.styleMask = [.titled, .closable, .miniaturizable, .resizable]
+            window.delegate = self
             window.setContentSize(NSSize(width: 540, height: 720))
             window.isReleasedWhenClosed = false
             window.center()
@@ -154,6 +156,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
         NSApp.activate()
         settingsWindow?.makeKeyAndOrderFront(nil)
+    }
+}
+
+extension AppDelegate: NSWindowDelegate {
+    /// Hand focus back to whatever was in front before settings opened; Wingman stays in the menu bar.
+    nonisolated func windowWillClose(_ notification: Notification) {
+        MainActor.assumeIsolated { NSApp.hide(nil) }
     }
 }
 

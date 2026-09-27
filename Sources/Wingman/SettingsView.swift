@@ -93,6 +93,16 @@ struct SettingsView: View {
                 Text("Slack 收到訊息時，輸入框右上方會出現「✦ 3 個建議」。按 \(model.hotkeyLabel) 或點它展開，按 1、2、3 填進輸入框，確認後自己按 Enter 送出。")
                     .font(.callout)
             } header: { Text("怎麼用") }
+
+            Section {
+                HStack {
+                    Text("關掉這個視窗後 Wingman 會繼續在背景運作。要再打開設定，點選單列的泡泡圖示，或再開一次 Wingman。")
+                        .font(.caption).foregroundStyle(.secondary)
+                    Spacer()
+                    Button("完成") { NSApp.keyWindow?.performClose(nil) }
+                        .keyboardShortcut(.defaultAction)
+                }
+            }
         }
         .formStyle(.grouped)
         .frame(width: 540)
