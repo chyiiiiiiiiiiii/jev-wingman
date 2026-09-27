@@ -16,7 +16,9 @@ final class FloatingPanel: NSPanel {
         backgroundColor = .clear
         isOpaque = false
         hasShadow = true
-        collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
+        // Stays on the chat window's Space (joining all Spaces left it floating over empty desktops),
+        // and may sit over a full-screen chat app.
+        collectionBehavior = [.fullScreenAuxiliary]
     }
 
     override var canBecomeKey: Bool { acceptsKey }
@@ -32,9 +34,9 @@ final class ClickThroughHostingView<Content: View>: NSHostingView<Content> {
     override func acceptsFirstMouse(for event: NSEvent?) -> Bool { true }
 }
 
-/// Keeps the pill and the suggestion panel glued above Slack's composer.
+/// Keeps the pill and the suggestion panel glued above the chat app's composer.
 @MainActor
-final class PanelController {
+final class PanelController: NSObject, NSWindowDelegate {
     private let model: AppModel
     private let pill = FloatingPanel()
     private let panel = FloatingPanel()
@@ -42,6 +44,8 @@ final class PanelController {
 
     init(model: AppModel) {
         self.model = model
+        super.init()
+        panel.delegate = self
         pill.contentView = ClickThroughHostingView(rootView: PillView(model: model))
         panel.acceptsKey = true
         panel.contentView = ClickThroughHostingView(rootView: SuggestionView(model: model))
@@ -76,6 +80,13 @@ final class PanelController {
             pill.setFrame(NSRect(x: composer.maxX - size.width - 10, y: top + 6, width: size.width, height: size.height),
                           display: true)
             pill.orderFrontRegardless()
+        }
+    }
+
+    /// Like a popover: a click anywhere else (the chat, another app) puts the panel away.
+    nonisolated func windowDidResignKey(_ notification: Notification) {
+        MainActor.assumeIsolated {
+            if model.panelShown { model.closePanel() }
         }
     }
 
@@ -160,6 +171,18 @@ struct SuggestionView: View {
     }
 
     @ViewBuilder private var header: some View {
+        HStack(alignment: .top) {
+            headerText
+            Spacer(minLength: 8)
+            Button { model.closePanel() } label: {
+                Image(systemName: "xmark.circle.fill").font(.system(size: 16)).foregroundStyle(.secondary)
+            }
+            .buttonStyle(.plain)
+            .help("關閉（Esc）")
+        }
+    }
+
+    @ViewBuilder private var headerText: some View {
         VStack(alignment: .leading, spacing: 4) {
             if let j = model.judgment {
                 HStack(spacing: 6) {
