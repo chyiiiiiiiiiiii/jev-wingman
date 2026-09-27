@@ -21,10 +21,12 @@ Wingman 把工作分給兩種模型：
 | Slack | 輔助使用（直接讀網頁結構） | 輔助使用 |
 | Discord | 輔助使用（直接讀網頁結構） | 輔助使用 |
 | Messenger 網頁版（Chrome、Edge、Arc、Brave） | 輔助使用，只讀 messenger.com 或 facebook.com/messages | 輔助使用 |
+| Instagram 網頁版私訊（同上瀏覽器） | 輔助使用，只讀 instagram.com/direct | 輔助使用 |
+| Threads 網頁版私訊（同上瀏覽器） | 輔助使用，只讀 threads.com/messages | 輔助使用 |
 | LINE | 聊天室名稱和輸入框用輔助使用讀；訊息內容在本機截圖辨識 | 輔助使用、螢幕與系統錄音 |
 | Telegram | 在本機截圖辨識 | 輔助使用、螢幕與系統錄音 |
 
-Slack、Discord、Messenger 都已經在真實聊天中用過。LINE 和 Telegram 是靠截圖辨識，實際使用的次數還比較少。
+Slack、Discord、Messenger、Instagram、Threads 都已經在真實聊天中讀過。LINE 和 Telegram 是靠截圖辨識，實際使用的次數還比較少。瀏覽器裡只讀 Messenger、Instagram、Threads 的訊息頁，動態、個人檔案、貼文和其他網站都不讀。對話裡的照片、Reels 或分享的貼文會算成一則（📎），這樣 Wingman 才知道最後是誰說話。
 
 ## 隱私
 
@@ -60,6 +62,7 @@ cd wingman
 - 訊息進來時，輸入框上方會出現「**✦ 3 個建議**」。按 **⌥Space**（可以在設定裡改）或直接點它。
 - **Enter** 填入 ★ 那句，**1–3** 選一句，**Esc** 關閉。填入後看一下內容，再自己按 Enter 送出。
 - 按「更短」「更委婉」「更正式」「更熱情」可以重寫；也可以直接打你想說的意思，例如「跟他說週五前給」，按 Enter 重寫。
+- **音效**：你在等的建議寫好時，和回覆填進輸入框時，會輕輕響一聲；背景自動分析完成時不會出聲。設定裡可以關掉，也可以在「木質」「水滴」「玻璃」「輕觸」四種音色中挑一種。聲音由 App 自己合成，音量遠低於最大值。
 
 用預設的模型，每次建議（判斷一次、寫 3 句、評分一次）大約 US$0.0002。
 
@@ -69,13 +72,13 @@ cd wingman
 
 ```bash
 swift test                                                         # 解析、解碼與安全規則的測試
-build/Wingman.app/Contents/MacOS/Wingman --render /tmp/wingman   # 把面板、引導和設定畫成 PNG
-/Applications/Wingman.app/Contents/MacOS/Wingman --dump --app messenger   # 現在讀到了什麼（文字會遮掉）
+build/Wingman.app/Contents/MacOS/Wingman --render /tmp/wingman   # 把面板、引導和設定畫成 PNG，音效存成 WAV
+/Applications/Wingman.app/Contents/MacOS/Wingman --dump --app instagram   # 現在讀到了什麼（文字會遮掉）
 /Applications/Wingman.app/Contents/MacOS/Wingman --probe com.hnc.Discord --wait   # 看某個 App 的畫面結構
 OPENROUTER_API_KEY=… scripts/bench-writers.py                     # 用虛構對話比較寫回覆的模型
 ```
 
-- `Sources/WingmanCore`：純邏輯，都有測試（Slack、Discord、Messenger 的解析、截圖辨識的氣泡分析、Jev 與 LLM 回應的解碼、語言與安全規則）。
+- `Sources/WingmanCore`：純邏輯，都有測試（Slack、Discord、Messenger、Instagram、Threads 的解析、哪些網頁可以讀、截圖辨識的氣泡分析、Jev 與 LLM 回應的解碼、語言與安全規則、音效）。
 - `Sources/Wingman`：App 本身（讀取、面板、設定、填入）。
 - 介面文字一律包在 `L("…")` 裡，以繁中原文當作查詢的鑰匙。翻譯寫在 `Resources/i18n/<語言>.json`；建置時會跑 `scripts/localize.py`，缺翻譯或格式符號對不上就停止建置。
 

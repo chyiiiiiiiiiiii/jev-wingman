@@ -91,7 +91,7 @@
  "已開啟「輔助使用」": "Accesibilidad activada",
  "需要開啟「輔助使用」": "Es necesario activar Accesibilidad",
  "打開系統設定": "Abrir Ajustes del Sistema",
- "用來讀 Slack、Discord、Messenger 網頁版的對話，並把你選的回覆填進輸入框。瀏覽器裡只讀 Messenger 分頁，其他網頁不讀。在清單裡把 Wingman 打開，這裡會自動打勾。Wingman 只讀你正在看的對話，不會自動送出任何訊息。": "Sirve para leer las conversaciones de Slack, Discord y Messenger (web) e insertar la respuesta que elijas. En el navegador solo lee la pestaña de Messenger, ninguna otra página. Activa Wingman en la lista y esto se marcará automáticamente. Wingman solo lee la conversación que tienes delante y nunca envía nada por su cuenta.",
+ "用來讀 Slack、Discord，以及 Messenger、Instagram、Threads 網頁版的對話，並把你選的回覆填進輸入框。瀏覽器裡只讀這三個網站的訊息頁，其他網頁不讀。在清單裡把 Wingman 打開，這裡會自動打勾。Wingman 只讀你正在看的對話，不會自動送出任何訊息。": "Sirve para leer las conversaciones de Slack y Discord, y de Messenger, Instagram y Threads en la web, e insertar la respuesta que elijas. En el navegador solo lee las páginas de mensajes de esos tres sitios, ninguna otra página. Activa Wingman en la lista y esto se marcará automáticamente. Wingman solo lee la conversación que tienes delante y nunca envía nada por su cuenta.",
  "1. 讓 Wingman 讀聊天內容": "1. Deja que Wingman lea tus chats",
  "已開啟「螢幕與系統錄音」": "Grabación de pantalla y del audio del sistema activada",
  "LINE、Telegram 需要「螢幕與系統錄音」": "LINE y Telegram necesitan Grabación de pantalla y del audio del sistema",
@@ -108,7 +108,7 @@
  "2. 連上 AI": "2. Conecta la IA",
  "用來分辨 Slack、Discord 裡哪些訊息是你說的。各 App 顯示的名字不同時，用逗號分開，例如「Yii, Yii Chen」。LINE、Telegram 看氣泡位置，不需要名字。": "Sirve para distinguir tus mensajes en Slack y Discord. Si cada app muestra un nombre distinto, sepáralos con comas, por ejemplo: “Yii, Yii Chen”. En LINE y Telegram se usa la posición de las burbujas, así que no hace falta nombre.",
  "3. 你是誰": "3. Quién eres",
- "在 Slack、Discord、LINE、Telegram 或 Messenger 網頁版收到訊息時，輸入框右上方會出現「✦ 3 個建議」。按 %@ 或點它展開，按 Enter 填入 ★ 推薦的那句，或按 1、2、3 選一句，確認後自己按 Enter 送出。": "Cuando llegue un mensaje en Slack, Discord, LINE, Telegram o Messenger (web), aparecerá “✦ 3 sugerencias” sobre el cuadro de mensaje. Presiona %@ o haz clic ahí; luego Enter para insertar la ★ o 1, 2, 3 para elegir otra. Revísala y envíala tú con Enter.",
+ "在 Slack、Discord、LINE、Telegram，或 Messenger、Instagram、Threads 網頁版收到訊息時，輸入框右上方會出現「✦ 3 個建議」。按 %@ 或點它展開，按 Enter 填入 ★ 推薦的那句，或按 1、2、3 選一句，確認後自己按 Enter 送出。": "Cuando llegue un mensaje en Slack, Discord, LINE, Telegram, o en Messenger, Instagram o Threads en la web, aparecerá “✦ 3 sugerencias” sobre el cuadro de mensaje. Presiona %@ o haz clic ahí; luego Enter para insertar la ★ o 1, 2, 3 para elegir otra. Revísala y envíala tú con Enter.",
  "怎麼用": "Cómo funciona",
  "登入 Mac 時自動開啟 Wingman": "Abrir Wingman al iniciar sesión",
  "開機後就在背景待命，平常不用自己打開。": "Queda a la espera en segundo plano desde el arranque, así que no tienes que abrirlo tú.",
@@ -155,5 +155,14 @@
  "取消": "Cancelar",
  "會刪除鑰匙圈裡的 key、所有設定和紀錄檔，然後重新啟動 Wingman。聊天內容本來就不會存在這台 Mac 上。": "Se borran las claves del Llavero, todos los ajustes y el registro, y Wingman se reinicia. Los chats nunca se guardaron en este Mac.",
  "隱私與控制": "Privacidad y control",
- "key 只存在這台 Mac 的鑰匙圈，只會送到它所屬的服務。": "Las claves se quedan en el Llavero de este Mac y solo se envían al servicio al que pertenecen."
+ "key 只存在這台 Mac 的鑰匙圈，只會送到它所屬的服務。": "Las claves se quedan en el Llavero de este Mac y solo se envían al servicio al que pertenecen.",
+ "互動音效": "Sonidos",
+ "你在等的建議寫好時，和回覆填進輸入框時，輕輕響一聲。背景自動分析完成時不會出聲。": "Un sonido suave cuando están listas las sugerencias que esperas y cuando se inserta una respuesta. El análisis que termina en segundo plano no suena.",
+ "音色": "Sonido",
+ "試聽": "Escuchar",
+ "音效": "Sonidos",
+ "木質": "Madera",
+ "水滴": "Gota",
+ "玻璃": "Cristal",
+ "輕觸": "Toque"
 }

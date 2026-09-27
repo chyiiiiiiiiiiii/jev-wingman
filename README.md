@@ -21,10 +21,12 @@ Wingman splits the job between two kinds of model:
 | Slack | Accessibility tree (Electron DOM) | Accessibility |
 | Discord | Accessibility tree (Electron DOM) | Accessibility |
 | Messenger (web, in Chrome, Edge, Arc or Brave) | Accessibility tree, only on messenger.com or facebook.com/messages | Accessibility |
+| Instagram messages (web, same browsers) | Accessibility tree, only on instagram.com/direct | Accessibility |
+| Threads messages (web, same browsers) | Accessibility tree, only on threads.com/messages | Accessibility |
 | LINE | Chat name and input box from accessibility; messages by on-device OCR | Accessibility, Screen & System Audio Recording |
 | Telegram | On-device OCR | Accessibility, Screen & System Audio Recording |
 
-Slack, Discord and Messenger have been used on real chats. LINE and Telegram are read by OCR and have had less real-world use.
+Slack, Discord, Messenger, Instagram and Threads have been read on real chats. LINE and Telegram are read by OCR and have had less real-world use. In a browser, only the message pages of Messenger, Instagram and Threads are read: feeds, profiles, posts and every other site are not. A photo, reel or shared post counts as a turn in the conversation (📎), so Wingman knows who spoke last.
 
 ## Privacy
 
@@ -54,6 +56,7 @@ On first launch Wingman walks through three steps: permissions, keys (an [OpenRo
 - When a message arrives, **✦ 3 suggestions** appears above the message box. Press **⌥Space** (you can change the shortcut) or click it.
 - **Enter** types the ★ draft, **1–3** types any draft, **Esc** closes. Check the text, then press Enter yourself.
 - **Shorter, Softer, More formal, Warmer** rewrite the drafts. You can also type what you want to say, for example "tell them by Friday", and press Enter.
+- **Sounds:** a soft sound when suggestions you are waiting for are ready, and when a reply is typed in. Analysis that finishes in the background stays silent. Settings has a switch and four voices: Wood, Droplet, Glass and Tap. They are synthesised by the app, well under full volume.
 
 A suggestion costs about US$0.0002 with the default models (one judgment, three drafts, one ranking).
 
@@ -63,13 +66,13 @@ The interface follows the system language: Traditional Chinese, Simplified Chine
 
 ```bash
 swift test                                                         # parsers, decoders, safety rules
-build/Wingman.app/Contents/MacOS/Wingman --render /tmp/wingman   # draw the panel, onboarding and settings as PNGs
-/Applications/Wingman.app/Contents/MacOS/Wingman --dump --app messenger   # what a reader sees now (redacted)
+build/Wingman.app/Contents/MacOS/Wingman --render /tmp/wingman   # the panel, onboarding and settings as PNGs, the sounds as WAVs
+/Applications/Wingman.app/Contents/MacOS/Wingman --dump --app instagram   # what a reader sees now (redacted)
 /Applications/Wingman.app/Contents/MacOS/Wingman --probe com.hnc.Discord --wait   # an app's accessibility tree
 OPENROUTER_API_KEY=… scripts/bench-writers.py                     # compare writer models on made-up threads
 ```
 
-- `Sources/WingmanCore`: pure logic with tests (Slack, Discord and Messenger parsers, OCR bubble parser, Jev and LLM decoders, language and safety rules).
+- `Sources/WingmanCore`: pure logic with tests (Slack, Discord, Messenger, Instagram and Threads parsers, which web pages are read, OCR bubble parser, Jev and LLM decoders, language and safety rules, the sounds).
 - `Sources/Wingman`: the app (readers, panels, settings, typing).
 - Interface text goes through `L("…")`, keyed by its Traditional Chinese original. Add translations to `Resources/i18n/<language>.json`; `scripts/localize.py` runs during the build and stops it if a translation or placeholder is missing.
 

@@ -20,6 +20,9 @@ public struct OCRLine: Equatable {
 
 /// Turns OCR lines from a bubble-style chat (LINE, Telegram) into messages.
 public enum BubbleParser {
+    /// Stands for a photo, reel or shared post: a turn of its own that never continues a bubble.
+    public static let attachment = "📎"
+
     /// Timestamps and read receipts sit beside bubbles, not inside what anyone wrote.
     static let noise = [
         #"^(上午|下午|晚上|凌晨|中午|早上)?\s?\d{1,2}[:：]\d{2}(\s?[AaPp][Mm])?$"#,
@@ -34,6 +37,7 @@ public enum BubbleParser {
             guard let isMe = side(of: line, in: pane) else { continue }
             // A wrapped bubble's next line starts right under the last; separate bubbles leave a gap.
             if let last = messages.last, last.isMe == isMe, let previous,
+               line.text != attachment, previous.text != attachment,
                line.frame.minY - previous.frame.maxY < previous.frame.height * 0.8 {
                 messages[messages.count - 1].text += joiner(last.text, line.text) + line.text
             } else {

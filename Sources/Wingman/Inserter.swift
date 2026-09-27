@@ -32,7 +32,7 @@ enum Inserter {
         guard let composer = reading.composer else {
             // Telegram exposes no input element, but its input box has focus whenever a chat is open.
             // Keystrokes go to whichever app is in front, so type only if that is still Telegram.
-            guard ChatApp.frontmost?.pid == pid else { return copy(line, L("聊天室已經切換")) }
+            guard Front.current?.pid == pid else { return copy(line, L("聊天室已經切換")) }
             type(line, pid: nil)
             return .typed
         }
@@ -50,7 +50,7 @@ enum Inserter {
 
         // Some builds drop events addressed to the process; the HID stream reaches the key window.
         // Retry only if the first attempt changed nothing, so a draft is never typed twice.
-        if after == before, ChatApp.frontmost?.pid == pid, focused(composer, pid: pid) {
+        if after == before, Front.current?.pid == pid, focused(composer, pid: pid) {
             type(line, pid: nil)
             try? await Task.sleep(for: .milliseconds(250))
             if landed(line, in: value(of: composer), before: before) { return .inserted }

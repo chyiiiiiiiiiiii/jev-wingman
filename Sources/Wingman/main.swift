@@ -8,7 +8,9 @@ if let index = arguments.firstIndex(of: "--probe"), index + 1 < arguments.count 
         return low...high
     } ?? 0.2...1
     let limit = arguments.firstIndex(of: "--limit").flatMap { i in i + 1 < arguments.count ? Int(arguments[i + 1]) : nil } ?? 260
-    exit(Dump.probe(bundleID: arguments[index + 1], wait: arguments.contains("--wait"), region: region, limit: limit))
+    let host = arguments.firstIndex(of: "--host").flatMap { i in i + 1 < arguments.count ? arguments[i + 1] : nil }
+    exit(Dump.probe(bundleID: arguments[index + 1], wait: arguments.contains("--wait"), region: region, limit: limit,
+                    host: host))
 }
 if let index = arguments.firstIndex(of: "--render"), index + 1 < arguments.count {
     exit(MainActor.assumeIsolated { Render.run(to: arguments[index + 1]) })

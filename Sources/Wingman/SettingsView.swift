@@ -3,6 +3,7 @@ import ApplicationServices
 import Combine
 import ServiceManagement
 import SwiftUI
+import WingmanCore
 
 /// Click, then press the new combination. Esc cancels; plain keys are refused.
 /// A setting's name and, under it, what it is for in one plain sentence.
@@ -118,6 +119,12 @@ struct SettingsView: View {
             })
     }
 
+    /// Both sounds of a voice, one after the other.
+    private func preview(_ voice: Chime.Voice) {
+        Sounds.play(voice, .ready)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) { Sounds.play(voice, .inserted) }
+    }
+
     var body: some View {
         Form {
             Section {
@@ -133,7 +140,7 @@ struct SettingsView: View {
                         }
                     }
                 }
-                Text(L("用來讀 Slack、Discord、Messenger 網頁版的對話，並把你選的回覆填進輸入框。瀏覽器裡只讀 Messenger 分頁，其他網頁不讀。在清單裡把 Wingman 打開，這裡會自動打勾。Wingman 只讀你正在看的對話，不會自動送出任何訊息。"))
+                Text(L("用來讀 Slack、Discord，以及 Messenger、Instagram、Threads 網頁版的對話，並把你選的回覆填進輸入框。瀏覽器裡只讀這三個網站的訊息頁，其他網頁不讀。在清單裡把 Wingman 打開，這裡會自動打勾。Wingman 只讀你正在看的對話，不會自動送出任何訊息。"))
                     .font(.caption).foregroundStyle(.secondary)
             } header: { Text(L("1. 讓 Wingman 讀聊天內容")) }
 
@@ -233,7 +240,8 @@ struct SettingsView: View {
                 }
                 VStack(alignment: .leading, spacing: 6) {
                     Text(L("在這些 App 使用 Wingman"))
-                    HStack(spacing: 14) {
+                    LazyVGrid(columns: Array(repeating: GridItem(.flexible(), alignment: .leading), count: 4),
+                              alignment: .leading, spacing: 6) {
                         ForEach(ChatApp.allCases, id: \.self) { app in
                             Toggle(app.name, isOn: appEnabled(app)).toggleStyle(.checkbox)
                         }
@@ -257,9 +265,28 @@ struct SettingsView: View {
 
             Section {
                 HotkeyRecorder(settings: settings)
-                Text(L("在 Slack、Discord、LINE、Telegram 或 Messenger 網頁版收到訊息時，輸入框右上方會出現「✦ 3 個建議」。按 %@ 或點它展開，按 Enter 填入 ★ 推薦的那句，或按 1、2、3 選一句，確認後自己按 Enter 送出。", "\(settings.hotkey.label)"))
+                Text(L("在 Slack、Discord、LINE、Telegram，或 Messenger、Instagram、Threads 網頁版收到訊息時，輸入框右上方會出現「✦ 3 個建議」。按 %@ 或點它展開，按 Enter 填入 ★ 推薦的那句，或按 1、2、3 選一句，確認後自己按 Enter 送出。", "\(settings.hotkey.label)"))
                     .font(.callout)
             } header: { Text(L("怎麼用")) }
+
+            Section {
+                Toggle(isOn: $settings.soundsOn) {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(L("互動音效"))
+                        Text(L("你在等的建議寫好時，和回覆填進輸入框時，輕輕響一聲。背景自動分析完成時不會出聲。"))
+                            .font(.caption).foregroundStyle(.secondary)
+                    }
+                }
+                HStack {
+                    Picker(L("音色"), selection: $settings.soundVoice) {
+                        ForEach(Chime.Voice.allCases, id: \.self) { Text($0.name).tag($0) }
+                    }
+                    .pickerStyle(.segmented)
+                    Button(L("試聽")) { preview(settings.soundVoice) }
+                }
+                .disabled(!settings.soundsOn)
+                .onChange(of: settings.soundVoice) { _, voice in preview(voice) }
+            } header: { Text(L("音效")) }
 
             Section {
                 Toggle(isOn: $opensAtLogin) {

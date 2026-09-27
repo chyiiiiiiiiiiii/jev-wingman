@@ -3,7 +3,8 @@ import SwiftUI
 import WingmanCore
 
 /// `Wingman --render <dir>`: draws the pill and the suggestion panel with sample data, light and dark,
-/// over a chat-like backdrop, so a change can be looked at as pixels before it ships.
+/// over a chat-like backdrop, so a change can be looked at as pixels before it ships. The sounds are
+/// written beside them as WAV files, to be listened to the same way.
 @MainActor
 enum Render {
     static func run(to directory: String) -> Int32 {
@@ -31,7 +32,7 @@ enum Render {
             }
         }
         let settings = SettingsView(settings: Prefs.shared, model: AppModel())
-            .frame(height: 1600)
+            .frame(height: 1900)
             .background(Color(nsColor: .windowBackgroundColor))
         write(settings, appearance: NSAppearance(named: .darkAqua)!, to: url.appendingPathComponent("settings-dark.png"))
         for (name, appearance) in [("light", NSAppearance.Name.aqua), ("dark", .darkAqua)] {
@@ -41,6 +42,11 @@ enum Render {
                 let file = url.appendingPathComponent("onboarding-\(name)-\(step + 1).png")
                 let height = write(view, appearance: NSAppearance(named: appearance)!, to: file)
                 print("\(file.lastPathComponent) height \(Int(height))")
+            }
+        }
+        for voice in Chime.Voice.allCases {
+            for event in Chime.Event.allCases {
+                try? Chime.wav(Chime.samples(voice, event)).write(to: url.appendingPathComponent("sound-\(voice.rawValue)-\(event).wav"))
             }
         }
         return 0

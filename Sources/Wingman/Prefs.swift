@@ -1,5 +1,6 @@
 import Foundation
 import Security
+import WingmanCore
 
 /// Keys live in the Keychain; everything else in UserDefaults. Environment variables win,
 /// which keeps a developer's shell keys out of the Keychain entirely.
@@ -34,12 +35,20 @@ final class Prefs: ObservableObject {
     @Published var disabledApps: Set<String> {
         didSet { UserDefaults.standard.set(Array(disabledApps), forKey: "disabledApps") }
     }
+    /// A quiet sound when suggestions you are waiting for are ready, and when a reply is typed in.
+    @Published var soundsOn: Bool { didSet { UserDefaults.standard.set(soundsOn, forKey: "soundsOn") } }
+    @Published var soundVoice: Chime.Voice { didSet { UserDefaults.standard.set(soundVoice.rawValue, forKey: "soundVoice") } }
     @Published var hotkey: HotkeySetting {
         didSet { UserDefaults.standard.set(try? JSONEncoder().encode(hotkey), forKey: "hotkey") }
     }
 
     static var storedMyName: String? {
         UserDefaults.standard.string(forKey: "myName").flatMap { $0.isEmpty ? nil : $0 }
+    }
+
+    /// `disabledApps` as saved, readable off the main thread by the readers.
+    static var storedDisabledApps: Set<String> {
+        Set(UserDefaults.standard.stringArray(forKey: "disabledApps") ?? [])
     }
 
     private init() {
@@ -51,6 +60,8 @@ final class Prefs: ObservableObject {
         paused = UserDefaults.standard.bool(forKey: "paused")
         autoAnalyze = UserDefaults.standard.object(forKey: "autoAnalyze") as? Bool ?? true
         disabledApps = Set(UserDefaults.standard.stringArray(forKey: "disabledApps") ?? [])
+        soundsOn = UserDefaults.standard.object(forKey: "soundsOn") as? Bool ?? true
+        soundVoice = UserDefaults.standard.string(forKey: "soundVoice").flatMap(Chime.Voice.init) ?? .wood
         hotkey = UserDefaults.standard.data(forKey: "hotkey")
             .flatMap { try? JSONDecoder().decode(HotkeySetting.self, from: $0) } ?? .standard
     }

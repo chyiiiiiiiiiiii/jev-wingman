@@ -55,10 +55,12 @@ enum Dump {
         return 0
     }
 
-    /// `--dump --app <slack|discord|line|telegram|messenger> [--wait]`: what the app's reader sees now.
+    /// `--dump --app <slack|discord|line|telegram|messenger|instagram|threads> [--wait]`: what the app's reader sees now.
     static func read(app: ChatApp, wait: Bool) async -> Int32 {
         guard AXIsProcessTrusted() else { print("Accessibility is not granted to this process."); return 1 }
-        guard let running = NSWorkspace.shared.runningApplications.first(where: { ChatApp.matching($0) == app }) else {
+        guard let running = NSWorkspace.shared.runningApplications.first(where: {
+            $0.bundleIdentifier.map(app.bundleIDs.contains) == true
+        }) else {
             print("\(app.name) is not running."); return 1
         }
         if wait {
@@ -95,7 +97,8 @@ enum Dump {
                 }
                 visit(root)
                 let page = AXSnapshot.pageURL(of: window).map { "\($0.host ?? "?")\($0.path.prefix(10))" } ?? "no page"
-                print("  window “\(title.prefix(10))”(\(title.count)) · \(page) · Messenger: \(isMessenger(window)) · "
+                let chat = AXSnapshot.pageURL(of: window).flatMap(WebChat.at)?.rawValue ?? "none"
+                print("  window “\(title.prefix(2))…”(\(title.count)) · \(page) · web chat: \(chat) · "
                       + "\(nodes) nodes · inputs: \(inputs.isEmpty ? "none" : inputs.joined(separator: ", "))")
             }
             return 1
@@ -106,19 +109,21 @@ enum Dump {
         for message in convo.messages.suffix(12) {
             print("  [\(message.isMe ? "me" : (message.sender.map(show) ?? "them"))] \(show(message.text))")
         }
-        if app == .messenger {
+        if app.isBrowser {
             let pane = MessengerParser.lastPane
             print(String(format: "text lines in the column x %.0f–%.0f, y %.0f–%.0f:", pane.minX, pane.maxX, pane.minY, pane.maxY))
             for line in MessengerParser.lastLines.sorted(by: { $0.frame.minY < $1.frame.minY }) {
-                print(String(format: "  y=%4.0f x=%4.0f–%4.0f ", line.frame.minY, line.frame.minX, line.frame.maxX) + show(line.text))
+                print(String(format: "  y=%4.0f h=%2.0f x=%4.0f–%4.0f ", line.frame.minY, line.frame.height, line.frame.minX, line.frame.maxX) + show(line.text))
             }
         }
         return 0
     }
 
-    /// `--probe <bundle id> [--wait]`: role, DOM classes and redacted text of every labelled node in
-    /// an app's window, to learn where a new app keeps its messages before writing its reader.
-    static func probe(bundleID: String, wait: Bool, region: ClosedRange<Double> = 0.2...1, limit: Int = 260) -> Int32 {
+    /// `--probe <bundle id> [--wait] [--host <domain>]`: role, DOM classes and redacted text of every labelled
+    /// node in an app's window, to learn where a new app keeps its messages before writing its reader.
+    /// `--host` picks the browser window showing that site, in front or not.
+    static func probe(bundleID: String, wait: Bool, region: ClosedRange<Double> = 0.2...1, limit: Int = 260,
+                      host: String? = nil) -> Int32 {
         guard AXIsProcessTrusted(), let app = NSRunningApplication.runningApplications(withBundleIdentifier: bundleID).first
         else { print("Not trusted, or \(bundleID) is not running."); return 1 }
         AXSnapshot.enableWebAccessibility(pid: app.processIdentifier)
@@ -130,7 +135,11 @@ enum Dump {
         var root: UINode?, counts: [Int] = []
         for _ in 0..<8 {
             Thread.sleep(forTimeInterval: 1)
-            guard let window = AXSnapshot.windows(pid: app.processIdentifier).first else { counts.append(0); continue }
+            let windows = AXSnapshot.windows(pid: app.processIdentifier)
+            let showing = host.map { host in
+                windows.first { AXSnapshot.pageURL(of: $0)?.host?.lowercased().hasSuffix(host) == true }
+            } ?? windows.first
+            guard let window = showing else { counts.append(0); continue }
             let snapshot = AXSnapshot(window: window)
             root = snapshot.root
             counts.append(snapshot.elements.count)

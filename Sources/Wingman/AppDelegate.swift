@@ -12,7 +12,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var settingsWindow: NSWindow?
     private var onboardingWindow: NSWindow?
     private var timer: Timer?
-    private var watching: ChatApp?
+    private var watching: Front?
     private var askedForScreenCapture = false
     private var reading = false
     private var lastReadState = ""
@@ -25,6 +25,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         Log.write("launch trusted=\(AXIsProcessTrusted()) screenCapture=\(CGPreflightScreenCaptureAccess())")
         NSApp.mainMenu = Self.mainMenu()
         panels = PanelController(model: model)
+        Sounds.prepare()
         setUpStatusItem()
         NSWorkspace.shared.notificationCenter.addObserver(
             forName: NSWorkspace.didActivateApplicationNotification, object: nil, queue: .main
@@ -37,7 +38,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 guard let self else { return }
                 self.hotkey = nil
                 self.model.hotkeyLabel = Prefs.shared.hotkey.label
-                if ChatApp.frontmost != nil { self.registerHotkey() }
+                if Front.current?.app != nil { self.registerHotkey() }   // a browser's comes with a web chat tab
             }
         }
         appsObservation = Prefs.shared.$disabledApps.dropFirst().sink { [weak self] _ in
@@ -66,23 +67,23 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         return true
     }
 
-    // MARK: - Watching Slack
+    // MARK: - Watching the chat in front
 
     private func frontmostChanged() {
-        if let front = ChatApp.frontmost {
-            if watching != front.app {
-                watching = front.app
+        if let front = Front.current {
+            if watching != front {
+                watching = front
                 timer?.invalidate()
-                timer = Timer.scheduledTimer(withTimeInterval: front.app.pollInterval, repeats: true) { [weak self] _ in
+                timer = Timer.scheduledTimer(withTimeInterval: front.pollInterval, repeats: true) { [weak self] _ in
                     MainActor.assumeIsolated { self?.tick() }
                 }
                 tick()
             }
-            if front.app.readsPixels && !CGPreflightScreenCaptureAccess() && !askedForScreenCapture {
+            if front.app?.readsPixels == true && !CGPreflightScreenCaptureAccess() && !askedForScreenCapture {
                 askedForScreenCapture = true
                 CGRequestScreenCaptureAccess()     // macOS shows its prompt once
             }
-            if !front.app.isBrowser { registerHotkey() }     // a browser gets it once a Messenger tab is read
+            if front.app != nil { registerHotkey() }     // a browser gets it once a web chat tab is read
         } else if NSWorkspace.shared.frontmostApplication?.processIdentifier != ProcessInfo.processInfo.processIdentifier {
             timer?.invalidate()
             timer = nil
@@ -93,8 +94,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     private func tick() {
-        guard !reading, AXIsProcessTrusted(), let front = ChatApp.frontmost else { return }
-        if front.app.isElectron && accessibilityEnabledFor != front.pid {
+        guard !reading, AXIsProcessTrusted(), let front = Front.current else { return }
+        if front.app?.isElectron == true && accessibilityEnabledFor != front.pid {
             AXSnapshot.enableWebAccessibility(pid: front.pid)
             accessibilityEnabledFor = front.pid
         }
@@ -102,19 +103,21 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let me = Prefs.storedMyName
         Task { [weak self] in
             // Readers.read is nonisolated, so the accessibility walk and OCR run off the main actor.
-            let reading = await Readers.read(front.app, pid: front.pid, myName: me)
+            let read = await Readers.read(front, myName: me)
             guard let self else { return }
             self.reading = false
-            let convo = reading?.conversation
+            // A browser tab that is not a web chat leaves the app as it was, so nothing restarts.
+            let app = read?.app ?? front.app ?? self.model.app
+            let convo = read?.reading.conversation
             let state = convo.map { "ok messages=\($0.messages.count) last=\($0.messages.last.map { $0.isMe ? "me" : "them" } ?? "-")" }
                 ?? "nothing"
             if state != self.lastReadState {    // log changes only; no message text
                 self.lastReadState = state
-                Log.write("read \(front.app.rawValue) \(state)")
+                Log.write("read \(app.rawValue) \(state)")
             }
-            self.model.update(convo, app: front.app, pid: front.pid)
-            if front.app.isBrowser {
-                if reading == nil { self.hotkey = nil } else { self.registerHotkey() }
+            self.model.update(convo, app: app, pid: front.pid)
+            if case .browser = front {
+                if read == nil { self.hotkey = nil } else { self.registerHotkey() }
             }
         }
     }

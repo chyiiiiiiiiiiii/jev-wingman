@@ -186,6 +186,7 @@ final class AppModel: ObservableObject {
                     if final.map(\.text) != self.candidates.map(\.text) { self.candidates = final }
                     self.phase = .ready
                 }
+                if self.panelShown { Sounds.play(.ready) }     // only when someone is waiting for them
                 Log.write("suggest \(Int(Date().timeIntervalSince(started) * 1000))ms candidates=\(written.count)")
                 await self.rankCandidates(convo)
             } catch {
@@ -218,6 +219,7 @@ final class AppModel: ObservableObject {
                     if final.map(\.text) != self.candidates.map(\.text) { self.candidates = final }
                     self.phase = .ready
                 }
+                if self.panelShown { Sounds.play(.ready) }     // only when someone is waiting for them
                 self.direction = ""
                 await self.rankCandidates(convo)
             } catch {
@@ -281,6 +283,7 @@ final class AppModel: ObservableObject {
         closePanel()
         Task { [weak self] in
             let outcome = await Inserter.insert(text, app: app, expectedTitle: chat, pid: pid)
+            if case .copied = outcome {} else { Sounds.play(.inserted) }
             self?.flash(outcome.message)
         }
     }
