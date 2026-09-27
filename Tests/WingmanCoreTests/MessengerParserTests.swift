@@ -71,7 +71,10 @@ private let page = UINode(role: "AXWindow", title: "Messenger", frame: CGRect(x:
         UINode(role: "AXHeading", title: "Alex Chen", frame: CGRect(x: 500, y: 40, width: 90, height: 20)),
         UINode(role: "AXStaticText", value: "我剛確認過，是週五", frame: CGRect(x: 500, y: 600, width: 120, height: 20)),
         UINode(role: "AXButton", desc: "傳送語音訊息", frame: CGRect(x: 438, y: 760, width: 30, height: 30)),
-        UINode(role: "AXTextArea", desc: "撰寫內容給 Alex Chen", frame: CGRect(x: 605, y: 762, width: 440, height: 30), handle: 4),
+        // Its placeholder is a text node inside it, drawn a little above the box's own frame.
+        UINode(role: "AXTextArea", desc: "撰寫內容給 Alex Chen", frame: CGRect(x: 605, y: 762, width: 440, height: 30),
+               children: [UINode(role: "AXStaticText", value: "撰寫內容給 Alex Chen", frame: CGRect(x: 610, y: 730, width: 200, height: 20))],
+               handle: 4),
         UINode(role: "AXButton", desc: "送出讚", frame: CGRect(x: 1089, y: 760, width: 30, height: 30)),
     ])
 

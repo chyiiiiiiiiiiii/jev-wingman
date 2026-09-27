@@ -7,8 +7,12 @@ import CoreGraphics
 /// the message box's row, whose bubble is whose by which edge of that column it hugs.
 public enum MessengerParser {
     static let controls: Set<String> = ["AXButton", "AXPopUpButton", "AXTextArea"]
-    /// Text inside these is a control's label, not something a person wrote.
-    static let labelled: Set<String> = ["AXButton", "AXPopUpButton", "AXLink", "AXHeading"]
+    /// Text inside these is a control's label (or the message box's placeholder), not something a person wrote.
+    static let labelled: Set<String> = ["AXButton", "AXPopUpButton", "AXLink", "AXHeading", "AXTextArea"]
+
+    /// The text lines and column the last parse used, for `--dump` diagnostics.
+    nonisolated(unsafe) public private(set) static var lastLines: [OCRLine] = []
+    nonisolated(unsafe) public private(set) static var lastPane: CGRect = .zero
 
     public static func parse(window: UINode) -> Conversation? {
         var nodes: [(node: UINode, inLabel: Bool)] = []
@@ -50,6 +54,8 @@ public enum MessengerParser {
                   pane.insetBy(dx: -2, dy: -2).contains(node.frame) else { return nil }
             return OCRLine(text: text, frame: node.frame)
         }
+        lastLines = lines
+        lastPane = pane
         return Conversation(title: heading?.text ?? window.title, isThread: false,
                             messages: BubbleParser.messages(from: lines, pane: pane),
                             draft: composer.value.trimmingCharacters(in: .whitespacesAndNewlines),

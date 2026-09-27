@@ -106,6 +106,13 @@ enum Dump {
         for message in convo.messages.suffix(12) {
             print("  [\(message.isMe ? "me" : (message.sender.map(show) ?? "them"))] \(show(message.text))")
         }
+        if app == .messenger {
+            let pane = MessengerParser.lastPane
+            print(String(format: "text lines in the column x %.0f–%.0f, y %.0f–%.0f:", pane.minX, pane.maxX, pane.minY, pane.maxY))
+            for line in MessengerParser.lastLines.sorted(by: { $0.frame.minY < $1.frame.minY }) {
+                print(String(format: "  y=%4.0f x=%4.0f–%4.0f ", line.frame.minY, line.frame.minX, line.frame.maxX) + show(line.text))
+            }
+        }
         return 0
     }
 
