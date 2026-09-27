@@ -75,6 +75,15 @@ struct SettingsView: View {
     private let tick = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
     private static let custom = "custom"
 
+    /// A setting's name and, under it, what it is for in one plain sentence.
+    private func purpose(_ title: String, _ detail: String) -> some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Text(title).fontWeight(.semibold)
+            Text(detail).font(.caption).foregroundStyle(.secondary)
+        }
+        .padding(.top, 4)
+    }
+
     /// Pasted keys often carry a trailing newline.
     private func trimmed(_ binding: Binding<String>) -> Binding<String> {
         Binding(get: { binding.wrappedValue },
@@ -106,9 +115,9 @@ struct SettingsView: View {
                         }
                     }
                 }
-                Text("在清單裡把 Wingman 打開，這裡會自動打勾。Wingman 只讀你正在看的 Slack 對話，不會自動送出任何訊息。")
+                Text("用來讀 Slack、Discord 的對話，並把你選的回覆填進輸入框。在清單裡把 Wingman 打開，這裡會自動打勾。Wingman 只讀你正在看的對話，不會自動送出任何訊息。")
                     .font(.caption).foregroundStyle(.secondary)
-            } header: { Text("1. 讓 Wingman 讀 Slack") }
+            } header: { Text("1. 讓 Wingman 讀聊天內容") }
 
             Section {
                 HStack {
@@ -130,18 +139,42 @@ struct SettingsView: View {
             } header: { Text("LINE、Telegram（選用）") }
 
             Section {
-                SecureField("OpenRouter API key（寫回覆用，sk-or-…）", text: trimmed($settings.openRouterKey))
+                purpose("寫回覆：OpenRouter（必填）",
+                        "請 AI 寫出 3 句候選回覆。按用量付費，要先在 OpenRouter 儲值（例如 US$5）；一次建議大約 US$0.0002。")
+                SecureField("OpenRouter API key（sk-or-v1-…）", text: trimmed($settings.openRouterKey))
                 if let problem = Prefs.keyProblem(settings.openRouterKey, prefix: "sk-or-") {
                     Text(problem).font(.caption).foregroundStyle(.red)
                 }
-                SecureField("TypeSafe API key（判斷訊息用，選填）", text: trimmed($settings.typesafeKey))
+                HStack(spacing: 16) {
+                    Link("申請 key ↗", destination: URL(string: "https://openrouter.ai/keys")!)
+                    Link("儲值 ↗", destination: URL(string: "https://openrouter.ai/settings/credits")!)
+                }
+                .font(.callout)
+
+                purpose("判斷訊息：TypeSafe（選填）",
+                        "判斷對方想要什麼、需不需要回、有多急，並從 3 句裡挑出最推薦的那句。沒填也能用，會改透過 OpenRouter 呼叫，每次建議大約慢 2–4 秒。")
+                SecureField("TypeSafe API key", text: trimmed($settings.typesafeKey))
                 if let problem = Prefs.keyProblem(settings.typesafeKey, prefix: "api") {
                     Text(problem).font(.caption).foregroundStyle(.red)
                 }
-                Text("Wingman 用 TypeSafe 的 Jev 模型判斷訊息、挑出最推薦的回覆，用 OpenRouter 上的模型寫回覆。只填 OpenRouter 也能用；填了 TypeSafe key，判斷會快幾秒。")
+                Link("申請 key ↗", destination: URL(string: "https://console.typesafe.ai/keys")!)
+                    .font(.callout)
+
+                Picker("寫回覆的模型", selection: modelChoice) {
+                    ForEach(Prefs.writerModels, id: \.id) { Text($0.label).tag($0.id) }
+                    Text("自訂…").tag(Self.custom)
+                }
+                if modelChoice.wrappedValue == Self.custom {
+                    TextField("OpenRouter 模型 ID，例如 openai/gpt-5.4-mini", text: $settings.model)
+                }
+                Text("推薦的那個最快、用台灣用語，不確定的時間會留 [時間] 讓你自己填，不會替你亂承諾。")
                     .font(.caption).foregroundStyle(.secondary)
-                HStack {
-                    Link("去 OpenRouter 申請 key ↗", destination: URL(string: "https://openrouter.ai/keys")!)
+
+                HStack(alignment: .top) {
+                    Text(testResult.isEmpty ? "填好 key 後按「測試連線」，確認都能用。" : testResult)
+                        .font(.caption)
+                        .foregroundStyle(testResult.isEmpty ? .secondary : .primary)
+                        .textSelection(.enabled)
                     Spacer()
                     Button(testing ? "測試中…" : "測試連線") {
                         testing = true
@@ -152,20 +185,9 @@ struct SettingsView: View {
                     }
                     .disabled(testing)
                 }
-                if !testResult.isEmpty {
-                    Text(testResult).font(.caption).textSelection(.enabled)
-                }
-                Picker("寫回覆的模型", selection: modelChoice) {
-                    ForEach(Prefs.writerModels, id: \.id) { Text($0.label).tag($0.id) }
-                    Text("自訂…").tag(Self.custom)
-                }
-                if modelChoice.wrappedValue == Self.custom {
-                    TextField("OpenRouter 模型 ID，例如 openai/gpt-5.4-mini", text: $settings.model)
-                }
-                DisclosureGroup("進階") {
-                    Text("聊天內容會直接從這台 Mac 送到 OpenRouter／TypeSafe，不經過其他伺服器。")
-                        .font(.caption).foregroundStyle(.secondary)
-                }
+                Label("聊天內容只會從這台 Mac 直接送到 OpenRouter 和 TypeSafe，不經過其他伺服器；key 存在這台 Mac 的鑰匙圈。",
+                      systemImage: "lock")
+                    .font(.caption).foregroundStyle(.secondary)
             } header: { Text("2. 連上 AI") }
 
             Section {
@@ -195,7 +217,12 @@ struct SettingsView: View {
             } header: { Text("怎麼用") }
 
             Section {
-                Toggle("登入 Mac 時自動開啟 Wingman", isOn: $opensAtLogin)
+                Toggle(isOn: $opensAtLogin) {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("登入 Mac 時自動開啟 Wingman")
+                        Text("開機後就在背景待命，平常不用自己打開。").font(.caption).foregroundStyle(.secondary)
+                    }
+                }
                     .onChange(of: opensAtLogin) { _, on in
                         do {
                             try on ? SMAppService.mainApp.register() : SMAppService.mainApp.unregister()
