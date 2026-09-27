@@ -3,12 +3,10 @@
 
     scripts/make-icons.py artwork.png
 
-The stroke's outline is filled solid, in the stroke's own indigo-to-cyan gradient, with a ✦ cut out of
-the middle (the ✦ Wingman shows above the message box): a solid shape is found at a glance in a crowded
-menu bar or Dock, where a thin line is not. Writes Resources/AppIcon.icns (macOS squircle body per
-Apple's 1024 template) and Resources/MenuBarIcon*.png (a black template image, the ✦ transparent).
+The stroke's outline is filled solid, in the stroke's own indigo-to-cyan gradient: a solid shape is found
+at a glance in a crowded menu bar or Dock, where a thin line is not. Writes Resources/AppIcon.icns (macOS
+squircle body per Apple's 1024 template) and Resources/MenuBarIcon*.png (a black template image).
 """
-import math
 import subprocess
 import sys
 import tempfile
@@ -30,32 +28,14 @@ def stroke_mask(art: Image.Image) -> Image.Image:
 
 
 def solid_mark(art: Image.Image) -> Image.Image:
-    """The bubble as one filled shape: the stroke plus everything it encloses, with the ✦ cut out."""
+    """The bubble as one filled shape: the stroke plus everything it encloses."""
     stroke = stroke_mask(art)
     line = stroke.point(lambda v: 255 if v > 90 else 0)
     inside = line.copy()
     box = stroke.getbbox()
     seed = ((box[0] + box[2]) // 2, (box[1] + box[3]) // 2 - (box[3] - box[1]) // 8)   # above the tail
     ImageDraw.floodfill(inside, seed, 255)
-    shape = ImageChops.lighter(inside, stroke)           # keep the stroke's soft outer edge
-    enclosed = ImageChops.subtract(inside, line).getbbox()
-    center = ((enclosed[0] + enclosed[2]) / 2, (enclosed[1] + enclosed[3]) / 2)
-    radius = min(enclosed[2] - enclosed[0], enclosed[3] - enclosed[1]) * 0.27
-    return ImageChops.subtract(shape, sparkle(shape.size, center, radius))
-
-
-def sparkle(size: tuple[int, int], center: tuple[float, float], radius: float) -> Image.Image:
-    """A four-pointed star with curved sides (a squashed astroid), drawn 4× larger and scaled down for a smooth edge."""
-    scale = 4
-    canvas = Image.new("L", (size[0] * scale, size[1] * scale), 0)
-    points = []
-    for step in range(720):
-        t = 2 * math.pi * step / 720
-        c, s = math.cos(t), math.sin(t)
-        points.append((scale * (center[0] + radius * math.copysign(abs(c) ** 2.5, c)),
-                       scale * (center[1] + radius * math.copysign(abs(s) ** 2.5, s))))
-    ImageDraw.Draw(canvas).polygon(points, fill=255)
-    return canvas.resize(size, Image.LANCZOS)
+    return ImageChops.lighter(inside, stroke)            # keep the stroke's soft outer edge
 
 
 def gradient(size: tuple[int, int], start: tuple[int, int, int], end: tuple[int, int, int]) -> Image.Image:
