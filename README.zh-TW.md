@@ -18,33 +18,11 @@ Wingman 把工作分給兩種模型：
 2. **LLM 寫回覆**：透過 OpenRouter 呼叫模型（預設是 DeepSeek V4.1 Flash），照 Jev 挑的回法各寫一句，寫好一句就先顯示一句。
 3. **Jev 評分**：Jev 幫 3 句打分數，最推薦的那句標 ★。按 Enter 填入 ★ 那句，按 1–3 可以自己選。
 
-從訊息進來到你按下 Enter，依序發生的事：
+![一次建議的六個步驟，分在三條泳道：你的 Mac 讀聊天；Jev 約 0.3 秒回答四個問題；程式取機率最高的三種回法，不需要回就停；LLM 在 2–4 秒內串流寫出三句；Jev 幫三句評分，★ 標出最推薦的；Wingman 填進輸入框，由你按 Enter 送出。](docs/flow-zh-Hant.png)
 
-```mermaid
-sequenceDiagram
-    autonumber
-    participant Chat as 聊天 App
-    participant W as Wingman（你的 Mac）
-    participant Jev as Jev（TypeSafe）
-    participant LLM as LLM（OpenRouter）
-    actor You as 你
-    Note over Chat,W: 在 Instagram、Threads 貼文底下，改成從你點進留言框開始
-    Chat->>W: 新訊息進來，在 Mac 上讀（輔助使用或本機 OCR）
-    W->>Jev: 最近 20 則訊息 + 4 個問題，一次請求
-    Jev-->>W: 意圖、要不要回、多急、用哪種回法，各附機率（約 0.3 秒）
-    alt 自動分析，且「要不要回」低於 0.5
-        W-->>You: 只顯示淡淡的標記，不寫草稿
-    else 需要回
-        W->>LLM: 照機率最高的 3 種回法各寫一句
-        LLM-->>W: 草稿串流回來，寫好一句先顯示一句
-        W->>Jev: 3 句草稿當成同一題的選項
-        Jev-->>W: 每句一個機率，最高的標 ★
-        W-->>You: 輸入框上方出現「✦ 3 個建議」
-    end
-    You->>W: 按 ⌥Space，再按 Enter（或 1–3）
-    W->>Chat: 填進輸入框（先確認聊天室和游標，不按 Enter）
-    You->>Chat: 看過後自己按 Enter 送出
-```
+### 系統架構
+
+![Wingman 在 Mac 上的各個元件：讀取器（ChatApp、AXSnapshot、各解析器、PixelReader）從 Slack、Discord、Messenger、Instagram、Threads、LINE、Telegram 取出最近 20 則；AppModel 決定要不要繼續；Brain.swift 把四個問題、之後把草稿送給 Jev 評分，並把前三種回法送給 LLM 寫字；面板顯示草稿和 ★；Inserter 把選好的那句填進輸入框。只有給 Jev 和 LLM 的請求會離開 Mac。](docs/architecture-zh-Hant.png)
 
 ## 支援的 App
 
@@ -109,6 +87,7 @@ build/Wingman.app/Contents/MacOS/Wingman --render /tmp/wingman   # 把面板、�
 /Applications/Wingman.app/Contents/MacOS/Wingman --probe com.hnc.Discord --wait   # 看某個 App 的畫面結構
 OPENROUTER_API_KEY=… scripts/bench-writers.py                     # 用虛構對話比較寫回覆的模型
 scripts/make-demo.py                                               # 產生 README 最上面的 GIF（需要 ffmpeg）
+scripts/make-diagrams.py                                           # 產生流程圖和系統架構圖（需要 Chrome）
 ```
 
 - `Sources/WingmanCore`：純邏輯，都有測試（Slack、Discord、Messenger、Instagram、Threads 的解析、哪些網頁可以讀、截圖辨識的氣泡分析、Jev 與 LLM 回應的解碼、語言與安全規則、音效）。

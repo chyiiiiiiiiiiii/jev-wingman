@@ -18,33 +18,11 @@ Wingman splits the job between two kinds of model:
 2. **An LLM writes.** A model on OpenRouter (DeepSeek V4.1 Flash by default) writes one draft per strategy Jev picked. Drafts appear as they are written.
 3. **Jev ranks.** Jev scores the three drafts and the best one gets ★. Enter types it; 1–3 types any of them.
 
-What happens, in order, from a message arriving to you pressing Enter:
+![One suggestion in six steps across three lanes: your Mac reads the chat; Jev answers four questions in about 0.3 s; code keeps the three likeliest ways to reply, or stops when no reply is needed; the LLM writes three drafts in 2–4 s, streamed; Jev scores them and ★ marks the best; Wingman types it in and you press Enter.](docs/flow-en.png)
 
-```mermaid
-sequenceDiagram
-    autonumber
-    participant Chat as Chat app
-    participant W as Wingman (your Mac)
-    participant Jev as Jev (TypeSafe)
-    participant LLM as LLM (OpenRouter)
-    actor You
-    Note over Chat,W: Under an Instagram or Threads post, it starts when your cursor enters the reply box
-    Chat->>W: New message, read on the Mac (accessibility tree or on-device OCR)
-    W->>Jev: Last 20 messages + 4 questions, one request
-    Jev-->>W: Intent, needs a reply?, how soon, which strategies, each with probabilities (~0.3 s)
-    alt Automatic analysis and needs_reply below 0.5
-        W-->>You: A quiet mark only, no drafts written
-    else A reply is expected
-        W->>LLM: One draft per top-3 strategy
-        LLM-->>W: Drafts, streamed one by one
-        W->>Jev: The 3 drafts as the options of one choice
-        Jev-->>W: A probability per draft, the highest gets ★
-        W-->>You: ✦ 3 suggestions above the message box
-    end
-    You->>W: ⌥Space, then Enter (or 1–3)
-    W->>Chat: Types the draft in (checks the chat and the focus, never presses Enter)
-    You->>Chat: Read it, press Enter to send
-```
+### System design
+
+![Wingman's parts inside the Mac: readers (ChatApp, AXSnapshot, the parsers, PixelReader) take the last 20 messages from Slack, Discord, Messenger, Instagram, Threads, LINE and Telegram; AppModel decides whether to go on; Brain.swift sends Jev four questions and later the drafts to score, and sends the LLM the top three ways to reply; the panel shows the drafts and ★; Inserter types the chosen one into the message box. Only the requests to Jev and the LLM leave the Mac.](docs/architecture-en.png)
 
 ## Supported apps
 
@@ -103,6 +81,7 @@ build/Wingman.app/Contents/MacOS/Wingman --render /tmp/wingman   # the panel, on
 /Applications/Wingman.app/Contents/MacOS/Wingman --probe com.hnc.Discord --wait   # an app's accessibility tree
 OPENROUTER_API_KEY=… scripts/bench-writers.py                     # compare writer models on made-up threads
 scripts/make-demo.py                                               # the GIFs at the top of the READMEs (needs ffmpeg)
+scripts/make-diagrams.py                                           # the flow and system design diagrams (needs Chrome)
 ```
 
 - `Sources/WingmanCore`: pure logic with tests (Slack, Discord, Messenger, Instagram and Threads parsers, which web pages are read, OCR bubble parser, Jev and LLM decoders, language and safety rules, the sounds).
