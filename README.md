@@ -21,7 +21,29 @@ Wingman splits the job between two kinds of model:
 What happens, in order, from a message arriving to you pressing Enter:
 
 ```mermaid
-{en}
+sequenceDiagram
+    autonumber
+    participant Chat as Chat app
+    participant W as Wingman (your Mac)
+    participant Jev as Jev (TypeSafe)
+    participant LLM as LLM (OpenRouter)
+    actor You
+    Note over Chat,W: Under an Instagram or Threads post, it starts when your cursor enters the reply box
+    Chat->>W: New message, read on the Mac (accessibility tree or on-device OCR)
+    W->>Jev: Last 20 messages + 4 questions, one request
+    Jev-->>W: Intent, needs a reply?, how soon, which strategies, each with probabilities (~0.3 s)
+    alt Automatic analysis and needs_reply below 0.5
+        W-->>You: A quiet mark only, no drafts written
+    else A reply is expected
+        W->>LLM: One draft per top-3 strategy
+        LLM-->>W: Drafts, streamed one by one
+        W->>Jev: The 3 drafts as the options of one choice
+        Jev-->>W: A probability per draft, the highest gets ★
+        W-->>You: ✦ 3 suggestions above the message box
+    end
+    You->>W: ⌥Space, then Enter (or 1–3)
+    W->>Chat: Types the draft in (checks the chat and the focus, never presses Enter)
+    You->>Chat: Read it, press Enter to send
 ```
 
 ## Supported apps

@@ -21,7 +21,29 @@ Wingman 把工作分給兩種模型：
 從訊息進來到你按下 Enter，依序發生的事：
 
 ```mermaid
-{zh}
+sequenceDiagram
+    autonumber
+    participant Chat as 聊天 App
+    participant W as Wingman（你的 Mac）
+    participant Jev as Jev（TypeSafe）
+    participant LLM as LLM（OpenRouter）
+    actor You as 你
+    Note over Chat,W: 在 Instagram、Threads 貼文底下，改成從你點進留言框開始
+    Chat->>W: 新訊息進來，在 Mac 上讀（輔助使用或本機 OCR）
+    W->>Jev: 最近 20 則訊息 + 4 個問題，一次請求
+    Jev-->>W: 意圖、要不要回、多急、用哪種回法，各附機率（約 0.3 秒）
+    alt 自動分析，且「要不要回」低於 0.5
+        W-->>You: 只顯示淡淡的標記，不寫草稿
+    else 需要回
+        W->>LLM: 照機率最高的 3 種回法各寫一句
+        LLM-->>W: 草稿串流回來，寫好一句先顯示一句
+        W->>Jev: 3 句草稿當成同一題的選項
+        Jev-->>W: 每句一個機率，最高的標 ★
+        W-->>You: 輸入框上方出現「✦ 3 個建議」
+    end
+    You->>W: 按 ⌥Space，再按 Enter（或 1–3）
+    W->>Chat: 填進輸入框（先確認聊天室和游標，不按 Enter）
+    You->>Chat: 看過後自己按 Enter 送出
 ```
 
 ## 支援的 App
