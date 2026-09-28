@@ -18,6 +18,12 @@ Wingman splits the job between two kinds of model:
 2. **An LLM writes.** A model on OpenRouter (DeepSeek V4.1 Flash by default) writes one draft per strategy Jev picked. Drafts appear as they are written.
 3. **Jev ranks.** Jev scores the three drafts and the best one gets ★. Enter types it; 1–3 types any of them.
 
+What happens, in order, from a message arriving to you pressing Enter:
+
+```mermaid
+{en}
+```
+
 ## Supported apps
 
 | App | How it is read | Permission |
