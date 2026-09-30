@@ -16,6 +16,12 @@ final class AppModel: ObservableObject {
     @Published var panelShown = false
     @Published var direction = ""
     @Published var fieldFocused = false
+    /// The draft ↑↓ has moved to and Enter types: the first while drafts come in, then ★ once Jev ranks
+    /// them, unless the arrows were used first.
+    @Published private(set) var selected = 0
+    private var movedByHand = false
+    /// Tab asks the panel to put the cursor in the direction field.
+    @Published var focusField = false
     @Published var hotkeyLabel = "⌥Space"
     @Published var panelWidth: CGFloat = 480
     @Published private(set) var chatInFront = false
@@ -100,6 +106,7 @@ final class AppModel: ObservableObject {
                           text: chinese ? "只改 v2 的部分，還是整份都要更新？" : "Just the v2 endpoints, or the whole doc?",
                           score: 0.11),
             ].prefix(drafts).map { scored ? $0 : Candidate(strategy: $0.strategy, text: $0.text) }
+            selected = bestIndex ?? 0
         }
     }
 
@@ -146,6 +153,8 @@ final class AppModel: ObservableObject {
             workTask?.cancel()
             phase = .idle
             candidates = []
+        resetSelection()
+            resetSelection()
             judgment = nil
         }
         // Prefetch once the other side's message has sat still, so ⌥Space opens instantly. With
@@ -187,6 +196,7 @@ final class AppModel: ObservableObject {
         let reuseJudgment = !auto && judgment != nil && judgedFingerprint == print
         phase = .thinking
         candidates = []
+        resetSelection()
         ranking = false
         if !reuseJudgment { judgment = nil }
         guard settings.hasWriterKey || !settings.typesafeKey.isEmpty else {
@@ -251,6 +261,7 @@ final class AppModel: ObservableObject {
         let current = generation
         phase = .thinking
         candidates = []
+        resetSelection()
         workTask = Task { [weak self] in
             guard let self else { return }
             do {
@@ -291,6 +302,7 @@ final class AppModel: ObservableObject {
             guard !Task.isCancelled, candidates.map(\.text) == drafts else { return }
             withAnimation(.easeOut(duration: 0.22)) {
                 for index in candidates.indices { candidates[index].score = scores[index] }
+                if !movedByHand, let best = bestIndex { selected = best }
             }
             Log.write("rank \(Int(Date().timeIntervalSince(started) * 1000))ms")
         } catch {
@@ -316,8 +328,20 @@ final class AppModel: ObservableObject {
         fieldFocused = false
     }
 
-    func insertBest() {
-        insert(bestIndex ?? 0)
+    /// Enter: the draft the arrows are on.
+    func insertSelected() {
+        insert(candidates.indices.contains(selected) ? selected : bestIndex ?? 0)
+    }
+
+    func moveSelection(_ step: Int) {
+        guard !candidates.isEmpty else { return }
+        selected = min(max(0, selected + step), candidates.count - 1)
+        movedByHand = true
+    }
+
+    private func resetSelection() {
+        selected = 0
+        movedByHand = false
     }
 
     func insert(_ index: Int) {

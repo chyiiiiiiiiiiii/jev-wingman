@@ -75,6 +75,7 @@ final class PanelController: NSObject, NSWindowDelegate {
                 panel.setFrame(frame, display: true)
                 panel.alphaValue = 0
                 panel.makeKeyAndOrderFront(nil)
+                panel.makeFirstResponder(nil)     // the drafts have the keys, not the direction field
                 NSAnimationContext.runAnimationGroup { $0.duration = 0.16; panel.animator().alphaValue = 1 }
             } else if panel.frame != frame {
                 NSAnimationContext.runAnimationGroup { context in
@@ -116,14 +117,20 @@ final class PanelController: NSObject, NSWindowDelegate {
             }
             guard pressed == event.keyCode else { return true }
             pressed = nil
-            if event.keyCode >= 18 && event.keyCode <= 20 { model.insert(Int(event.keyCode) - 18) } else { model.insertBest() }
+            if event.keyCode >= 18 && event.keyCode <= 20 { model.insert(Int(event.keyCode) - 18) } else { model.insertSelected() }
             return true
         }
         guard event.type == .keyDown else { return false }
         switch event.keyCode {
-        case 53:  // Esc
-            if model.fieldFocused && !model.direction.isEmpty {
-                model.direction = ""
+        case 125 where !model.fieldFocused, 126 where !model.fieldFocused:   // ↓ ↑ move between the drafts
+            model.moveSelection(event.keyCode == 125 ? 1 : -1)
+            return true
+        case 48 where !model.fieldFocused:         // Tab: write a direction of your own
+            model.focusField = true
+            return true
+        case 53:  // Esc: out of the field first (clearing it if it has words), then close
+            if model.fieldFocused {
+                if model.direction.isEmpty { panel.makeFirstResponder(nil) } else { model.direction = "" }
             } else {
                 model.closePanel()
             }
@@ -156,6 +163,30 @@ struct PillView: View {
             .overlay(Capsule().strokeBorder(.separator))
             .fixedSize()
             .onTapGesture { model.togglePanel() }
+    }
+}
+
+/// A small quiet capsule: a coloured dot or a symbol, then a few words.
+struct Tag: View {
+    let text: String
+    var dot: Color? = nil
+    var symbol: String? = nil
+
+    var body: some View {
+        HStack(spacing: 5) {
+            if let symbol {
+                Image(systemName: symbol).font(.system(size: 9.5, weight: .semibold))
+            } else if let dot {
+                Circle().fill(dot).frame(width: 6, height: 6)
+            }
+            Text(text).lineLimit(1)
+        }
+        .font(.system(size: 11.5))
+        .foregroundStyle(.secondary)
+        .padding(.horizontal, 8)
+        .padding(.vertical, 2.5)
+        .background(Capsule().fill(.quaternary.opacity(0.7)))
+        .fixedSize()
     }
 }
 
@@ -224,7 +255,10 @@ struct SuggestionView: View {
         .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 12))
         .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(.separator))
         .onChange(of: fieldFocused) { _, focused in model.fieldFocused = focused }
-        .onChange(of: model.panelShown) { _, shown in if !shown { fieldFocused = false } }
+        .onChange(of: model.panelShown) { _, _ in fieldFocused = false }
+        .onChange(of: model.focusField) { _, wanted in
+            if wanted { fieldFocused = true; model.focusField = false }
+        }
     }
 
     /// Chips and the direction field rewrite what is on screen; nothing to rewrite while writing.
@@ -237,11 +271,11 @@ struct SuggestionView: View {
 
     /// What the keys do right now.
     private var hint: String {
-        if fieldFocused { return L("Enter 重寫 · ⌘1–3 填入 · Esc 清除") }
+        if fieldFocused { return L("Enter 重寫 · Esc 回到選項 · ⌘1–3 填入") }
         switch model.phase {
-        case .ready: return L("Enter 填入 ★ 推薦 · 1–3 選一句 · Esc 關閉 · 不會自動送出")
+        case .ready: return L("↑↓ 選一句 · Enter 填入 · Tab 說你的想法 · Esc 關閉 · 不會自動送出")
         case .failed: return L("Esc 關閉")
-        default: return L("正在寫，好了就能按 Enter 或 1–3 填入 · Esc 關閉")
+        default: return L("正在寫，好了就能 ↑↓ 選、Enter 填入 · Esc 關閉")
         }
     }
 
@@ -257,23 +291,28 @@ struct SuggestionView: View {
         }
     }
 
+    /// When to reply, as a small tag whose dot keeps the urgency colour; a globe under a public post.
+    @ViewBuilder private func replyTag(_ j: Judgment) -> some View {
+        if model.conversation?.isPost == true {
+            // A reply under a post is public; say so before anything is typed.
+            Tag(text: L("你的回覆會公開"), symbol: "globe")
+        } else if let urgency = j.urgency {
+            j.needsReply < 0.35 ? Tag(text: L("這則可以不回"), dot: .gray)
+                                : Tag(text: Self.urgencyText(urgency), dot: Self.urgencyColor(urgency))
+        }
+    }
+
     @ViewBuilder private var headerText: some View {
         VStack(alignment: .leading, spacing: 4) {
             if let j = model.judgment {
-                HStack(spacing: 6) {
-                    if let urgency = j.urgency {
-                        Circle().fill(Self.urgencyColor(urgency)).frame(width: 8, height: 8)
-                    }
-                    Text(Self.plain(j.intent, sure: j.intentConfidence >= 0.5)).fontWeight(.semibold)
-                    Text("·").foregroundStyle(.secondary)
-                    if model.conversation?.isPost == true {
-                        // A reply under a post is public; say so before anything is typed.
-                        Text(L("你的回覆會公開")).foregroundStyle(.secondary)
-                    } else if let urgency = j.urgency {
-                        Text(j.needsReply < 0.35 ? L("這則可以不回") : Self.urgencyText(urgency)).foregroundStyle(.secondary)
-                    }
+                // What is happening, then what to do about it as a tag; the tag drops to its own line
+                // rather than squeeze a long sentence.
+                let sentence = Text(Self.plain(j.intent, sure: j.intentConfidence >= 0.5))
+                    .font(.system(size: 13, weight: .semibold))
+                ViewThatFits(in: .horizontal) {
+                    HStack(spacing: 8) { sentence; replyTag(j) }
+                    VStack(alignment: .leading, spacing: 5) { sentence; replyTag(j) }
                 }
-                .font(.system(size: 13))
                 if let tension = j.tension {
                     MoodBar(tension: tension, subtext: (j.subtext ?? 0) >= Brain.meaningful)
                 }
@@ -335,6 +374,7 @@ struct SuggestionView: View {
 
     private func candidateRow(_ index: Int, _ candidate: Candidate) -> some View {
         let best = model.bestIndex == index
+        let chosen = model.selected == index
         return HStack(alignment: .top, spacing: 10) {
             Text("\(index + 1)")
                 .font(.system(size: 12, weight: .bold, design: .rounded))
@@ -369,9 +409,13 @@ struct SuggestionView: View {
             Spacer(minLength: 0)
         }
         .padding(8)
-        .background(best ? Self.brand.opacity(0.12) : hovered == index ? Color.accentColor.opacity(0.06) : .clear,
+        // The frame follows the arrows; ★ stays on the draft Jev picked.
+        .background(chosen ? Self.brand.opacity(0.12) : hovered == index ? Color.accentColor.opacity(0.06) : .clear,
                     in: RoundedRectangle(cornerRadius: 8))
-        .overlay(RoundedRectangle(cornerRadius: 8).strokeBorder(best ? Self.brand.opacity(0.8) : .clear))
+        .overlay(RoundedRectangle(cornerRadius: 8).strokeBorder(chosen ? Self.brand.opacity(0.8) : .clear))
+        .animation(.easeOut(duration: 0.12), value: chosen)
+        .accessibilityElement(children: .combine)
+        .accessibilityAddTraits(chosen ? .isSelected : [])
         .contentShape(Rectangle())
         .onHover { hovered = $0 ? index : (hovered == index ? nil : hovered) }
         .onTapGesture { model.insert(index) }

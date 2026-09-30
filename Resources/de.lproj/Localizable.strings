@@ -77,10 +77,10 @@
 "更正式" = "Förmlicher";
 "更熱情" = "Herzlicher";
 "說說你想怎麼回，例如「跟他說週五前給」，按 Enter 重寫" = "Sag, was du antworten willst, z. B. „bis Freitag“";
-"Enter 重寫 · ⌘1–3 填入 · Esc 清除" = "Enter neu schreiben · ⌘1–3 einfügen · Esc leeren";
-"Enter 填入 ★ 推薦 · 1–3 選一句 · Esc 關閉 · 不會自動送出" = "Enter ★ einfügen · 1–3 auswählen · Esc schließen · sendet nie selbst";
+"Enter 重寫 · Esc 回到選項 · ⌘1–3 填入" = "Enter schreibt neu · Esc zurück zu den Vorschlägen · ⌘1–3 fügt ein";
+"↑↓ 選一句 · Enter 填入 · Tab 說你的想法 · Esc 關閉 · 不會自動送出" = "↑↓ wählen · Enter einfügen · Tab für eigenen Wunsch · Esc schließen · sendet nie";
 "Esc 關閉" = "Esc schließen";
-"正在寫，好了就能按 Enter 或 1–3 填入 · Esc 關閉" = "Wird geschrieben… Enter oder 1–3, sobald fertig · Esc schließen";
+"正在寫，好了就能 ↑↓ 選、Enter 填入 · Esc 關閉" = "Schreibt… dann ↑↓ wählen, Enter einfügen · Esc schließen";
 "關閉（Esc）" = "Schließen (Esc)";
 "你的回覆會公開" = "Deine Antwort ist öffentlich";
 "這則可以不回" = "Keine Antwort nötig";
@@ -179,7 +179,7 @@
 "清除並重新啟動" = "Löschen und neu starten";
 "取消" = "Abbrechen";
 "會刪除鑰匙圈裡的 key、所有設定、紀錄檔和記住的聊天紀錄，然後重新啟動 Wingman。" = "Löscht die Schlüssel im Schlüsselbund, alle Einstellungen, das Protokoll und gemerkte Chats und startet Wingman neu.";
-"在 Slack、Discord、LINE、Telegram，或 Messenger、Instagram、Threads 網頁版收到訊息時，以及在 Instagram、Threads 的貼文底下準備留言時，輸入框右上方會出現「✦ 3 個建議」。按 %@ 或點它展開，按 Enter 填入 ★ 推薦的那句，或按 1、2、3 選一句，確認後自己按 Enter 送出。" = "Kommt in Slack, Discord, LINE, Telegram oder in Messenger, Instagram oder Threads im Web eine Nachricht an, und wenn du unter einem Instagram- oder Threads-Beitrag eine Antwort beginnst, erscheint über dem Eingabefeld „✦ 3 Vorschläge“. Drücke %@ oder klicke darauf, dann Enter für die ★-Antwort oder 1, 2, 3 zum Auswählen. Prüfe sie und drücke selbst Enter zum Senden.";
+"在 Slack、Discord、LINE、Telegram，或 Messenger、Instagram、Threads 網頁版收到訊息時，以及在 Instagram、Threads 的貼文底下準備留言時，輸入框右上方會出現「✦ 3 個建議」。按 %@ 或點它展開，一開始就停在 ★ 推薦的那句，用 ↑↓ 換一句、按 Enter 填入（或直接按 1、2、3），確認後自己按 Enter 送出。" = "Kommt in Slack, Discord, LINE, Telegram oder in Messenger, Instagram oder Threads im Web eine Nachricht an, und wenn du unter einem Instagram- oder Threads-Beitrag eine Antwort beginnst, erscheint über dem Eingabefeld „✦ 3 Vorschläge“. Drücke %@ oder klicke darauf: Der ★-Vorschlag ist schon ausgewählt; ↑↓ wählt einen anderen, Enter fügt ihn ein (oder 1, 2, 3). Prüfe ihn und drücke selbst Enter zum Senden.";
 "怎麼用" = "So funktioniert’s";
 "互動音效" = "Töne";
 "你在等的建議寫好時，和回覆填進輸入框時，輕輕響一聲。背景自動分析完成時不會出聲。音量跟著系統的提示音音量。" = "Ein leiser Ton, wenn Vorschläge fertig sind, auf die du wartest, und wenn eine Antwort eingefügt wurde. Analysen, die im Hintergrund fertig werden, bleiben still. Die Lautstärke folgt der Hinweislautstärke des Mac.";

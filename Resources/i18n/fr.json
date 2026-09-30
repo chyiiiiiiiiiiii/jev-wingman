@@ -61,10 +61,7 @@
  "更正式": "Plus formel",
  "更熱情": "Plus chaleureux",
  "說說你想怎麼回，例如「跟他說週五前給」，按 Enter 重寫": "Dites quoi répondre, ex. « prêt vendredi »",
- "Enter 重寫 · ⌘1–3 填入 · Esc 清除": "Entrée : réécrire · ⌘1–3 : insérer · Esc : effacer",
- "Enter 填入 ★ 推薦 · 1–3 選一句 · Esc 關閉 · 不會自動送出": "Entrée : insérer ★ · 1–3 : choisir · Esc : fermer · aucun envoi automatique",
  "Esc 關閉": "Esc : fermer",
- "正在寫，好了就能按 Enter 或 1–3 填入 · Esc 關閉": "Rédaction… Entrée ou 1–3 dès que c'est prêt · Esc : fermer",
  "關閉（Esc）": "Fermer (Esc)",
  "回覆 %@：%@": "Réponse à %@ : %@",
  "對方": "votre interlocuteur",
@@ -106,7 +103,6 @@
  "2. 連上 AI": "2. Connecter l'IA",
  "用來分辨 Slack、Discord 裡哪些訊息是你說的。各 App 顯示的名字不同時，用逗號分開，例如「Yii, Yii Chen」。LINE、Telegram 和網頁版的 Messenger、Instagram、Threads 看氣泡位置，不需要名字。": "Permet de distinguer vos messages Slack et Discord de ceux des autres. Si votre nom diffère selon les apps, séparez les variantes par des virgules, par exemple « Yii, Yii Chen ». Pour LINE, Telegram, et Messenger, Instagram et Threads sur le web, la position des bulles suffit : aucun nom n'est nécessaire.",
  "3. 你是誰": "3. Qui êtes-vous ?",
- "在 Slack、Discord、LINE、Telegram，或 Messenger、Instagram、Threads 網頁版收到訊息時，以及在 Instagram、Threads 的貼文底下準備留言時，輸入框右上方會出現「✦ 3 個建議」。按 %@ 或點它展開，按 Enter 填入 ★ 推薦的那句，或按 1、2、3 選一句，確認後自己按 Enter 送出。": "Quand un message arrive dans Slack, Discord, LINE, Telegram, ou dans Messenger, Instagram ou Threads sur le web, et quand vous commencez une réponse sous une publication Instagram ou Threads, « ✦ 3 suggestions » apparaît au-dessus du champ de message, à droite. Appuyez sur %@ ou cliquez dessus, puis sur Entrée pour insérer la réponse ★, ou sur 1, 2 ou 3 pour en choisir une. Vérifiez-la, puis appuyez vous-même sur Entrée pour l'envoyer.",
  "怎麼用": "Mode d'emploi",
  "登入 Mac 時自動開啟 Wingman": "Ouvrir Wingman à l'ouverture de session",
  "開機後就在背景待命，平常不用自己打開。": "Wingman reste prêt en arrière-plan après le démarrage : inutile de l'ouvrir vous-même.",
@@ -229,5 +225,9 @@
  "對方好像在搞笑": "Semble plaisanter",
  "不急，有空再回": "Pas pressé, répondez quand vous pouvez",
  "這則可以不回": "Pas besoin de répondre",
- "你的回覆會公開": "Votre réponse sera publique"
+ "你的回覆會公開": "Votre réponse sera publique",
+ "Enter 重寫 · Esc 回到選項 · ⌘1–3 填入": "Entrée réécrit · Échap revient aux réponses · ⌘1–3 insère",
+ "↑↓ 選一句 · Enter 填入 · Tab 說你的想法 · Esc 關閉 · 不會自動送出": "↑↓ choisir · Entrée insérer · Tab pour dire ce que vous voulez · Échap fermer · n'envoie jamais",
+ "正在寫，好了就能 ↑↓ 選、Enter 填入 · Esc 關閉": "Rédaction… puis ↑↓ pour choisir, Entrée pour insérer · Échap fermer",
+ "在 Slack、Discord、LINE、Telegram，或 Messenger、Instagram、Threads 網頁版收到訊息時，以及在 Instagram、Threads 的貼文底下準備留言時，輸入框右上方會出現「✦ 3 個建議」。按 %@ 或點它展開，一開始就停在 ★ 推薦的那句，用 ↑↓ 換一句、按 Enter 填入（或直接按 1、2、3），確認後自己按 Enter 送出。": "Quand un message arrive dans Slack, Discord, LINE, Telegram, ou dans Messenger, Instagram ou Threads sur le web, et quand vous commencez une réponse sous une publication Instagram ou Threads, « ✦ 3 suggestions » apparaît au-dessus du champ de message, à droite. Appuyez sur %@ ou cliquez dessus : la réponse ★ est sélectionnée d'emblée ; ↑↓ en choisit une autre et Entrée l'insère (ou 1, 2, 3). Vérifiez-la, puis appuyez vous-même sur Entrée pour l'envoyer."
 }

@@ -77,10 +77,10 @@
 "更正式" = "Plus formel";
 "更熱情" = "Plus chaleureux";
 "說說你想怎麼回，例如「跟他說週五前給」，按 Enter 重寫" = "Dites quoi répondre, ex. « prêt vendredi »";
-"Enter 重寫 · ⌘1–3 填入 · Esc 清除" = "Entrée : réécrire · ⌘1–3 : insérer · Esc : effacer";
-"Enter 填入 ★ 推薦 · 1–3 選一句 · Esc 關閉 · 不會自動送出" = "Entrée : insérer ★ · 1–3 : choisir · Esc : fermer · aucun envoi automatique";
+"Enter 重寫 · Esc 回到選項 · ⌘1–3 填入" = "Entrée réécrit · Échap revient aux réponses · ⌘1–3 insère";
+"↑↓ 選一句 · Enter 填入 · Tab 說你的想法 · Esc 關閉 · 不會自動送出" = "↑↓ choisir · Entrée insérer · Tab pour dire ce que vous voulez · Échap fermer · n'envoie jamais";
 "Esc 關閉" = "Esc : fermer";
-"正在寫，好了就能按 Enter 或 1–3 填入 · Esc 關閉" = "Rédaction… Entrée ou 1–3 dès que c'est prêt · Esc : fermer";
+"正在寫，好了就能 ↑↓ 選、Enter 填入 · Esc 關閉" = "Rédaction… puis ↑↓ pour choisir, Entrée pour insérer · Échap fermer";
 "關閉（Esc）" = "Fermer (Esc)";
 "你的回覆會公開" = "Votre réponse sera publique";
 "這則可以不回" = "Pas besoin de répondre";
@@ -179,7 +179,7 @@
 "清除並重新啟動" = "Effacer et redémarrer";
 "取消" = "Annuler";
 "會刪除鑰匙圈裡的 key、所有設定、紀錄檔和記住的聊天紀錄，然後重新啟動 Wingman。" = "Supprime les clés du trousseau, tous les réglages, le journal et les conversations mémorisées, puis redémarre Wingman.";
-"在 Slack、Discord、LINE、Telegram，或 Messenger、Instagram、Threads 網頁版收到訊息時，以及在 Instagram、Threads 的貼文底下準備留言時，輸入框右上方會出現「✦ 3 個建議」。按 %@ 或點它展開，按 Enter 填入 ★ 推薦的那句，或按 1、2、3 選一句，確認後自己按 Enter 送出。" = "Quand un message arrive dans Slack, Discord, LINE, Telegram, ou dans Messenger, Instagram ou Threads sur le web, et quand vous commencez une réponse sous une publication Instagram ou Threads, « ✦ 3 suggestions » apparaît au-dessus du champ de message, à droite. Appuyez sur %@ ou cliquez dessus, puis sur Entrée pour insérer la réponse ★, ou sur 1, 2 ou 3 pour en choisir une. Vérifiez-la, puis appuyez vous-même sur Entrée pour l'envoyer.";
+"在 Slack、Discord、LINE、Telegram，或 Messenger、Instagram、Threads 網頁版收到訊息時，以及在 Instagram、Threads 的貼文底下準備留言時，輸入框右上方會出現「✦ 3 個建議」。按 %@ 或點它展開，一開始就停在 ★ 推薦的那句，用 ↑↓ 換一句、按 Enter 填入（或直接按 1、2、3），確認後自己按 Enter 送出。" = "Quand un message arrive dans Slack, Discord, LINE, Telegram, ou dans Messenger, Instagram ou Threads sur le web, et quand vous commencez une réponse sous une publication Instagram ou Threads, « ✦ 3 suggestions » apparaît au-dessus du champ de message, à droite. Appuyez sur %@ ou cliquez dessus : la réponse ★ est sélectionnée d'emblée ; ↑↓ en choisit une autre et Entrée l'insère (ou 1, 2, 3). Vérifiez-la, puis appuyez vous-même sur Entrée pour l'envoyer.";
 "怎麼用" = "Mode d'emploi";
 "互動音效" = "Sons";
 "你在等的建議寫好時，和回覆填進輸入框時，輕輕響一聲。背景自動分析完成時不會出聲。音量跟著系統的提示音音量。" = "Un son discret quand les suggestions que vous attendez sont prêtes et quand une réponse est insérée. L'analyse qui se termine en arrière-plan reste silencieuse. Le volume suit celui des alertes du Mac.";
