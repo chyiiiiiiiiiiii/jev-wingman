@@ -264,16 +264,13 @@ struct SuggestionView: View {
                     if let urgency = j.urgency {
                         Circle().fill(Self.urgencyColor(urgency)).frame(width: 8, height: 8)
                     }
-                    Text(L(j.intent)).fontWeight(.semibold)     // Jev answers with the Chinese option name
-                    if j.intentConfidence < 0.5 {
-                        Text(L("不太確定")).foregroundStyle(.secondary)
-                    }
+                    Text(Self.plain(j.intent, sure: j.intentConfidence >= 0.5)).fontWeight(.semibold)
                     Text("·").foregroundStyle(.secondary)
                     if model.conversation?.isPost == true {
                         // A reply under a post is public; say so before anything is typed.
-                        Text(L("公開留言")).foregroundStyle(.secondary)
+                        Text(L("你的回覆會公開")).foregroundStyle(.secondary)
                     } else if let urgency = j.urgency {
-                        Text(j.needsReply < 0.35 ? L("可以不回") : Self.urgencyText(urgency)).foregroundStyle(.secondary)
+                        Text(j.needsReply < 0.35 ? L("這則可以不回") : Self.urgencyText(urgency)).foregroundStyle(.secondary)
                     }
                 }
                 .font(.system(size: 13))
@@ -427,7 +424,30 @@ struct SuggestionView: View {
         case 2.5...: L("對方正在等，建議馬上回")
         case 1.5...: L("最好一小時內回")
         case 0.5...: L("今天內回就好")
-        default: L("不急")
+        default: L("不急，有空再回")
+        }
+    }
+
+    /// What the other side is doing, said the way a friend would whisper it; "好像" when Jev is less than sure.
+    /// Jev answers with the option's name, which stays the name in code and in the writer's brief.
+    static func plain(_ intent: String, sure: Bool) -> String {
+        switch intent {
+        case "問資訊": sure ? L("對方在問你一件事") : L("對方好像在問你一件事")
+        case "請求或交辦": sure ? L("對方想請你幫忙") : L("對方好像想請你幫忙")
+        case "催進度或要時間": sure ? L("對方在等你的進度") : L("對方好像在等你的進度")
+        case "確認或同意": sure ? L("對方在等你點頭") : L("對方好像在等你點頭")
+        case "告知": sure ? L("對方在跟你說一件事") : L("對方好像在跟你說一件事")
+        case "閒聊": sure ? L("對方在閒聊") : L("對方好像在閒聊")
+        case "抱怨或不滿": sure ? L("對方有點不滿") : L("對方好像有點不滿")
+        case "感謝或稱讚": sure ? L("對方在謝謝你") : L("對方好像在謝謝你")
+        case "分享觀點": sure ? L("對方在分享看法") : L("對方好像在分享看法")
+        case "分享生活或成果": sure ? L("對方在分享近況") : L("對方好像在分享近況")
+        case "提問或求助": sure ? L("對方在找答案") : L("對方好像在找答案")
+        case "徵求互動": sure ? L("對方想聽大家的想法") : L("對方好像想聽大家的想法")
+        case "宣傳或公告": sure ? L("對方在宣傳或公告") : L("對方好像在宣傳或公告")
+        case "心情抒發": sure ? L("對方在抒發心情") : L("對方好像在抒發心情")
+        case "幽默或玩梗": sure ? L("對方在搞笑") : L("對方好像在搞笑")
+        default: L(intent)
         }
     }
 }
