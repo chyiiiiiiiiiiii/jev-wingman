@@ -45,14 +45,20 @@ struct Brain {
                                                                                 : ReplyQuestions.strategyOrder)
     }
 
+    /// From "緊張" up the chat is tense, and replies should settle it before anything else.
+    static let tense = 1.5
+    /// A subtext this likely is worth answering.
+    static let meaningful = 0.6
+
     /// Jev's pick among the drafts, as a probability per draft in the order given.
-    func rank(_ convo: Conversation, drafts: [String]) async throws -> [Double] {
+    func rank(_ convo: Conversation, drafts: [String], tense: Bool = false) async throws -> [Double] {
         guard let replyTo = convo.messages.last(where: { !$0.isMe }) else { throw Failure.nothingToAnswer }
         let criteria = Dictionary(drafts.map { ($0, NSNull()) }, uniquingKeysWith: { first, _ in first })
         let body: [String: Any] = ["model": jevModel, "state": state(convo, replyTo: replyTo),
                                    "questions": ["best": ["type": "choice",
                                                           "instructions": convo.isPost ? ReplyQuestions.postRankInstructions
-                                                                                       : ReplyQuestions.rankInstructions,
+                                                              : ReplyQuestions.rankInstructions
+                                                                + (tense ? "現在氣氛緊張，先接住對方情緒、語氣穩的那則比較好。" : ""),
                                                           "criteria": criteria]]]
         let data = try await post(jevURL, key: jevKey, body: body)
         return try JevDecoder.scores(from: data, for: drafts)
@@ -70,6 +76,12 @@ struct Brain {
             : "請依照下面每一種回法各寫一則回覆，順序不變：\n\(asks)"
         if let judgment {
             brief = "對方的意圖：\(judgment.intent)。\n" + brief
+            if let tension = judgment.tension, tension >= Self.tense {
+                brief = "氣氛緊張：先接住對方的情緒，語氣穩，不辯解、不開玩笑，也不急著給承諾。\n" + brief
+            }
+            if let subtext = judgment.subtext, subtext >= Self.meaningful {
+                brief = "對方可能話中有話（試探、反諷或拐彎抱怨）：回應真正的意思，不要只照字面回。\n" + brief
+            }
         }
         return try await complete(convo, brief: brief, onDrafts: onDrafts)
     }

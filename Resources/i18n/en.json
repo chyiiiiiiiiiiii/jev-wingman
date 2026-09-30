@@ -142,7 +142,7 @@
  "服務暫時有問題，稍後再試（%@）": "The service is having trouble; try again later (%@)",
  "服務回應 %@": "The service answered %@",
  "Wingman 沒有自己的伺服器，開發者收不到你的 key，也收不到聊天內容。": "Wingman has no server of its own: its developer never receives your keys or your chats.",
- "送出去的只有你正在看的對話裡最近 20 則訊息、聊天室名稱和發言人名字：判斷送到 TypeSafe（承諾不拿來訓練模型），寫回覆送到 OpenRouter，而且只轉給不保留、不訓練的供應商。聊天內容不會存在這台 Mac 上，紀錄檔只記時間、次數和花費。": "Only the last 20 messages of the chat you're looking at, the chat's name and the senders' names are sent: to TypeSafe for reading (it commits not to train on them) and to OpenRouter for drafts, routed only to providers that neither keep nor train on them. Chats are not stored on this Mac; the log holds only times, counts and costs.",
+ "送出去的只有你正在看的對話裡最近 20 則訊息、聊天室名稱和發言人名字：判斷送到 TypeSafe（承諾不拿來訓練模型），寫回覆送到 OpenRouter，而且只轉給不保留、不訓練的供應商。聊天內容不會存在這台 Mac 上：Wingman 開著時只在記憶體裡記得你看過的訊息，讓往上捲過的內容也算數，關掉就消失。紀錄檔只記時間、次數和花費。": "Only the last 20 messages of the chat you're looking at, the chat's name and the senders' names are sent: judgments to TypeSafe (which commits not to train on them), drafts to OpenRouter, routed only to providers that neither keep nor train on them. Chats are never stored on this Mac: while Wingman runs it remembers the messages you have seen in memory only, so ones you scrolled past still count, and forgets them when it quits. The log keeps only times, counts and costs.",
  "OpenRouter 隱私政策 ↗": "OpenRouter privacy policy ↗",
  "TypeSafe 隱私政策 ↗": "TypeSafe privacy policy ↗",
  "新訊息進來時自動分析": "Analyze new messages automatically",
@@ -185,5 +185,15 @@
  "分享經驗": "Share experience",
  "讚美鼓勵": "Praise",
  "幽默回應": "Be witty",
- "禮貌提出不同看法": "Politely disagree"
+ "禮貌提出不同看法": "Politely disagree",
+ "⚠︎ 氣氛緊張 · ✦ %@ 個建議  %@": "⚠︎ Tense · ✦ %@ suggestions  %@",
+ "平和": "Calm",
+ "留意": "Watch it",
+ "緊張": "Tense",
+ "快吵架": "Near a fight",
+ "翻臉": "Breaking off",
+ "氣氛": "Mood",
+ "話中有話": "Reads between the lines",
+ "Jev 判斷這段對話離吵架有多近：平和、留意、緊張、快吵架、翻臉": "How close Jev judges this chat is to a fight: calm, watch it, tense, near a fight, breaking off",
+ "不太確定": "not sure"
 }

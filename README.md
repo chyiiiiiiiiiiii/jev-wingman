@@ -14,15 +14,15 @@ Jev does the deciding and an LLM only does the writing. Jev does not write prose
 
 Wingman splits the job between two kinds of model:
 
-1. **Jev reads the message.** [TypeSafe's Jev](https://typesafe.ai/blog/introducing-system-one-models-and-jev) answers typed questions in about 0.3 s: what the other person wants, whether and how soon to reply, and which reply strategies fit.
+1. **Jev reads the message.** [TypeSafe's Jev](https://typesafe.ai/blog/introducing-system-one-models-and-jev) answers typed questions in about 0.3 s: what the other person wants, whether and how soon to reply, which reply strategies fit, how tense the chat is, and whether the message means more than it says. The panel shows the mood as a bar, from calm to breaking off; a tense chat steers the drafts toward settling it first.
 2. **An LLM writes.** A model on OpenRouter (DeepSeek V4.1 Flash by default) writes one draft per strategy Jev picked. Drafts appear as they are written.
 3. **Jev ranks.** Jev scores the three drafts and the best one gets ★. Enter types it; 1–3 types any of them.
 
-![One suggestion in six steps across three lanes: your Mac reads the chat; Jev answers four questions in about 0.3 s; code keeps the three likeliest ways to reply, or stops when no reply is needed; the LLM writes three drafts in 2–4 s, streamed; Jev scores them and ★ marks the best; Wingman types it in and you press Enter.](docs/flow-en.png)
+![One suggestion in six steps across three lanes: your Mac reads the chat; Jev answers six questions in about 0.3 s; code keeps the three likeliest ways to reply, or stops when no reply is needed; the LLM writes three drafts in 2–4 s, streamed; Jev scores them and ★ marks the best; Wingman types it in and you press Enter.](docs/flow-en.png)
 
 ### System design
 
-![Wingman's parts inside the Mac: readers (ChatApp, AXSnapshot, the parsers, PixelReader) take the last 20 messages from Slack, Discord, Messenger, Instagram, Threads, LINE and Telegram; AppModel decides whether to go on; Brain.swift sends Jev four questions and later the drafts to score, and sends the LLM the top three ways to reply; the panel shows the drafts and ★; Inserter types the chosen one into the message box. Only the requests to Jev and the LLM leave the Mac.](docs/architecture-en.png)
+![Wingman's parts inside the Mac: readers (ChatApp, AXSnapshot, the parsers, PixelReader) take the last 20 messages from Slack, Discord, Messenger, Instagram, Threads, LINE and Telegram; AppModel decides whether to go on; Brain.swift sends Jev six questions and later the drafts to score, and sends the LLM the top three ways to reply; the panel shows the drafts and ★; Inserter types the chosen one into the message box. Only the requests to Jev and the LLM leave the Mac.](docs/architecture-en.png)
 
 ## Supported apps
 
@@ -43,7 +43,7 @@ Slack, Discord, Messenger, Instagram and Threads have been read on real chats. L
 - **There is no Wingman server.** Each person uses their own API keys, and the developer never receives keys or chats.
 - **What is sent:** only the last 20 messages of the chat you are looking at, the chat's name, the senders' names and your own display name. Judgments go to TypeSafe, which commits not to train models on user data ([privacy policy](https://typesafe.ai/legal/privacy-policy)). Drafts are written through OpenRouter, which keeps prompts only if you opt in ([privacy](https://openrouter.ai/privacy)). Wingman asks OpenRouter to use only zero-data-retention providers that do not collect data, and skips the mainland China providers listed in `Brain.swift`.
 - **When it is sent:** when a new message arrives in the chat you have open, or only when you press the shortcut if you turn off automatic analysis. Opening a chat or scrolling back sends nothing. Apps you untick in settings are never read.
-- **What stays on your Mac:** keys, in the Keychain (this device only). Chats are never stored. Screen captures stay in memory and are read on the Mac. The log (`~/Library/Logs/Wingman.log`) holds times, counts and costs, never message text. Settings has a button that erases everything.
+- **What stays on your Mac:** keys, in the Keychain (this device only). Chats are never stored: while Wingman runs it remembers, in memory only, the messages you have seen in each chat, so ones you scrolled past still count toward the last 20, and it forgets them when it quits. Screen captures stay in memory and are read on the Mac. The log (`~/Library/Logs/Wingman.log`) holds times, counts and costs, never message text. Settings has a button that erases everything.
 - **What Wingman can do to other apps:** type a draft you picked into the message box. It never presses Enter, strips anything that could act as Enter, checks that the chat is still the one the draft was written for, and checks that the message box has focus. If any of that fails, it copies the draft to the clipboard (this Mac only) instead.
 - **Messages from other people go to the model as text.** A hostile message can try to steer the drafts, so read a draft before you send it. The model has no tools, keys or other chats to reach.
 

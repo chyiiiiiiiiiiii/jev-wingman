@@ -14,12 +14,13 @@ enum Render {
         try? FileManager.default.createDirectory(at: url, withIntermediateDirectories: true)
         for (name, appearance, backdrop) in [("light", NSAppearance.Name.aqua, NSColor(white: 0.96, alpha: 1)),
                                              ("dark", .darkAqua, NSColor(red: 0.11, green: 0.11, blue: 0.13, alpha: 1))] {
-            for (state, phase, drafts, scored) in [("1-thinking", AppModel.Phase.thinking, 0, false),
-                                                   ("2-streaming", .thinking, 1, false),
-                                                   ("3-written", .ready, 3, false),
-                                                   ("4-ranked", .ready, 3, true)] {
+            for (state, phase, drafts, scored, tense) in [("1-thinking", AppModel.Phase.thinking, 0, false, false),
+                                                          ("2-streaming", .thinking, 1, false, false),
+                                                          ("3-written", .ready, 3, false, false),
+                                                          ("4-ranked", .ready, 3, true, false),
+                                                          ("5-tense", .ready, 3, true, true)] {
                 let model = AppModel()
-                model.loadSample(phase: phase, drafts: drafts, scored: scored)
+                model.loadSample(phase: phase, drafts: drafts, scored: scored, tense: tense)
                 let view = VStack(alignment: .trailing, spacing: 16) {
                     PillView(model: model)
                     SuggestionView(model: model)

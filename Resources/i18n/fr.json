@@ -142,7 +142,7 @@
  "服務暫時有問題，稍後再試（%@）": "Le service rencontre un problème, réessayez plus tard (%@)",
  "服務回應 %@": "Le service a répondu %@",
  "Wingman 沒有自己的伺服器，開發者收不到你的 key，也收不到聊天內容。": "Wingman n’a pas de serveur : son développeur ne reçoit jamais vos clés ni vos conversations.",
- "送出去的只有你正在看的對話裡最近 20 則訊息、聊天室名稱和發言人名字：判斷送到 TypeSafe（承諾不拿來訓練模型），寫回覆送到 OpenRouter，而且只轉給不保留、不訓練的供應商。聊天內容不會存在這台 Mac 上，紀錄檔只記時間、次數和花費。": "Seuls les 20 derniers messages de la conversation affichée, son nom et les noms des expéditeurs sont envoyés : à TypeSafe pour l’analyse (qui s’engage à ne pas entraîner de modèles avec) et à OpenRouter pour les brouillons, transmis uniquement à des fournisseurs qui ne les conservent pas et ne s’en servent pas pour l’entraînement. Les conversations ne sont pas stockées sur ce Mac ; le journal ne contient que des heures, des nombres et des coûts.",
+ "送出去的只有你正在看的對話裡最近 20 則訊息、聊天室名稱和發言人名字：判斷送到 TypeSafe（承諾不拿來訓練模型），寫回覆送到 OpenRouter，而且只轉給不保留、不訓練的供應商。聊天內容不會存在這台 Mac 上：Wingman 開著時只在記憶體裡記得你看過的訊息，讓往上捲過的內容也算數，關掉就消失。紀錄檔只記時間、次數和花費。": "Seuls les 20 derniers messages de la conversation affichée, son nom et les noms des expéditeurs sont envoyés : les analyses à TypeSafe (qui s'engage à ne pas entraîner de modèles avec), les brouillons à OpenRouter, uniquement vers des fournisseurs qui ne les conservent pas et n'entraînent rien avec. Les conversations ne sont jamais enregistrées sur ce Mac : tant que Wingman tourne, il garde en mémoire les messages que vous avez vus, pour que ceux que vous avez fait défiler comptent aussi, et les oublie à la fermeture. Le journal ne garde que des heures, des nombres et des coûts.",
  "OpenRouter 隱私政策 ↗": "Politique de confidentialité d’OpenRouter ↗",
  "TypeSafe 隱私政策 ↗": "Politique de confidentialité de TypeSafe ↗",
  "新訊息進來時自動分析": "Analyser automatiquement les nouveaux messages",
@@ -185,5 +185,15 @@
  "分享經驗": "Partager son expérience",
  "讚美鼓勵": "Féliciter",
  "幽默回應": "Avec humour",
- "禮貌提出不同看法": "Exprimer un désaccord poli"
+ "禮貌提出不同看法": "Exprimer un désaccord poli",
+ "⚠︎ 氣氛緊張 · ✦ %@ 個建議  %@": "⚠︎ Tendu · ✦ %@ suggestions  %@",
+ "平和": "Calme",
+ "留意": "Attention",
+ "緊張": "Tendu",
+ "快吵架": "Au bord de la dispute",
+ "翻臉": "Rupture",
+ "氣氛": "Ambiance",
+ "話中有話": "Sous-entendu",
+ "Jev 判斷這段對話離吵架有多近：平和、留意、緊張、快吵架、翻臉": "À quel point Jev juge cette conversation proche d'une dispute : calme, attention, tendu, au bord de la dispute, rupture",
+ "不太確定": "incertain"
 }

@@ -12,6 +12,16 @@ if let index = arguments.firstIndex(of: "--probe"), index + 1 < arguments.count 
     exit(Dump.probe(bundleID: arguments[index + 1], wait: arguments.contains("--wait"), region: region, limit: limit,
                     host: host))
 }
+if arguments.contains("--check-jev") {
+    let done = DispatchSemaphore(value: 0)
+    var status: Int32 = 1
+    Task.detached {
+        status = await Dump.checkJev()
+        done.signal()
+    }
+    done.wait()
+    exit(status)
+}
 if let index = arguments.firstIndex(of: "--render-demo"), index + 1 < arguments.count {
     exit(MainActor.assumeIsolated { Render.demo(to: arguments[index + 1]) })
 }

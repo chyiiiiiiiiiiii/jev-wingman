@@ -159,6 +159,39 @@ struct PillView: View {
     }
 }
 
+/// The chat's mood, from calm to breaking off: a short green bar when all is well, a longer and redder one
+/// as it heats up, and a word for where it stands. "話中有話" joins it when the message means more than it says.
+struct MoodBar: View {
+    let tension: Double       // 0 … 4
+    let subtext: Bool
+
+    private static let words = [L("平和"), L("留意"), L("緊張"), L("快吵架"), L("翻臉")]
+    private static let colors: [Color] = [.green, .yellow, .orange, .red, .red]
+
+    var body: some View {
+        let level = min(4, max(0, Int(tension.rounded())))
+        HStack(spacing: 8) {
+            Text(L("氣氛")).foregroundStyle(.secondary)
+            ZStack(alignment: .leading) {
+                Capsule().fill(.quaternary)
+                Capsule().fill(Self.colors[level].gradient)
+                    .frame(width: 96 * max(0.1, min(1, (tension + 0.5) / 4.5)))
+            }
+            .frame(width: 96, height: 5)
+            Text(Self.words[level]).foregroundStyle(level >= 2 ? Self.colors[level] : .secondary)
+                .fontWeight(level >= 2 ? .semibold : .regular)
+            if subtext {
+                Text(L("話中有話"))
+                    .padding(.horizontal, 6).padding(.vertical, 1)
+                    .background(Capsule().strokeBorder(.orange.opacity(0.7)))
+                    .foregroundStyle(.orange)
+            }
+        }
+        .font(.system(size: 11.5))
+        .help(L("Jev 判斷這段對話離吵架有多近：平和、留意、緊張、快吵架、翻臉"))
+    }
+}
+
 struct SuggestionView: View {
     @ObservedObject var model: AppModel
     @FocusState private var fieldFocused: Bool
@@ -232,6 +265,9 @@ struct SuggestionView: View {
                         Circle().fill(Self.urgencyColor(urgency)).frame(width: 8, height: 8)
                     }
                     Text(L(j.intent)).fontWeight(.semibold)     // Jev answers with the Chinese option name
+                    if j.intentConfidence < 0.5 {
+                        Text(L("不太確定")).foregroundStyle(.secondary)
+                    }
                     Text("·").foregroundStyle(.secondary)
                     if model.conversation?.isPost == true {
                         // A reply under a post is public; say so before anything is typed.
@@ -241,6 +277,9 @@ struct SuggestionView: View {
                     }
                 }
                 .font(.system(size: 13))
+                if let tension = j.tension {
+                    MoodBar(tension: tension, subtext: (j.subtext ?? 0) >= Brain.meaningful)
+                }
             } else {
                 Text("Wingman").font(.system(size: 13, weight: .semibold))
             }

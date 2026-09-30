@@ -55,3 +55,14 @@ private let recordedRanking = #"""
     #expect(j.urgency == nil)
     #expect(j.strategies.prefix(2).map(\.name) == ["分享經驗", "提出問題"])
 }
+
+@Test func readsTheMoodAndSubtextWhenAsked() throws {
+    let data = #"{"answers":{"intent":{"type":"choice","choice":"抱怨或不滿","confidence":0.4,"probabilities":{"抱怨或不滿":0.6}},"needs_reply":{"type":"noul","noul":0.9},"urgency":{"type":"score","score":1.4},"strategy":{"type":"choice","probabilities":{"先問清楚":0.5}},"tension":{"type":"score","score":2.6},"subtext":{"type":"noul","noul":0.8}}}"#
+    let j = try JevDecoder.judgment(from: Data(data.utf8), strategyOrder: offered)
+    #expect(j.tension == 2.6)
+    #expect(j.subtext == 0.8)
+    // Older answers without them still decode.
+    let plain = try JevDecoder.judgment(from: Data(recorded.utf8), strategyOrder: offered)
+    #expect(plain.tension == nil)
+    #expect(plain.subtext == nil)
+}

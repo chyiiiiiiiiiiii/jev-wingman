@@ -31,6 +31,15 @@ public enum ReplyQuestions {
 
     public static var strategyOrder: [String] { strategies.map(\.0) }
 
+    /// How close a chat is to a fight, after jev-chat-jarvis's `danger_level` (its ten levels folded into five).
+    public static let tensionLevels = [
+        "平和：閒聊或玩笑，沒有抱怨、沒有試探",
+        "留意：小小的提醒或輕微不滿，好好回就沒事",
+        "緊張：明顯不高興、諷刺或冷淡的短回，回得隨便會升溫",
+        "快吵架：公開指責或生氣，回錯一句就會吵起來",
+        "翻臉：撂下狠話或最後通牒，或已經說不想再談",
+    ]
+
     /// What someone posting publicly (a post on Threads or Instagram, or a comment under one) is doing.
     public static let postIntents: [(String, String)] = [
         ("分享觀點", "發表看法、評論或心得"),
@@ -76,6 +85,13 @@ public enum ReplyQuestions {
             "strategy": ["type": "choice",
                          "instructions": "`me` 回覆 `reply_to` 時，哪一種回法最能推進這段對話？",
                          "criteria": Dictionary(uniqueKeysWithValues: strategies)],
+            "tension": ["type": "score",
+                        "instructions": "這段對話現在離吵架或傷感情有多近？看現在的氣氛：對方已經真心接受道歉、"
+                            + "氣氛緩和了，就照緩和後的現在評分；撂下的狠話還沒收回，就維持在高的那一級。",
+                        "criteria": tensionLevels],
+            "subtext": ["type": "noul",
+                        "instructions": "`reply_to` 有沒有話中有話？例如在試探 `me` 記不記得、在不在乎，反諷，"
+                            + "拐彎抱怨，或有沒說出口的要求。看整段對話判斷，不要只看這一句。"],
         ]
     }
 

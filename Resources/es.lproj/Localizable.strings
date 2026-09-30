@@ -13,6 +13,7 @@
 "繼續提供建議" = "Reanudar sugerencias";
 "暫停建議" = "Pausar sugerencias";
 "正在想怎麼回…" = "Pensando respuestas…";
+"⚠︎ 氣氛緊張 · ✦ %@ 個建議  %@" = "⚠︎ Tenso · ✦ %@ sugerencias  %@";
 "✦ %@ 個建議  %@" = "✦ %@ sugerencias  %@";
 "這則可以不回 · %@ 仍可寫回覆" = "No requiere respuesta · %@ para responder de todos modos";
 "⚠︎ 沒有產生建議  %@" = "⚠︎ No hay sugerencias  %@";
@@ -61,6 +62,14 @@
 "你的名字" = "Tu nombre";
 "好了之後，打開一個對方最後說話的對話，輸入框上方會出現「✦ 3 個建議」。按 %@ 展開，按 Enter 填入最推薦的那句。" = "Luego abre un chat en el que la otra persona haya escrito lo último. Sobre el cuadro de mensaje aparecerá “✦ 3 sugerencias”. Presiona %@ para abrirlo y Enter para insertar la recomendada.";
 "Wingman：按 %@ 或點這裡，幫你想回覆" = "Wingman: presiona %@ o haz clic aquí para ver ideas de respuesta";
+"平和" = "Tranquilo";
+"留意" = "Cuidado";
+"緊張" = "Tenso";
+"快吵架" = "A punto de discutir";
+"翻臉" = "Ruptura";
+"氣氛" = "Ambiente";
+"話中有話" = "Con segundas";
+"Jev 判斷這段對話離吵架有多近：平和、留意、緊張、快吵架、翻臉" = "Qué tan cerca de una discusión ve Jev este chat: tranquilo, cuidado, tenso, a punto de discutir, ruptura";
 "更短" = "Más breve";
 "更委婉" = "Más suave";
 "更正式" = "Más formal";
@@ -71,6 +80,7 @@
 "Esc 關閉" = "Esc cerrar";
 "正在寫，好了就能按 Enter 或 1–3 填入 · Esc 關閉" = "Redactando… Enter o 1–3 cuando esté listo · Esc cerrar";
 "關閉（Esc）" = "Cerrar (Esc)";
+"不太確定" = "no seguro";
 "公開留言" = "Respuesta pública";
 "可以不回" = "No requiere respuesta";
 "回覆 %@：%@" = "Respondiendo a %@: %@";
@@ -122,7 +132,7 @@
 "用來分辨 Slack、Discord 裡哪些訊息是你說的。各 App 顯示的名字不同時，用逗號分開，例如「Yii, Yii Chen」。LINE、Telegram 和網頁版的 Messenger、Instagram、Threads 看氣泡位置，不需要名字。" = "Sirve para distinguir tus mensajes en Slack y Discord. Si cada app muestra un nombre distinto, sepáralos con comas, por ejemplo: “Yii, Yii Chen”. En LINE, Telegram y en Messenger, Instagram y Threads en la web se usa la posición de las burbujas, así que no hace falta nombre.";
 "3. 你是誰" = "3. Quién eres";
 "Wingman 沒有自己的伺服器，開發者收不到你的 key，也收不到聊天內容。" = "Wingman no tiene servidor propio: su desarrollador nunca recibe tus claves ni tus chats.";
-"送出去的只有你正在看的對話裡最近 20 則訊息、聊天室名稱和發言人名字：判斷送到 TypeSafe（承諾不拿來訓練模型），寫回覆送到 OpenRouter，而且只轉給不保留、不訓練的供應商。聊天內容不會存在這台 Mac 上，紀錄檔只記時間、次數和花費。" = "Solo se envían los últimos 20 mensajes del chat que estás viendo, su nombre y los nombres de quienes escriben: a TypeSafe para analizarlos (se compromete a no entrenar con ellos) y a OpenRouter para los borradores, que solo los pasa a proveedores que no los guardan ni entrenan con ellos. Los chats no se guardan en este Mac; el registro solo anota horas, recuentos y costes.";
+"送出去的只有你正在看的對話裡最近 20 則訊息、聊天室名稱和發言人名字：判斷送到 TypeSafe（承諾不拿來訓練模型），寫回覆送到 OpenRouter，而且只轉給不保留、不訓練的供應商。聊天內容不會存在這台 Mac 上：Wingman 開著時只在記憶體裡記得你看過的訊息，讓往上捲過的內容也算數，關掉就消失。紀錄檔只記時間、次數和花費。" = "Solo se envían los últimos 20 mensajes del chat que estás viendo, el nombre del chat y los nombres de quienes escriben: las valoraciones a TypeSafe (que se compromete a no entrenar con ellos) y los borradores a OpenRouter, solo hacia proveedores que no los guardan ni entrenan con ellos. Los chats nunca se guardan en este Mac: mientras Wingman está abierto recuerda en memoria los mensajes que has visto, para que cuenten también los que ya pasaste, y los olvida al cerrarse. El registro solo guarda horas, cantidades y costes.";
 "OpenRouter 隱私政策 ↗" = "Política de privacidad de OpenRouter ↗";
 "TypeSafe 隱私政策 ↗" = "Política de privacidad de TypeSafe ↗";
 "新訊息進來時自動分析" = "Analizar mensajes nuevos automáticamente";

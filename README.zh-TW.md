@@ -14,15 +14,15 @@ Wingman 是一個常駐在 macOS 選單列的小工具。它會讀你眼前的�
 
 Wingman 把工作分給兩種模型：
 
-1. **Jev 判斷訊息**：[TypeSafe 的 Jev](https://typesafe.ai/blog/introducing-system-one-models-and-jev) 大約 0.3 秒就能回答幾個固定格式的問題：對方想要什麼、需不需要回、多急，以及適合用哪幾種回法。
+1. **Jev 判斷訊息**：[TypeSafe 的 Jev](https://typesafe.ai/blog/introducing-system-one-models-and-jev) 大約 0.3 秒就能回答幾個固定格式的問題：對方想要什麼、需不需要回、多急、適合用哪幾種回法、氣氛有多緊張，以及有沒有話中有話。面板會用一條氣氛條顯示從「平和」到「翻臉」；氣氛緊張時，建議會先接住對方的情緒。
 2. **LLM 寫回覆**：透過 OpenRouter 呼叫模型（預設是 DeepSeek V4.1 Flash），照 Jev 挑的回法各寫一句，寫好一句就先顯示一句。
 3. **Jev 評分**：Jev 幫 3 句打分數，最推薦的那句標 ★。按 Enter 填入 ★ 那句，按 1–3 可以自己選。
 
-![一次建議的六個步驟，分在三條泳道：你的 Mac 讀聊天；Jev 約 0.3 秒回答四個問題；程式取機率最高的三種回法，不需要回就停；LLM 在 2–4 秒內串流寫出三句；Jev 幫三句評分，★ 標出最推薦的；Wingman 填進輸入框，由你按 Enter 送出。](docs/flow-zh-Hant.png)
+![一次建議的六個步驟，分在三條泳道：你的 Mac 讀聊天；Jev 約 0.3 秒回答六個問題；程式取機率最高的三種回法，不需要回就停；LLM 在 2–4 秒內串流寫出三句；Jev 幫三句評分，★ 標出最推薦的；Wingman 填進輸入框，由你按 Enter 送出。](docs/flow-zh-Hant.png)
 
 ### 系統架構
 
-![Wingman 在 Mac 上的各個元件：讀取器（ChatApp、AXSnapshot、各解析器、PixelReader）從 Slack、Discord、Messenger、Instagram、Threads、LINE、Telegram 取出最近 20 則；AppModel 決定要不要繼續；Brain.swift 把四個問題、之後把草稿送給 Jev 評分，並把前三種回法送給 LLM 寫字；面板顯示草稿和 ★；Inserter 把選好的那句填進輸入框。只有給 Jev 和 LLM 的請求會離開 Mac。](docs/architecture-zh-Hant.png)
+![Wingman 在 Mac 上的各個元件：讀取器（ChatApp、AXSnapshot、各解析器、PixelReader）從 Slack、Discord、Messenger、Instagram、Threads、LINE、Telegram 取出最近 20 則；AppModel 決定要不要繼續；Brain.swift 把六個問題、之後把草稿送給 Jev 評分，並把前三種回法送給 LLM 寫字；面板顯示草稿和 ★；Inserter 把選好的那句填進輸入框。只有給 Jev 和 LLM 的請求會離開 Mac。](docs/architecture-zh-Hant.png)
 
 ## 支援的 App
 
@@ -47,7 +47,7 @@ Slack、Discord、Messenger、Instagram、Threads 都已經在真實聊天中讀
 - **什麼時候送出：** 你開著的聊天室有新訊息進來時才送；關掉自動分析的話，就只在你按快捷鍵時送。打開聊天室、往上捲動都不會送出。在設定裡取消勾選的 App，Wingman 完全不會讀。
 - **留在你 Mac 上的東西：**
   - key 存在鑰匙圈，而且只存在這台裝置。
-  - 聊天內容從來不會存下來。截圖只在記憶體裡、在本機辨識。
+  - 聊天內容從來不會存下來。Wingman 開著時，只在記憶體裡記得你在各聊天室看過的訊息，讓往上捲過的內容也能算進最近 20 則；關掉就消失，不寫進硬碟。截圖只在記憶體裡、在本機辨識。
   - 紀錄檔（`~/Library/Logs/Wingman.log`）只記時間、次數和花費，不記任何訊息內容。
   - 設定裡有「清除所有資料」按鈕。
 - **Wingman 能對其他 App 做什麼：** 只能把你選的回覆打進輸入框。它不會按 Enter，也會先濾掉任何可能被當成 Enter 的字元；打字前會確認聊天室還是寫草稿時的那一個、游標在輸入框裡。任何一項不符合，就改成只複製到剪貼簿，而且只留在這台 Mac。

@@ -119,6 +119,34 @@ enum Dump {
         return 0
     }
 
+    /// `--check-jev`: ask Jev about two made-up chats, one calm and one tense, with the keys in settings, and print
+    /// what comes back (never the keys), to see the questions still suit the model after they change.
+    static func checkJev() async -> Int32 {
+        func line(_ text: String, me: Bool = false) -> ChatMessage { ChatMessage(sender: me ? "我" : "Mia", text: text, isMe: me) }
+        let chats = [
+            ("calm", [line("早安～今天的站會改到十點喔"), line("好，收到", me: true), line("API 文件今天來得及更新嗎？")]),
+            ("tense", [line("你上週說週三前會給我文件"), line("再等我一下，快好了", me: true),
+                       line("你每次都這樣說"), line("算了，你忙你的吧，我自己弄")]),
+        ]
+        let brain = Brain(settings: Prefs.shared, app: .slack)
+        for (name, messages) in chats {
+            let convo = Conversation(title: "#dev", isThread: false, messages: messages, draft: "",
+                                     composerHandle: -1, composerFrame: .zero)
+            let started = Date()
+            do {
+                let j = try await brain.judge(convo)
+                print(String(format: "%@ · %d ms · intent %@ (%.2f) · needs reply %.2f · urgency %.2f · tension %@ · subtext %@",
+                             name, Int(Date().timeIntervalSince(started) * 1000), j.intent, j.intentConfidence, j.needsReply,
+                             j.urgency ?? -1, j.tension.map { String(format: "%.2f", $0) } ?? "none",
+                             j.subtext.map { String(format: "%.2f", $0) } ?? "none"))
+            } catch {
+                print("\(name): \(error.localizedDescription)")
+                return 1
+            }
+        }
+        return 0
+    }
+
     /// `--dump --app <instagram|threads> --pretend-focus`: read the front tab as if its first text box had focus,
     /// to check the post reader on a real page without clicking into a box where Enter would post.
     static func post(app: ChatApp) -> Int32 {

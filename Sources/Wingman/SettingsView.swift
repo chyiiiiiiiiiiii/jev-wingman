@@ -251,7 +251,7 @@ struct SettingsView: View {
             Section {
                 VStack(alignment: .leading, spacing: 6) {
                     Text(L("Wingman 沒有自己的伺服器，開發者收不到你的 key，也收不到聊天內容。")).fontWeight(.semibold)
-                    Text(L("送出去的只有你正在看的對話裡最近 20 則訊息、聊天室名稱和發言人名字：判斷送到 TypeSafe（承諾不拿來訓練模型），寫回覆送到 OpenRouter，而且只轉給不保留、不訓練的供應商。聊天內容不會存在這台 Mac 上，紀錄檔只記時間、次數和花費。"))
+                    Text(L("送出去的只有你正在看的對話裡最近 20 則訊息、聊天室名稱和發言人名字：判斷送到 TypeSafe（承諾不拿來訓練模型），寫回覆送到 OpenRouter，而且只轉給不保留、不訓練的供應商。聊天內容不會存在這台 Mac 上：Wingman 開著時只在記憶體裡記得你看過的訊息，讓往上捲過的內容也算數，關掉就消失。紀錄檔只記時間、次數和花費。"))
                         .font(.caption).foregroundStyle(.secondary)
                     HStack(spacing: 16) {
                         Link(L("OpenRouter 隱私政策 ↗"), destination: URL(string: "https://openrouter.ai/privacy")!)

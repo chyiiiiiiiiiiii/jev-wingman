@@ -34,6 +34,9 @@ final class AppModel: ObservableObject {
     private var generation = 0            // drafts streaming in for an older request are dropped
     private var draftedFor = ""           // the chat title the drafts on screen were written for
     private var lastRead: (title: String, messages: [ChatMessage]) = ("", [])
+    /// Each chat as seen earlier this session, so messages scrolled past still count. Memory only: nothing
+    /// is written to disk, and it is gone when Wingman quits.
+    private var earlier: [String: [ChatMessage]] = [:]
 
     private var brain: Brain { Brain(settings: settings, app: app) }
 
@@ -44,7 +47,12 @@ final class AppModel: ObservableObject {
         // Nothing to suggest yet, but this chat is being read: a quiet mark says so and is a place to click.
         case .idle: return conversation == nil ? nil : "✦ \(hotkeyLabel)"
         case .thinking: return L("正在想怎麼回…")
-        case .ready: return L("✦ %@ 個建議  %@", "\(candidates.count)", "\(hotkeyLabel)")
+        case .ready:
+            // A tense chat says so before the panel is opened.
+            if let tension = judgment?.tension, tension >= Brain.tense {
+                return L("⚠︎ 氣氛緊張 · ✦ %@ 個建議  %@", "\(candidates.count)", "\(hotkeyLabel)")
+            }
+            return L("✦ %@ 個建議  %@", "\(candidates.count)", "\(hotkeyLabel)")
         case .skipped: return L("這則可以不回 · %@ 仍可寫回覆", "\(hotkeyLabel)")
         case .failed: return L("⚠︎ 沒有產生建議  %@", "\(hotkeyLabel)")
         }
@@ -61,7 +69,7 @@ final class AppModel: ObservableObject {
     /// Sample state for `Wingman --render`, so panel changes can be looked at before shipping.
     /// A made-up chat for `--render`, in Chinese under a Chinese interface and in English otherwise,
     /// since drafts follow the chat's language.
-    func loadSample(phase: Phase, drafts: Int = 3, scored: Bool = true, note: String? = nil) {
+    func loadSample(phase: Phase, drafts: Int = 3, scored: Bool = true, note: String? = nil, tense: Bool = false) {
         let chinese = interfaceLanguage.hasPrefix("zh")
         chatInFront = true
         self.note = note
@@ -70,8 +78,11 @@ final class AppModel: ObservableObject {
             messages: [ChatMessage(sender: "Mia", time: chinese ? "中午 12:39" : "12:39 PM",
                                    text: chinese ? "API 文件今天來得及更新嗎？" : "Can we get the API docs updated today?")],
             draft: "", composerHandle: -1, composerFrame: CGRect(x: 0, y: 0, width: 560, height: 40))
-        judgment = Judgment(intent: "催進度或要時間", intentConfidence: 0.9, needsReply: 0.9, urgency: 1.2,
-                            strategies: [])
+        judgment = tense
+            ? Judgment(intent: "抱怨或不滿", intentConfidence: 0.42, needsReply: 0.95, urgency: 2.1, strategies: [],
+                       tension: 2.4, subtext: 0.8)
+            : Judgment(intent: "催進度或要時間", intentConfidence: 0.9, needsReply: 0.9, urgency: 1.2, strategies: [],
+                       tension: 0.3, subtext: 0.2)
         self.phase = phase
         if drafts > 0 {
             candidates = [
@@ -104,13 +115,20 @@ final class AppModel: ObservableObject {
             self.app = app
             seenFingerprint = ""
         }
+        guard var convo else { conversation = nil; return }
+        let visible = convo.messages
+        if !convo.isPost {
+            let key = "\(app.rawValue)|\(convo.title)"
+            if earlier[key] == nil && earlier.count >= 40 { earlier.removeAll() }
+            convo.messages = Transcript.merge(known: earlier[key] ?? [], seen: visible)
+            earlier[key] = convo.messages
+        }
         conversation = convo
-        guard let convo else { return }
         // Only messages that came in while this chat was open count; opening it or scrolling back does not.
-        let arrived = convo.title == lastRead.title ? Arrivals.new(since: lastRead.messages, in: convo.messages) : []
+        let arrived = convo.title == lastRead.title ? Arrivals.new(since: lastRead.messages, in: visible) : []
         // Under a post, the cursor landing in its reply box is the cue: a reply is on its way.
         let replyStarted = convo.isPost && convo.title != lastRead.title
-        lastRead = (convo.title, convo.messages)
+        lastRead = (convo.title, visible)
         let print = fingerprint(convo)
         guard print != seenFingerprint else { return }
         seenFingerprint = print
@@ -248,7 +266,7 @@ final class AppModel: ObservableObject {
         defer { ranking = false }
         let started = Date()
         do {
-            let scores = try await brain.rank(convo, drafts: drafts)
+            let scores = try await brain.rank(convo, drafts: drafts, tense: (judgment?.tension ?? 0) >= Brain.tense)
             guard !Task.isCancelled, candidates.map(\.text) == drafts else { return }
             withAnimation(.easeOut(duration: 0.22)) {
                 for index in candidates.indices { candidates[index].score = scores[index] }

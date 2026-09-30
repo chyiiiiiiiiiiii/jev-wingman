@@ -19,13 +19,20 @@ public struct Judgment: Equatable {
     public var urgency: Double?
     /// Every reply strategy, most probable first.
     public var strategies: [Strategy]
+    /// How close the chat is to a fight: 0 calm … 4 openly breaking off. nil when not asked (posts).
+    public var tension: Double?
+    /// Probability the message means more than it says: a test, sarcasm, a complaint left unsaid.
+    public var subtext: Double?
 
-    public init(intent: String, intentConfidence: Double, needsReply: Double, urgency: Double?, strategies: [Strategy]) {
+    public init(intent: String, intentConfidence: Double, needsReply: Double, urgency: Double?, strategies: [Strategy],
+                tension: Double? = nil, subtext: Double? = nil) {
         self.intent = intent
         self.intentConfidence = intentConfidence
         self.needsReply = needsReply
         self.urgency = urgency
         self.strategies = strategies
+        self.tension = tension
+        self.subtext = subtext
     }
 }
 
@@ -48,7 +55,9 @@ public enum JevDecoder {
             .map { Strategy(name: $0.key, probability: $0.value) }
             .sorted { ($0.probability, -(rank[$0.name] ?? .max)) > ($1.probability, -(rank[$1.name] ?? .max)) }
         return Judgment(intent: intentChoice, intentConfidence: intent["confidence"] as? Double ?? 0,
-                        needsReply: needsReply, urgency: urgency, strategies: strategies)
+                        needsReply: needsReply, urgency: urgency, strategies: strategies,
+                        tension: (answers["tension"] as? [String: Any])?["score"] as? Double,
+                        subtext: (answers["subtext"] as? [String: Any])?["noul"] as? Double)
     }
 }
 
