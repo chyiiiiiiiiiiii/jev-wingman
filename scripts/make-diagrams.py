@@ -191,7 +191,7 @@ def flow(language: str) -> str:
 ARCH = {
     "en": dict(
         title="Wingman", subtitle="System design: reading, deciding and typing stay on your Mac. Two kinds of request leave it.",
-        mac="Your Mac", mac_note="chats are never stored · keys stay in the Keychain", apps="Chat apps", wingman="Wingman.app", outside="Outside your Mac",
+        mac="Your Mac", mac_note="chats not stored unless you choose · keys stay in the Keychain", apps="Chat apps", wingman="Wingman.app", outside="Outside your Mac",
         slack=("Slack · Discord", "accessibility tree"),
         web=("Messenger · Instagram · Threads", "exact host · posts: only your reply box"),
         pixels=("LINE · Telegram", "on-device OCR, captures never leave"),
@@ -209,7 +209,7 @@ ARCH = {
     ),
     "zh-Hant": dict(
         title="Wingman", subtitle="系統架構：讀、判斷、填入都在你的 Mac 上，只有兩種請求會離開",
-        mac="你的 Mac", mac_note="聊天內容不存檔 · key 只在鑰匙圈", apps="聊天 App", wingman="Wingman.app", outside="Mac 之外",
+        mac="你的 Mac", mac_note="聊天內容預設不存檔 · key 只在鑰匙圈", apps="聊天 App", wingman="Wingman.app", outside="Mac 之外",
         slack=("Slack · Discord", "輔助使用樹"),
         web=("Messenger · Instagram · Threads", "確切網址 · 貼文只讀游標所在的留言框"),
         pixels=("LINE · Telegram", "本機 OCR，截圖不上傳"),

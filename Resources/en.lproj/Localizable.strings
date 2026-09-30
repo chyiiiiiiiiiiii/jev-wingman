@@ -60,6 +60,8 @@
 "你在聊天 App 裡顯示的名字" = "Your name as shown in chat apps";
 "用來分辨 Slack、Discord 裡哪些是你說的。名字不只一個就用逗號分開，例如「Yii, Yii Chen」。" = "Tells your Slack and Discord messages apart from others'. Separate several names with commas, e.g. \"Yii, Yii Chen\".";
 "你的名字" = "Your name";
+"記住聊天紀錄" = "Remember chats";
+"下次打開同一個聊天室時也記得之前說過的話，建議會更準。紀錄加密存在這台 Mac，不進備份，隨時可以在設定裡清除。" = "Opening a chat again, Wingman still knows what was said before, so suggestions fit better. Kept encrypted on this Mac, out of backups, and you can clear it any time in settings.";
 "好了之後，打開一個對方最後說話的對話，輸入框上方會出現「✦ 3 個建議」。按 %@ 展開，按 Enter 填入最推薦的那句。" = "Then open a chat where the other person spoke last. \"✦ 3 suggestions\" appears above the message box. Press %@ to open it and Enter to fill in the recommended one.";
 "Wingman：按 %@ 或點這裡，幫你想回覆" = "Wingman: press %@ or click here for reply ideas";
 "平和" = "Calm";
@@ -132,11 +134,14 @@
 "用來分辨 Slack、Discord 裡哪些訊息是你說的。各 App 顯示的名字不同時，用逗號分開，例如「Yii, Yii Chen」。LINE、Telegram 和網頁版的 Messenger、Instagram、Threads 看氣泡位置，不需要名字。" = "Tells your Slack and Discord messages apart from others'. If apps show different names, separate them with commas, e.g. \"Yii, Yii Chen\". LINE, Telegram, and Messenger, Instagram and Threads on the web go by bubble position and need no name.";
 "3. 你是誰" = "3. Who you are";
 "Wingman 沒有自己的伺服器，開發者收不到你的 key，也收不到聊天內容。" = "Wingman has no server of its own: its developer never receives your keys or your chats.";
-"送出去的只有你正在看的對話裡最近 20 則訊息、聊天室名稱和發言人名字：判斷送到 TypeSafe（承諾不拿來訓練模型），寫回覆送到 OpenRouter，而且只轉給不保留、不訓練的供應商。聊天內容不會存在這台 Mac 上：Wingman 開著時只在記憶體裡記得你看過的訊息，讓往上捲過的內容也算數，關掉就消失。紀錄檔只記時間、次數和花費。" = "Only the last 20 messages of the chat you're looking at, the chat's name and the senders' names are sent: judgments to TypeSafe (which commits not to train on them), drafts to OpenRouter, routed only to providers that neither keep nor train on them. Chats are never stored on this Mac: while Wingman runs it remembers the messages you have seen in memory only, so ones you scrolled past still count, and forgets them when it quits. The log keeps only times, counts and costs.";
+"送出去的只有你正在看的對話裡最近 20 則訊息、聊天室名稱和發言人名字：判斷送到 TypeSafe（承諾不拿來訓練模型），寫回覆送到 OpenRouter，而且只轉給不保留、不訓練的供應商。聊天內容預設不會存在這台 Mac 上：Wingman 開著時只在記憶體裡記得你看過的訊息，讓往上捲過的內容也算數，關掉就消失；除非你打開下面的「記住聊天紀錄」。紀錄檔只記時間、次數和花費。" = "Only the last 20 messages of the chat you're looking at, the chat's name and the senders' names are sent: judgments to TypeSafe (which commits not to train on them), drafts to OpenRouter, routed only to providers that neither keep nor train on them. By default chats are never stored on this Mac: while Wingman runs it remembers the messages you have seen in memory only, so ones you scrolled past still count, and forgets them when it quits; unless you turn on Remember chats below. The log keeps only times, counts and costs.";
 "OpenRouter 隱私政策 ↗" = "OpenRouter privacy policy ↗";
 "TypeSafe 隱私政策 ↗" = "TypeSafe privacy policy ↗";
 "新訊息進來時自動分析" = "Analyze new messages automatically";
 "關掉後，只有你按快捷鍵時才會把對話送出去。" = "When off, a chat is sent only when you press the shortcut.";
+"開啟後，每個聊天室最近 300 則訊息會加密存在這台 Mac（不進備份，90 天沒打開就刪除），下次打開時也記得之前說過的話；送出去的仍然只有最近 20 則。關掉會立刻刪除已存的紀錄。" = "When on, each chat's last 300 messages are kept encrypted on this Mac (out of backups, deleted after 90 days unopened), so reopening a chat keeps what was said before; only the last 20 are ever sent. Turning it off deletes what was kept right away.";
+"目前記得 %@ 個聊天室" = "Remembering %@ chats";
+"清除聊天紀錄" = "Clear remembered chats";
 "在這些 App 使用 Wingman" = "Use Wingman in these apps";
 "沒勾的 App，Wingman 完全不會讀取。" = "Wingman doesn't read unchecked apps at all.";
 "清除 Wingman 的所有資料…" = "Erase All Wingman Data…";
@@ -144,7 +149,7 @@
 "清除所有資料？" = "Erase all data?";
 "清除並重新啟動" = "Erase and Restart";
 "取消" = "Cancel";
-"會刪除鑰匙圈裡的 key、所有設定和紀錄檔，然後重新啟動 Wingman。聊天內容本來就不會存在這台 Mac 上。" = "This deletes the keys in your Keychain, all settings and the log, then restarts Wingman. Chats were never stored on this Mac.";
+"會刪除鑰匙圈裡的 key、所有設定、紀錄檔和記住的聊天紀錄，然後重新啟動 Wingman。" = "This deletes the keys in your Keychain, all settings, the log and any remembered chats, then restarts Wingman.";
 "在 Slack、Discord、LINE、Telegram，或 Messenger、Instagram、Threads 網頁版收到訊息時，以及在 Instagram、Threads 的貼文底下準備留言時，輸入框右上方會出現「✦ 3 個建議」。按 %@ 或點它展開，按 Enter 填入 ★ 推薦的那句，或按 1、2、3 選一句，確認後自己按 Enter 送出。" = "When a message arrives in Slack, Discord, LINE, Telegram, or Messenger, Instagram or Threads on the web, and when you start a reply under an Instagram or Threads post, \"✦ 3 suggestions\" appears above the message box. Press %@ or click it, then Enter for the ★ one or 1, 2, 3 to pick. Check it and press Enter yourself to send.";
 "怎麼用" = "How it works";
 "互動音效" = "Sounds";

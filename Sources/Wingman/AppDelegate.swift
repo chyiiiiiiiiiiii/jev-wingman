@@ -26,6 +26,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         NSApp.mainMenu = Self.mainMenu()
         panels = PanelController(model: model)
         Sounds.prepare()
+        ChatHistory.forgetStale()
         setUpStatusItem()
         NSWorkspace.shared.notificationCenter.addObserver(
             forName: NSWorkspace.didActivateApplicationNotification, object: nil, queue: .main

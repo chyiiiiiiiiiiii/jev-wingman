@@ -35,6 +35,14 @@ final class Prefs: ObservableObject {
     @Published var disabledApps: Set<String> {
         didSet { UserDefaults.standard.set(Array(disabledApps), forKey: "disabledApps") }
     }
+    /// Each chat's recent messages kept on this Mac, sealed, between launches. Off unless chosen; turning it
+    /// off deletes what was kept.
+    @Published var keepHistory: Bool {
+        didSet {
+            UserDefaults.standard.set(keepHistory, forKey: "keepHistory")
+            if !keepHistory { ChatHistory.eraseAll() }
+        }
+    }
     /// A quiet sound when suggestions you are waiting for are ready, and when a reply is typed in.
     @Published var soundsOn: Bool { didSet { UserDefaults.standard.set(soundsOn, forKey: "soundsOn") } }
     @Published var soundVoice: Chime.Voice { didSet { UserDefaults.standard.set(soundVoice.rawValue, forKey: "soundVoice") } }
@@ -60,6 +68,7 @@ final class Prefs: ObservableObject {
         paused = UserDefaults.standard.bool(forKey: "paused")
         autoAnalyze = UserDefaults.standard.object(forKey: "autoAnalyze") as? Bool ?? true
         disabledApps = Set(UserDefaults.standard.stringArray(forKey: "disabledApps") ?? [])
+        keepHistory = UserDefaults.standard.bool(forKey: "keepHistory")
         soundsOn = UserDefaults.standard.object(forKey: "soundsOn") as? Bool ?? true
         soundVoice = UserDefaults.standard.string(forKey: "soundVoice").flatMap(Chime.Voice.init) ?? .wood
         hotkey = UserDefaults.standard.data(forKey: "hotkey")
@@ -77,6 +86,7 @@ final class Prefs: ObservableObject {
         try? FileManager.default.removeItem(at: FileManager.default.homeDirectoryForCurrentUser
             .appendingPathComponent("Library/Logs/Wingman.log"))
         try? FileManager.default.removeItem(at: Sounds.folder)
+        ChatHistory.eraseAll()
     }
 
     /// Why a pasted value is not an API key, or nil when it looks like one. Keys have no spaces;

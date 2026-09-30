@@ -119,6 +119,25 @@ enum Dump {
         return 0
     }
 
+    /// `--check-history`: keep a made-up chat the way 記住聊天紀錄 does, read it back, look at the file on disk,
+    /// then remove what the check made (and the key, if the check was the one to create it).
+    static func checkHistory() -> Int32 {
+        let chat = "check|wingman-self-test"
+        let hadKey = Keychain.get(account: "history") != nil, before = ChatHistory.count
+        let messages = [ChatMessage(sender: "Mia", text: "自我檢查：這則會加密存起來再讀回來"),
+                        ChatMessage(sender: "我", text: "收到", isMe: true)]
+        ChatHistory.save(chat, messages)
+        let file = ChatHistory.folder.appendingPathComponent(HistoryCodec.fileName(for: chat))
+        let back = ChatHistory.load(chat)
+        let plaintext = String(decoding: (try? Data(contentsOf: file)) ?? Data(), as: UTF8.self).contains("自我檢查")
+        let excluded = (try? ChatHistory.folder.resourceValues(forKeys: [.isExcludedFromBackupKey]))?.isExcludedFromBackup == true
+        try? FileManager.default.removeItem(at: file)
+        if !hadKey && before == 0 { ChatHistory.eraseAll() }
+        print("round trip \(back == messages) · words readable on disk \(plaintext) · out of backups \(excluded) · "
+              + "left behind \(ChatHistory.count - before) files")
+        return back == messages && !plaintext && excluded ? 0 : 1
+    }
+
     /// `--check-jev`: ask Jev about two made-up chats, one calm and one tense, with the keys in settings, and print
     /// what comes back (never the keys), to see the questions still suit the model after they change.
     static func checkJev() async -> Int32 {

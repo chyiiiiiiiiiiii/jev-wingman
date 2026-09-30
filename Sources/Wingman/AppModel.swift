@@ -37,6 +37,8 @@ final class AppModel: ObservableObject {
     /// Each chat as seen earlier this session, so messages scrolled past still count. Memory only: nothing
     /// is written to disk, and it is gone when Wingman quits.
     private var earlier: [String: [ChatMessage]] = [:]
+    private var unsaved: Set<String> = []
+    private var saveTask: Task<Void, Never>?
 
     private var brain: Brain { Brain(settings: settings, app: app) }
 
@@ -119,9 +121,16 @@ final class AppModel: ObservableObject {
         let visible = convo.messages
         if !convo.isPost {
             let key = "\(app.rawValue)|\(convo.title)"
-            if earlier[key] == nil && earlier.count >= 40 { earlier.removeAll() }
-            convo.messages = Transcript.merge(known: earlier[key] ?? [], seen: visible)
+            if earlier[key] == nil {
+                if earlier.count >= 40 { earlier.removeAll() }
+                // With 記住聊天紀錄 on, a chat opened again starts from what was kept last time.
+                if settings.keepHistory { earlier[key] = ChatHistory.load(key) }
+            }
+            let known = earlier[key] ?? []
+            convo.messages = Transcript.merge(known: known, seen: visible,
+                                              limit: settings.keepHistory ? ChatHistory.limit : 60)
             earlier[key] = convo.messages
+            if settings.keepHistory && convo.messages != known { remember(key) }
         }
         conversation = convo
         // Only messages that came in while this chat was open count; opening it or scrolling back does not.
@@ -147,6 +156,18 @@ final class AppModel: ObservableObject {
             try? await Task.sleep(for: .seconds(1))
             guard !Task.isCancelled, let self, self.seenFingerprint == print else { return }
             self.analyze(auto: true)
+        }
+    }
+
+    /// Writes changed chats a few seconds after the last change, not on every read.
+    private func remember(_ key: String) {
+        unsaved.insert(key)
+        saveTask?.cancel()
+        saveTask = Task { [weak self] in
+            try? await Task.sleep(for: .seconds(3))
+            guard !Task.isCancelled, let self, self.settings.keepHistory else { return }
+            for key in self.unsaved { ChatHistory.save(key, self.earlier[key] ?? []) }
+            self.unsaved.removeAll()
         }
     }
 

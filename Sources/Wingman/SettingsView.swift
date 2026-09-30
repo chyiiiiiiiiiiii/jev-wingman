@@ -126,6 +126,7 @@ struct SettingsView: View {
     @State private var confirmErase = false
     @State private var opensAtLogin = SMAppService.mainApp.status == .enabled
     @State private var systemSounds = Sounds.systemAllowsThem
+    @State private var historyCount = ChatHistory.count
     private let tick = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
     private static let custom = "custom"
 
@@ -251,7 +252,7 @@ struct SettingsView: View {
             Section {
                 VStack(alignment: .leading, spacing: 6) {
                     Text(L("Wingman 沒有自己的伺服器，開發者收不到你的 key，也收不到聊天內容。")).fontWeight(.semibold)
-                    Text(L("送出去的只有你正在看的對話裡最近 20 則訊息、聊天室名稱和發言人名字：判斷送到 TypeSafe（承諾不拿來訓練模型），寫回覆送到 OpenRouter，而且只轉給不保留、不訓練的供應商。聊天內容不會存在這台 Mac 上：Wingman 開著時只在記憶體裡記得你看過的訊息，讓往上捲過的內容也算數，關掉就消失。紀錄檔只記時間、次數和花費。"))
+                    Text(L("送出去的只有你正在看的對話裡最近 20 則訊息、聊天室名稱和發言人名字：判斷送到 TypeSafe（承諾不拿來訓練模型），寫回覆送到 OpenRouter，而且只轉給不保留、不訓練的供應商。聊天內容預設不會存在這台 Mac 上：Wingman 開著時只在記憶體裡記得你看過的訊息，讓往上捲過的內容也算數，關掉就消失；除非你打開下面的「記住聊天紀錄」。紀錄檔只記時間、次數和花費。"))
                         .font(.caption).foregroundStyle(.secondary)
                     HStack(spacing: 16) {
                         Link(L("OpenRouter 隱私政策 ↗"), destination: URL(string: "https://openrouter.ai/privacy")!)
@@ -263,6 +264,24 @@ struct SettingsView: View {
                     VStack(alignment: .leading, spacing: 2) {
                         Text(L("新訊息進來時自動分析"))
                         Text(L("關掉後，只有你按快捷鍵時才會把對話送出去。")).font(.caption).foregroundStyle(.secondary)
+                    }
+                }
+                Toggle(isOn: $settings.keepHistory) {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(L("記住聊天紀錄"))
+                        Text(L("開啟後，每個聊天室最近 300 則訊息會加密存在這台 Mac（不進備份，90 天沒打開就刪除），下次打開時也記得之前說過的話；送出去的仍然只有最近 20 則。關掉會立刻刪除已存的紀錄。"))
+                            .font(.caption).foregroundStyle(.secondary)
+                    }
+                }
+                if settings.keepHistory {
+                    HStack {
+                        Text(L("目前記得 %@ 個聊天室", "\(historyCount)")).font(.caption).foregroundStyle(.secondary)
+                        Spacer()
+                        Button(L("清除聊天紀錄")) {
+                            ChatHistory.eraseAll()
+                            historyCount = 0
+                        }
+                        .controlSize(.small)
                     }
                 }
                 VStack(alignment: .leading, spacing: 6) {
@@ -287,7 +306,7 @@ struct SettingsView: View {
                 }
                 Button(L("取消"), role: .cancel) {}
             } message: {
-                Text(L("會刪除鑰匙圈裡的 key、所有設定和紀錄檔，然後重新啟動 Wingman。聊天內容本來就不會存在這台 Mac 上。"))
+                Text(L("會刪除鑰匙圈裡的 key、所有設定、紀錄檔和記住的聊天紀錄，然後重新啟動 Wingman。"))
             }
 
             Section {
@@ -368,6 +387,7 @@ struct SettingsView: View {
             trusted = AXIsProcessTrusted()
             canCapture = CGPreflightScreenCaptureAccess()
             systemSounds = Sounds.systemAllowsThem
+            historyCount = ChatHistory.count
         }
     }
 }

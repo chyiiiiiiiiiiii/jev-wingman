@@ -136,6 +136,14 @@ struct OnboardingView: View {
                            L("用來分辨 Slack、Discord 裡哪些是你說的。名字不只一個就用逗號分開，例如「Yii, Yii Chen」。"))
             TextField(L("你的名字"), text: $settings.myName).textFieldStyle(.roundedBorder)
             HotkeyRecorder(settings: settings)
+            // Asked here, plainly, rather than switched on quietly: it is the one setting that keeps chats on disk.
+            Toggle(isOn: $settings.keepHistory) {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(L("記住聊天紀錄"))
+                    Text(L("下次打開同一個聊天室時也記得之前說過的話，建議會更準。紀錄加密存在這台 Mac，不進備份，隨時可以在設定裡清除。"))
+                        .font(.caption).foregroundStyle(.secondary)
+                }
+            }
             Text(L("好了之後，打開一個對方最後說話的對話，輸入框上方會出現「✦ 3 個建議」。按 %@ 展開，按 Enter 填入最推薦的那句。", "\(settings.hotkey.label)"))
                 .font(.callout)
                 .padding(12)

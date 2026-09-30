@@ -142,7 +142,7 @@
  "服務暫時有問題，稍後再試（%@）": "El servicio tiene problemas; inténtalo más tarde (%@)",
  "服務回應 %@": "El servicio respondió %@",
  "Wingman 沒有自己的伺服器，開發者收不到你的 key，也收不到聊天內容。": "Wingman no tiene servidor propio: su desarrollador nunca recibe tus claves ni tus chats.",
- "送出去的只有你正在看的對話裡最近 20 則訊息、聊天室名稱和發言人名字：判斷送到 TypeSafe（承諾不拿來訓練模型），寫回覆送到 OpenRouter，而且只轉給不保留、不訓練的供應商。聊天內容不會存在這台 Mac 上：Wingman 開著時只在記憶體裡記得你看過的訊息，讓往上捲過的內容也算數，關掉就消失。紀錄檔只記時間、次數和花費。": "Solo se envían los últimos 20 mensajes del chat que estás viendo, el nombre del chat y los nombres de quienes escriben: las valoraciones a TypeSafe (que se compromete a no entrenar con ellos) y los borradores a OpenRouter, solo hacia proveedores que no los guardan ni entrenan con ellos. Los chats nunca se guardan en este Mac: mientras Wingman está abierto recuerda en memoria los mensajes que has visto, para que cuenten también los que ya pasaste, y los olvida al cerrarse. El registro solo guarda horas, cantidades y costes.",
+ "送出去的只有你正在看的對話裡最近 20 則訊息、聊天室名稱和發言人名字：判斷送到 TypeSafe（承諾不拿來訓練模型），寫回覆送到 OpenRouter，而且只轉給不保留、不訓練的供應商。聊天內容預設不會存在這台 Mac 上：Wingman 開著時只在記憶體裡記得你看過的訊息，讓往上捲過的內容也算數，關掉就消失；除非你打開下面的「記住聊天紀錄」。紀錄檔只記時間、次數和花費。": "Solo se envían los últimos 20 mensajes del chat que estás viendo, el nombre del chat y los nombres de quienes escriben: las valoraciones a TypeSafe (que se compromete a no entrenar con ellos) y los borradores a OpenRouter, solo hacia proveedores que no los guardan ni entrenan con ellos. Por defecto los chats nunca se guardan en este Mac: mientras Wingman está abierto recuerda en memoria los mensajes que has visto, para que cuenten también los que ya pasaste, y los olvida al cerrarse; salvo que actives Recordar chats más abajo. El registro solo guarda horas, cantidades y costes.",
  "OpenRouter 隱私政策 ↗": "Política de privacidad de OpenRouter ↗",
  "TypeSafe 隱私政策 ↗": "Política de privacidad de TypeSafe ↗",
  "新訊息進來時自動分析": "Analizar mensajes nuevos automáticamente",
@@ -153,7 +153,7 @@
  "清除所有資料？": "¿Borrar todos los datos?",
  "清除並重新啟動": "Borrar y reiniciar",
  "取消": "Cancelar",
- "會刪除鑰匙圈裡的 key、所有設定和紀錄檔，然後重新啟動 Wingman。聊天內容本來就不會存在這台 Mac 上。": "Se borran las claves del Llavero, todos los ajustes y el registro, y Wingman se reinicia. Los chats nunca se guardaron en este Mac.",
+ "會刪除鑰匙圈裡的 key、所有設定、紀錄檔和記住的聊天紀錄，然後重新啟動 Wingman。": "Esto borra las claves del Llavero, todos los ajustes, el registro y los chats recordados, y reinicia Wingman.",
  "隱私與控制": "Privacidad y control",
  "key 只存在這台 Mac 的鑰匙圈，只會送到它所屬的服務。": "Las claves se quedan en el Llavero de este Mac y solo se envían al servicio al que pertenecen.",
  "互動音效": "Sonidos",
@@ -195,5 +195,10 @@
  "氣氛": "Ambiente",
  "話中有話": "Con segundas",
  "Jev 判斷這段對話離吵架有多近：平和、留意、緊張、快吵架、翻臉": "Qué tan cerca de una discusión ve Jev este chat: tranquilo, cuidado, tenso, a punto de discutir, ruptura",
- "不太確定": "no seguro"
+ "不太確定": "no seguro",
+ "記住聊天紀錄": "Recordar chats",
+ "下次打開同一個聊天室時也記得之前說過的話，建議會更準。紀錄加密存在這台 Mac，不進備份，隨時可以在設定裡清除。": "Al abrir de nuevo un chat, Wingman sigue sabiendo lo que se dijo antes y las sugerencias encajan mejor. Se guarda cifrado en este Mac, fuera de las copias de seguridad, y puedes borrarlo cuando quieras en los ajustes.",
+ "開啟後，每個聊天室最近 300 則訊息會加密存在這台 Mac（不進備份，90 天沒打開就刪除），下次打開時也記得之前說過的話；送出去的仍然只有最近 20 則。關掉會立刻刪除已存的紀錄。": "Si lo activas, se guardan cifrados en este Mac los últimos 300 mensajes de cada chat (fuera de las copias de seguridad y borrados tras 90 días sin abrirse), para que al volver recuerde lo anterior; solo se envían siempre los últimos 20. Al desactivarlo se borra al instante lo guardado.",
+ "目前記得 %@ 個聊天室": "Recordando %@ chats",
+ "清除聊天紀錄": "Borrar chats recordados"
 }
