@@ -5,8 +5,9 @@
     scripts/make-reel.py reel-01 --stage    run the made-up chats through Jev and the writer first
 
 Shots to be filmed (side A, B, …) come from promo/<name>/footage/<A>.mov or .mp4 when there, cropped to
-9:16 and started at the second given in footage/cuts.json ({"A": 1.5}); until then a card says what to
-film. Their own sound (keys, a sigh) stays in, under the sound effects. Music is left to Instagram.
+9:16 and started at the second given in footage/cuts.json ({"A": 1.5}); until then the app's drawn lead
+acts them out. Their own sound (keys, a sigh) stays in, under the sound effects, over a quiet made-up
+music bed; Instagram's music can go on top.
 Needs ffmpeg. Every chat in it is made up.
 """
 import json
@@ -65,6 +66,28 @@ def sent() -> list:
     return out
 
 
+def sigh() -> list:
+    """A long breath out: soft noise that swells and fades."""
+    random.seed(3)
+    out, low = [], 0.0
+    for i in range(int(RATE * 0.9)):
+        t = i / RATE
+        low += 0.08 * (random.uniform(-1, 1) - low)      # a one-pole low-pass: hiss into breath
+        out.append(1.6 * low * min(1, t / 0.22) * math.exp(-max(0, t - 0.22) / 0.22))
+    return out
+
+
+def press() -> list:
+    """Two keys going down together: a low thock with a click on top."""
+    random.seed(5)
+    out = []
+    for i in range(int(RATE * 0.12)):
+        t = i / RATE
+        out.append(0.4 * math.sin(2 * math.pi * 170 * t) * math.exp(-t / 0.025)
+                   + 0.15 * random.uniform(-1, 1) * math.exp(-t / 0.004))
+    return out
+
+
 def typing(seconds: float) -> list:
     """Keys over most of a beat: short filtered clicks at uneven gaps."""
     random.seed(7)
@@ -80,6 +103,74 @@ def typing(seconds: float) -> list:
             if start + i < len(out):
                 out[start + i] += loudness * click * math.exp(-i / (RATE * 0.004))
         at += random.uniform(0.09, 0.16)
+    return out
+
+
+def music(seconds: float) -> list:
+    """A quiet lo-fi bed so no stretch of the cut is silent: Fmaj7, Em7, Dm7, Cmaj7 at 88 BPM, with
+    a warm pad, a plucked arpeggio, a soft bass and brushed drums. Made here, so nothing to license."""
+    random.seed(11)
+    beat = 60 / 88
+    bar = beat * 4
+    total = int(RATE * seconds)
+    out = [0.0] * total
+    chords = [(53, 57, 60, 64), (52, 55, 59, 62), (50, 53, 57, 60), (48, 52, 55, 59)]   # MIDI notes
+
+    def hz(note):
+        return 440 * 2 ** ((note - 69) / 12)
+
+    def add(start, samples, gain):
+        offset = int(start * RATE)
+        for i, v in enumerate(samples):
+            if offset + i < total:
+                out[offset + i] += gain * v
+
+    def pluck(note, length):
+        period = max(2, int(RATE / hz(note)))
+        ring = [random.uniform(-1, 1) for _ in range(period)]
+        samples = []
+        for i in range(int(RATE * length)):
+            value = ring[i % period]
+            ring[i % period] = 0.497 * (value + ring[(i + 1) % period])
+            samples.append(value)
+        return samples
+
+    bars = int(seconds / bar) + 1
+    for n in range(bars):
+        chord = chords[n % 4]
+        at = n * bar
+        # Pad: the chord held through the bar, swelling in and out.
+        length = int(RATE * bar)
+        pad = [0.0] * length
+        for note in chord:
+            step = 2 * math.pi * hz(note) / RATE
+            for i in range(length):
+                pad[i] += math.sin(step * i) + 0.25 * math.sin(2 * step * i)
+        for i in range(length):
+            t = i / RATE
+            pad[i] *= min(1, t / 0.35) * min(1, (bar - t) / 0.35)
+        add(at, pad, 0.035)
+        # Arpeggio: eighth notes up the chord, an octave higher.
+        for k in range(8):
+            add(at + k * beat / 2 + random.uniform(0, 0.012), pluck(chord[k % 4] + 12, 0.5), 0.12)
+        # Bass on one and three; kick with it; a brushed snare on two and four; hats between.
+        for k in range(4):
+            start = at + k * beat
+            if k in (0, 2):
+                root = hz(chord[0] - 12)
+                add(start, [math.sin(2 * math.pi * root * i / RATE) * math.exp(-i / (RATE * 0.35))
+                            for i in range(int(RATE * 0.6))], 0.16)
+                phase, kick = 0.0, []
+                for i in range(int(RATE * 0.16)):
+                    phase += 2 * math.pi * (50 + 70 * math.exp(-i / (RATE * 0.03))) / RATE
+                    kick.append(math.sin(phase) * math.exp(-i / (RATE * 0.05)))
+                add(start, kick, 0.3)
+            else:
+                add(start, [random.uniform(-1, 1) * math.exp(-i / (RATE * 0.06)) for i in range(int(RATE * 0.2))], 0.05)
+            add(start + beat / 2, [random.uniform(-1, 1) * math.exp(-i / (RATE * 0.008)) for i in range(int(RATE * 0.03))], 0.035)
+    for i in range(total):
+        t = i / RATE
+        out[i] *= min(1, t / 0.3) * min(1, (seconds - t) / 1.5)
     return out
 
 
@@ -103,6 +194,10 @@ def segment(beat: dict, frames: Path, footage: Path, cuts: dict, out: Path) -> N
                "[0:v]scale=1080:1920:force_original_aspect_ratio=increase,crop=1080:1920,setsar=1,"
                f"tpad=stop_mode=clone:stop_duration={seconds}[v];[v][1]overlay[out];{sound}",
                "-map", "[out]", "-map", "[aout]", *encode, out)
+    elif "sequence" in beat:
+        ffmpeg("-framerate", str(FPS), "-start_number", "0", "-i", frames / beat["sequence"], "-loop", "1", "-t", seconds,
+               "-i", overlay, "-f", "lavfi", "-t", seconds, "-i", f"anullsrc=r={RATE}:cl=stereo",
+               "-filter_complex", "[0][1]overlay,setsar=1[out]", "-map", "[out]", "-map", "2:a", *encode, out)
     else:
         ffmpeg("-loop", "1", "-t", seconds, "-i", frames / beat["frame"], "-loop", "1", "-t", seconds, "-i", overlay,
                "-f", "lavfi", "-t", seconds, "-i", f"anullsrc=r={RATE}:cl=stereo",
@@ -135,11 +230,13 @@ def main() -> None:
         ffmpeg("-f", "concat", "-safe", "0", "-i", work / "parts.txt", "-c", "copy", joined)
 
         # Each beat's sound, placed where the beat starts.
-        sounds = {"pop": work / "pop.wav", "sent": work / "sent.wav", "inserted": frames / "sound-inserted.wav",
-                  "ready": frames / "sound-ready.wav"}
-        write_wav(sounds["pop"], pop())
-        write_wav(sounds["sent"], sent())
-        inputs, chain, labels, start = ["-i", joined], "", ["[0:a]"], 0.0
+        sounds = {"inserted": frames / "sound-inserted.wav", "ready": frames / "sound-ready.wav"}
+        for kind, samples in (("pop", pop()), ("sent", sent()), ("sigh", sigh()), ("press", press())):
+            sounds[kind] = work / f"{kind}.wav"
+            write_wav(sounds[kind], samples)
+        length = sum(beat["seconds"] for beat in beats)
+        write_wav(work / "music.wav", music(length))
+        inputs, chain, labels, start = ["-i", joined, "-i", work / "music.wav"], "", ["[0:a]", "[1:a]"], 0.0
         for index, beat in enumerate(beats):
             kind = beat.get("sound")
             if kind == "type":
@@ -151,16 +248,19 @@ def main() -> None:
                 inputs += ["-i", path]
                 n = len(labels)
                 gain = 1.6 if kind in ("inserted", "ready") else 1.0
-                chain += f"[{n}:a]volume={gain},adelay={int(start * 1000)}:all=1[s{n}];"
+                chain += f"[{n}:a]volume={gain},adelay={int((start + beat.get('soundAt', 0)) * 1000)}:all=1[s{n}];"
                 labels.append(f"[s{n}]")
             start += beat["seconds"]
         chain += f"{''.join(labels)}amix=inputs={len(labels)}:duration=first:normalize=0,alimiter=limit=0.9[a]"
         out = promo / "out" / f"{name}.mp4"
         out.parent.mkdir(exist_ok=True)
+        # The first beat, caption and all, is the cover.
+        ffmpeg("-i", frames / beats[0]["frame"], "-i", frames / beats[0]["overlay"], "-filter_complex", "overlay",
+               "-q:v", "2", out.with_name("cover.jpg"))
         ffmpeg(*inputs, "-filter_complex", chain, "-map", "0:v", "-map", "[a]", "-c:v", "copy", "-c:a", "aac",
                "-b:a", "192k", "-movflags", "+faststart", out)
-        filmed = sorted({b["side"] for b in beats if "side" in b} - {p.stem for p in footage.glob("*.*")})
-        print(f"{out.relative_to(ROOT)} · {start:.1f} s" + (f" · still to film: {', '.join(filmed)}" if filmed else ""))
+        drawn = sorted({b["side"] for b in beats if "side" in b} - {p.stem for p in footage.glob("*.*")})
+        print(f"{out.relative_to(ROOT)} · {start:.1f} s" + (f" · drawn, not filmed: {', '.join(drawn)}" if drawn else ""))
 
 
 if __name__ == "__main__":

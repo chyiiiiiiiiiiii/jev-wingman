@@ -62,7 +62,7 @@ enum Reel {
     struct Beat: Decodable {
         let seconds: Double
         var caption: String?
-        /// A shot to be filmed; drawn as a card saying what to film until the footage is in.
+        /// A shot to be filmed; the drawn lead acts it out until the footage is in.
         var side: String?
         var shot: String?
         var chat: String?
@@ -76,6 +76,8 @@ enum Reel {
         var pill: String?
         var key: String?
         var sound: String?
+        /// Seconds into the beat the sound starts; at its start when absent.
+        var soundAt: Double?
         var end: Bool?
     }
 
@@ -167,7 +169,12 @@ enum Reel {
             if beat.end == true {
                 write(EndCard(), to: out.appendingPathComponent(frame))
             } else if let side = beat.side {
-                write(SideCard(side: side, shot: beat.shot ?? "", seconds: beat.seconds), to: out.appendingPathComponent(frame))
+                // Drawn until the shot is filmed: the lead acts it out at 30 frames a second.
+                write(ReelCharacter(shot: side, t: 0), to: out.appendingPathComponent(frame))
+                for index in 0..<Int((beat.seconds * 30).rounded()) {
+                    write(ReelCharacter(shot: side, t: Double(index) / 30),
+                          to: out.appendingPathComponent(String(format: "side-%@-%03d.png", side, index)))
+                }
             } else if let id = beat.chat, let chat = script.chats[id] {
                 if (beat.panel == true || beat.pill == "auto"), said[id] == nil {
                     print("\(id) is not staged yet: run --stage first")
@@ -180,7 +187,11 @@ enum Reel {
             write(Overlay(caption: beat.caption, key: beat.key), to: out.appendingPathComponent(overlay))
             var entry: [String: Any] = ["frame": frame, "overlay": overlay, "seconds": beat.seconds]
             if let sound = beat.sound { entry["sound"] = sound }
-            if let side = beat.side { entry["side"] = side }
+            if let at = beat.soundAt { entry["soundAt"] = at }
+            if let side = beat.side {
+                entry["side"] = side
+                entry["sequence"] = "side-\(side)-%03d.png"
+            }
             listed.append(entry)
         }
         let beats = try? JSONSerialization.data(withJSONObject: listed, options: [.prettyPrinted, .sortedKeys])
@@ -453,30 +464,6 @@ private struct ChatScreen: View {
         case .telegram, .messenger: Color(red: 0.16, green: 0.6, blue: 0.95)
         case .instagram: Color(red: 0.88, green: 0.19, blue: 0.62)
         case .threads, nil: Color.white
-        }
-    }
-}
-
-/// Stands in for a shot still to be filmed, saying what to film.
-private struct SideCard: View {
-    let side: String
-    let shot: String
-    let seconds: Double
-
-    var body: some View {
-        ZStack {
-            Color(red: 0.10, green: 0.10, blue: 0.13)
-            VStack(spacing: 14) {
-                Image(systemName: "video.fill").font(.system(size: 34)).foregroundStyle(.secondary)
-                Text("側拍 \(side)").font(Layout.chinese(30, .bold))
-                Text(shot).font(Layout.chinese(18)).foregroundStyle(.secondary).multilineTextAlignment(.center)
-                Text(String(format: "%.1f 秒", seconds)).font(.system(size: 15, weight: .medium)).foregroundStyle(.tertiary)
-            }
-            .padding(30)
-            .frame(width: 380, height: 300)
-            .overlay(RoundedRectangle(cornerRadius: 18).strokeBorder(style: StrokeStyle(lineWidth: 2, dash: [8, 6]))
-                .foregroundStyle(.tertiary))
-            .padding(.top, 60)
         }
     }
 }
