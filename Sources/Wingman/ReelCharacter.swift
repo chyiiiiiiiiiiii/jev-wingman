@@ -45,7 +45,7 @@ private enum Ink {
 
 // MARK: - The face
 
-private struct Face {
+struct ReelFace {
     enum Eyes { case open, half, closed, happy, squint, wide, look(Double) }
     enum Mouth { case flat, sigh, wavy, smile, smirk, tongue, frown }
     var eyes: Eyes = .open
@@ -61,7 +61,7 @@ private struct Face {
 private struct Head: View {
     let x: Double
     let y: Double
-    let face: Face
+    let face: ReelFace
 
     var body: some View {
         ZStack {
@@ -266,6 +266,26 @@ private struct Arm: View {
     }
 }
 
+/// The lead from the waist up, for scenes drawn elsewhere: head at (225, 330), a hand that can reach the keys.
+struct ReelLead: View {
+    let face: ReelFace
+    /// 0 resting … 1 reaching over the lid to press a key.
+    var handUp = 0.0
+
+    var body: some View {
+        ZStack {
+            Torso(x: 225, y: 410)
+            if handUp > 0 { Arm(from: CGPoint(x: 335, y: 640), hand: CGPoint(x: 305, y: 520 - 50 * handUp)) }
+            Head(x: 225, y: 330, face: face)
+        }
+    }
+}
+
+/// The lead's laptop, seen from behind, with the app's icon on the lid.
+struct ReelLaptop: View {
+    var body: some View { Laptop() }
+}
+
 // MARK: - Shots
 
 /// Night at the desk: the lamp, the laptop's glow, and the face over the lid.
@@ -294,7 +314,7 @@ private struct DeskShot: View {
     }
 
     private struct Pose {
-        var face = Face()
+        var face = ReelFace()
         var slump = 0.0
         var lean = CGPoint.zero
         var hand: CGPoint?
@@ -306,7 +326,7 @@ private struct DeskShot: View {
         case "A":   // a long sigh, then a scratch of the head
             let sigh = smooth(span(t, 0.3, 0.8))
             pose.slump = 10 * sigh
-            pose.face = Face(eyes: t < 0.3 ? .open : .half, brows: -1, mouth: t < 0.3 ? .flat : t < 1.1 ? .sigh : .wavy)
+            pose.face = ReelFace(eyes: t < 0.3 ? .open : .half, brows: -1, mouth: t < 0.3 ? .flat : t < 1.1 ? .sigh : .wavy)
             if blinking(t, at: [0.15]) { pose.face.eyes = .closed }
             if t > 1.0 {
                 let up = smooth(span(t, 1.0, 1.25))
@@ -317,16 +337,16 @@ private struct DeskShot: View {
             let bob = sin(t * 2 * .pi * 6) * 2.5
             pose.slump = bob
             pose.lean = CGPoint(x: 0, y: 6)
-            pose.face = Face(eyes: .wide, brows: 1, mouth: .wavy, sweat: span(t, 0.2, 1.9))
+            pose.face = ReelFace(eyes: .wide, brows: 1, mouth: .wavy, sweat: span(t, 0.2, 1.9))
         case "D":   // leaning in to fill a blank
             pose.lean = CGPoint(x: 0, y: 12 * smooth(span(t, 0, 0.4)))
             pose.slump = sin(t * 2 * .pi * 5) * 1.5
-            pose.face = Face(eyes: .squint, brows: 0.8, mouth: .tongue)
+            pose.face = ReelFace(eyes: .squint, brows: 0.8, mouth: .tongue)
         case "E":   // a nod, a press, a smile
             let nod = sin(.pi * span(t, 0.1, 0.45)) + sin(.pi * span(t, 0.45, 0.8))
             pose.lean = CGPoint(x: 0, y: 9 * nod)
             let done = t > 0.9
-            pose.face = Face(eyes: done ? .happy : .open, brows: 0, mouth: done ? .smile : .flat, blush: done ? 1 : 0.3)
+            pose.face = ReelFace(eyes: done ? .happy : .open, brows: 0, mouth: done ? .smile : .flat, blush: done ? 1 : 0.3)
             if t > 0.95 {
                 let press = span(t, 0.95, 1.1) - span(t, 1.15, 1.35)
                 pose.hand = CGPoint(x: 312, y: 460 + 16 * press)
@@ -451,7 +471,7 @@ private struct MorningShot: View {
     var body: some View {
         let look: Double = t < 0.45 ? -1 : t < 0.9 ? 1 : 0
         let caught = t > 0.9
-        let face = Face(eyes: caught ? .look(0) : .look(look), brows: -0.6, mouth: caught ? .smirk : .flat,
+        let face = ReelFace(eyes: caught ? .look(0) : .look(look), brows: -0.6, mouth: caught ? .smirk : .flat,
                         blush: caught ? 0.9 : 0.2, sweat: span(t, 0.5, 1.6))
         ZStack {
             LinearGradient(colors: [Color(red: 1.0, green: 0.94, blue: 0.86), Color(red: 0.98, green: 0.85, blue: 0.74)],

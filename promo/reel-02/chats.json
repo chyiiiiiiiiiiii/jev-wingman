@@ -1,0 +1,81 @@
+{
+  "note": "Made-up chats for 〈腦內會議室〉. Chats marked stage go through the real Wingman with --stage; staged.json keeps what it said (copied from reel-01's run).",
+  "chats": {
+    "ivy": {
+      "app": "instagram",
+      "title": "Ivy",
+      "stage": true,
+      "messages": [
+        {
+          "from": "Ivy",
+          "time": "20:10",
+          "text": "這週末要不要去看那部電影？"
+        },
+        {
+          "from": "我",
+          "time": "22:40",
+          "text": "這週有點忙欸，週末要加班趕專案"
+        },
+        {
+          "from": "Ivy",
+          "time": "22:41",
+          "text": "哈哈 好啦 你很忙齁"
+        }
+      ]
+    },
+    "boss": {
+      "app": "slack",
+      "title": "王經理",
+      "stage": true,
+      "messages": [
+        {
+          "from": "王經理",
+          "time": "17:55",
+          "text": "明天十點跟客戶報告，簡報麻煩你準備"
+        },
+        {
+          "from": "我",
+          "time": "18:20",
+          "text": "好，大綱先放共用資料夾了，數據今晚補完"
+        },
+        {
+          "from": "王經理",
+          "time": "23:47",
+          "text": "明天早上的簡報，你那邊 OK 嗎？"
+        }
+      ]
+    },
+    "family": {
+      "app": "line",
+      "title": "相親相愛一家人",
+      "stage": true,
+      "messages": [
+        {
+          "from": "媽媽",
+          "time": "06:30",
+          "text": "📎",
+          "image": "早安圖"
+        },
+        {
+          "from": "媽媽",
+          "time": "06:30",
+          "text": "早安 今天也要開開心心喔🌞"
+        }
+      ],
+      "group": true
+    },
+    "notice": {
+      "app": "discord",
+      "title": "# 公告",
+      "group": true,
+      "stage": true,
+      "messages": [
+        {
+          "from": "管理員",
+          "time": "14:02",
+          "text": "本週五 22:00–23:00 系統維護，期間無法登入，謝謝大家配合🙏"
+        }
+      ]
+    }
+  }
+}

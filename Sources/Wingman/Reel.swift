@@ -75,13 +75,21 @@ enum Reel {
         /// "auto": the pill as it reads once the chat was looked at; "note": the pill after a draft is typed in.
         var pill: String?
         var key: String?
+        /// A drawn scene (ReelScene), animated through the beat; `start` skips into its animation.
+        var scene: String?
+        var start: Double?
         var sound: String?
         /// Seconds into the beat the sound starts; at its start when absent.
         var soundAt: Double?
         var end: Bool?
     }
 
-    struct Spec: Decodable { let beats: [Beat] }
+    struct Spec: Decodable {
+        let beats: [Beat]
+        /// The chat a drawn story is about, and what the other side answers at its end.
+        var chat: String?
+        var reply: String?
+    }
 
     static func load<T: Decodable>(_ type: T.Type, _ url: URL) throws -> T {
         try JSONDecoder().decode(type, from: Data(contentsOf: url))
@@ -166,7 +174,22 @@ enum Reel {
         for (index, beat) in spec.beats.enumerated() {
             let frame = String(format: "frame-%02d.png", index + 1)
             let overlay = String(format: "overlay-%02d.png", index + 1)
-            if beat.end == true {
+            if let scene = beat.scene {
+                // A drawn scene, caption and all, frame by frame.
+                let context = ReelContext(said: said, lines: { lines($0, script) }, app: { ChatApp(rawValue: script.chats[$0]?.app ?? "") },
+                                          panel: { panel($0, script, said) }, text: spec.reply, chat: spec.chat ?? "")
+                for step in 0..<Int((beat.seconds * 30).rounded()) {
+                    let view = ZStack {
+                        ReelScene(name: scene, t: Double(step) / 30 + (beat.start ?? 0), context: context)
+                        Overlay(caption: beat.caption, key: nil, t: Double(step) / 30)
+                    }
+                    write(view, to: out.appendingPathComponent(String(format: "beat-%02d-%03d.png", index + 1, step)))
+                }
+            }
+            if beat.scene != nil {
+                try? FileManager.default.copyItem(at: out.appendingPathComponent(String(format: "beat-%02d-000.png", index + 1)),
+                                                  to: out.appendingPathComponent(frame))
+            } else if beat.end == true {
                 write(EndCard(), to: out.appendingPathComponent(frame))
             } else if let side = beat.side {
                 // Drawn until the shot is filmed: the lead acts it out at 30 frames a second.
@@ -184,7 +207,8 @@ enum Reel {
                                  model: model(for: beat, id, script, said), said: said),
                       to: out.appendingPathComponent(frame))
             }
-            write(Overlay(caption: beat.caption, key: beat.key), to: out.appendingPathComponent(overlay))
+            // A drawn scene carries its own caption; the overlay keeps only the key.
+            write(Overlay(caption: beat.scene == nil ? beat.caption : nil, key: beat.key), to: out.appendingPathComponent(overlay))
             var entry: [String: Any] = ["frame": frame, "overlay": overlay, "seconds": beat.seconds]
             if let sound = beat.sound { entry["sound"] = sound }
             if let at = beat.soundAt { entry["soundAt"] = at }
@@ -192,6 +216,7 @@ enum Reel {
                 entry["side"] = side
                 entry["sequence"] = "side-\(side)-%03d.png"
             }
+            if beat.scene != nil { entry["sequence"] = String(format: "beat-%02d-%%03d.png", index + 1) }
             listed.append(entry)
         }
         let beats = try? JSONSerialization.data(withJSONObject: listed, options: [.prettyPrinted, .sortedKeys])
@@ -201,6 +226,18 @@ enum Reel {
         }
         print("\(spec.beats.count) beats in \(out.path)")
         return 0
+    }
+
+    /// A chat's panel with Wingman's ranked drafts in it.
+    @MainActor
+    private static func panel(_ id: String, _ script: Script, _ said: [String: Said]) -> AppModel {
+        let model = AppModel()
+        model.panelWidth = 420
+        model.hotkeyLabel = "⌥Space"
+        if let s = said[id] {
+            model.present(conversation(id, script, said), judgment: s.judgment, candidates: s.candidates, phase: .ready)
+        }
+        return model
     }
 
     @MainActor
@@ -261,6 +298,14 @@ private enum Layout {
 private struct Overlay: View {
     let caption: String?
     let key: String?
+    /// Seconds into the beat, to pop the caption in; nil holds it still.
+    var t: Double? = nil
+
+    static func pop(_ x: Double) -> Double {
+        guard x < 1 else { return 1 }
+        let c = 1.70158, p = x - 1
+        return 1 + (c + 1) * p * p * p + c * p * p
+    }
 
     var body: some View {
         ZStack(alignment: .top) {
@@ -274,6 +319,7 @@ private struct Overlay: View {
                     .padding(.horizontal, 16).padding(.vertical, 9)
                     .background(Color.black.opacity(0.42), in: RoundedRectangle(cornerRadius: 14))
                     .shadow(color: .black.opacity(0.5), radius: 8, y: 2)
+                    .scaleEffect(t.map { max(0.01, Overlay.pop(min(1, $0 / 0.2))) } ?? 1)
                     .frame(height: Layout.captionHeight)
                     .padding(.top, Layout.captionTop)
             }

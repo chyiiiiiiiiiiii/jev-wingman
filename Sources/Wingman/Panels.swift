@@ -454,7 +454,7 @@ struct SuggestionView: View {
         }
     }
 
-    private static func urgencyColor(_ urgency: Double) -> Color {
+    static func urgencyColor(_ urgency: Double) -> Color {
         switch urgency {
         case 2.5...: .red
         case 1.5...: .orange
@@ -463,7 +463,7 @@ struct SuggestionView: View {
         }
     }
 
-    private static func urgencyText(_ urgency: Double) -> String {
+    static func urgencyText(_ urgency: Double) -> String {
         switch urgency {
         case 2.5...: L("對方正在等，建議馬上回")
         case 1.5...: L("最好一小時內回")
