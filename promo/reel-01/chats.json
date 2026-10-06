@@ -1,0 +1,188 @@
+{
+  "note": "Made-up chats for the Reels video. Nobody here is real. Chats marked stage go through the real Wingman (Jev judges, the writer drafts, Jev ranks) with --stage; what it says is kept in staged.json and drawn as is.",
+  "chats": {
+    "kai": {
+      "app": "line",
+      "title": "阿凱",
+      "messages": [
+        {
+          "from": "我",
+          "time": "21:02",
+          "text": "📎",
+          "image": "截圖"
+        },
+        {
+          "from": "我",
+          "time": "21:02",
+          "text": "他這什麼意思？？"
+        },
+        {
+          "from": "我",
+          "time": "21:05",
+          "text": "📎",
+          "image": "截圖"
+        },
+        {
+          "from": "我",
+          "time": "21:05",
+          "text": "我要怎麼回 救命"
+        },
+        {
+          "from": "阿凱",
+          "time": "21:06",
+          "text": "又來😩"
+        },
+        {
+          "from": "阿凱",
+          "time": "21:06",
+          "text": "你今天已經傳第八張了欸"
+        },
+        {
+          "from": "我",
+          "time": "23:48",
+          "text": "📎",
+          "image": "截圖"
+        },
+        {
+          "from": "我",
+          "time": "23:48",
+          "text": "主管半夜問這個 怎麼回🥲"
+        },
+        {
+          "from": "阿凱",
+          "time": "23:52",
+          "text": "我要睡了 你自己決定😴"
+        }
+      ]
+    },
+    "boss": {
+      "app": "slack",
+      "title": "王經理",
+      "stage": true,
+      "messages": [
+        {
+          "from": "王經理",
+          "time": "17:55",
+          "text": "明天十點跟客戶報告，簡報麻煩你準備"
+        },
+        {
+          "from": "我",
+          "time": "18:20",
+          "text": "好，大綱先放共用資料夾了，數據今晚補完"
+        },
+        {
+          "from": "王經理",
+          "time": "23:47",
+          "text": "明天早上的簡報，你那邊 OK 嗎？"
+        }
+      ]
+    },
+    "ivy": {
+      "app": "instagram",
+      "title": "Ivy",
+      "stage": true,
+      "messages": [
+        {
+          "from": "Ivy",
+          "time": "20:10",
+          "text": "這週末要不要去看那部電影？"
+        },
+        {
+          "from": "我",
+          "time": "22:40",
+          "text": "這週有點忙欸，週末要加班趕專案"
+        },
+        {
+          "from": "Ivy",
+          "time": "22:41",
+          "text": "哈哈 好啦 你很忙齁"
+        }
+      ]
+    },
+    "family": {
+      "app": "line",
+      "title": "相親相愛一家人",
+      "stage": true,
+      "messages": [
+        {
+          "from": "媽媽",
+          "time": "06:30",
+          "text": "📎",
+          "image": "早安圖"
+        },
+        {
+          "from": "媽媽",
+          "time": "06:30",
+          "text": "早安 今天也要開開心心喔🌞"
+        }
+      ],
+      "group": true
+    },
+    "threads": {
+      "app": "threads",
+      "title": "daily.worker：大家半夜收到主管訊息，都怎麼回？",
+      "post": true,
+      "stage": true,
+      "messages": [
+        {
+          "from": "daily.worker",
+          "time": "2 小時",
+          "text": "大家半夜收到主管訊息，都怎麼回？\n我先：已讀，明天再說"
+        }
+      ]
+    },
+    "kai2": {
+      "app": "line",
+      "title": "阿凱",
+      "stage": true,
+      "from": "kai",
+      "messages": [
+        {
+          "from": "阿凱",
+          "time": "08:12",
+          "text": "欸 你昨天後來怎麼都沒傳截圖給我"
+        },
+        {
+          "from": "阿凱",
+          "time": "08:12",
+          "text": "你是不是有別的顧問了"
+        }
+      ]
+    },
+    "kai3": {
+      "app": "line",
+      "title": "阿凱",
+      "from": "kai2",
+      "messages": [
+        {
+          "from": "我",
+          "time": "08:15",
+          "text": "$kai2"
+        },
+        {
+          "from": "阿凱",
+          "time": "08:16",
+          "text": "欸 你怎麼突然這麼會回"
+        },
+        {
+          "from": "阿凱",
+          "time": "08:16",
+          "text": "用了什麼 我也要"
+        }
+      ]
+    },
+    "notice": {
+      "app": "discord",
+      "title": "# 公告",
+      "group": true,
+      "stage": true,
+      "messages": [
+        {
+          "from": "管理員",
+          "time": "14:02",
+          "text": "本週五 22:00–23:00 系統維護，期間無法登入，謝謝大家配合🙏"
+        }
+      ]
+    }
+  }
+}

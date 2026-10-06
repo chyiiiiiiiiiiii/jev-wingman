@@ -25,6 +25,21 @@ if arguments.contains("--check-jev") {
     done.wait()
     exit(status)
 }
+if let index = arguments.firstIndex(of: "--stage"), index + 1 < arguments.count {
+    let only = arguments.firstIndex(of: "--only").flatMap { i in i + 1 < arguments.count ? arguments[i + 1] : nil }?
+        .split(separator: ",").map(String.init) ?? []
+    let done = DispatchSemaphore(value: 0)
+    var status: Int32 = 1
+    Task.detached {
+        status = await Reel.stage(arguments[index + 1], only: only)
+        done.signal()
+    }
+    done.wait()
+    exit(status)
+}
+if let index = arguments.firstIndex(of: "--render-reel"), index + 2 < arguments.count {
+    exit(MainActor.assumeIsolated { Reel.render(arguments[index + 1], to: arguments[index + 2]) })
+}
 if let index = arguments.firstIndex(of: "--render-demo"), index + 1 < arguments.count {
     exit(MainActor.assumeIsolated { Render.demo(to: arguments[index + 1]) })
 }

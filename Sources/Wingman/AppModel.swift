@@ -110,6 +110,17 @@ final class AppModel: ObservableObject {
         }
     }
 
+    /// Shows what Wingman said about a made-up chat, for `--render-reel`.
+    func present(_ convo: Conversation, judgment: Judgment?, candidates: [Candidate], phase: Phase, note: String? = nil) {
+        chatInFront = true
+        conversation = convo
+        self.judgment = judgment
+        self.candidates = candidates
+        self.phase = phase
+        self.note = note
+        selected = bestIndex ?? 0
+    }
+
     // MARK: - Screen updates
 
     func chatLeft() {
@@ -153,7 +164,6 @@ final class AppModel: ObservableObject {
             workTask?.cancel()
             phase = .idle
             candidates = []
-        resetSelection()
             resetSelection()
             judgment = nil
         }
