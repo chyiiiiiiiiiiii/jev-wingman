@@ -31,7 +31,7 @@ public enum SlackParser {
         var reader = MessageReader(myName: myName)
         walk(window) { node in
             if node.hasClass("p-view_header__big_button") {
-                title = node.text
+                title = chatName(of: node)
                 return false
             }
             if node.hasClass("c-input_checkbox") && isBelow(node.frame, composer.frame) {
@@ -87,5 +87,21 @@ public enum SlackParser {
     private static func isBelow(_ frame: CGRect, _ composer: CGRect) -> Bool {
         frame.minY >= composer.maxY - 1 && frame.minY <= composer.maxY + 60
             && frame.minX >= composer.minX - 8 && frame.minX < composer.maxX
+    }
+}
+
+extension SlackParser {
+    /// The chat's name from the header button, which Slack labels for screen readers ("#開發 的頻道詳細資料",
+    /// "Yii Chen 的對話詳細資料"): the name shown inside it, or for a channel the #name in the label.
+    static func chatName(of header: UINode) -> String {
+        var shown = ""
+        func find(_ node: UINode) {
+            if shown.isEmpty, node.role == "AXStaticText", !node.value.isEmpty { shown = node.value }
+            node.children.forEach(find)
+        }
+        header.children.forEach(find)
+        if !shown.isEmpty { return shown }
+        let tag = header.text.split(whereSeparator: \.isWhitespace).first { $0.hasPrefix("#") && $0.count > 1 }
+        return tag.map(String.init) ?? header.text
     }
 }

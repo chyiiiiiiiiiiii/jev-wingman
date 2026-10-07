@@ -117,3 +117,21 @@ private func window(_ children: [UINode], title: String = "開發 (頻道) - Mon
     let unfocused = SlackParser.parse(window: tree(channelFocused: false, threadFocused: false), myName: "Leo")
     #expect(unfocused?.composerHandle == 2)
 }
+
+// Slack 4.x on 2026-10-07: the header button carries only a description, plus the visible name as a child in a DM.
+private func liveHeader(desc: String, shown: String? = nil) -> UINode {
+    el("AXButton", cls: ["c-button-unstyled", "p-view_header__big_button"], desc: desc,
+       CGRect(x: 400, y: 40, width: 120, height: 28),
+       shown.map { [el("AXStaticText", value: $0, CGRect(x: 420, y: 44, width: 80, height: 20))] } ?? [])
+}
+
+@Test func aChannelIsNamedByItsHashtagNotTheButtonsDescription() {
+    let tree = window([liveHeader(desc: "#開發 的頻道詳細資料")] + message("Mia", "在嗎", y: 200) + [composer()])
+    #expect(SlackParser.parse(window: tree, myName: "Leo")?.title == "#開發")
+}
+
+@Test func aDirectMessageIsNamedByTheNameItShows() {
+    let tree = window([liveHeader(desc: "Yii Chen 的對話詳細資料", shown: "Yii Chen")] + message("Yii Chen", "在嗎", y: 200)
+        + [composer()])
+    #expect(SlackParser.parse(window: tree, myName: "Leo")?.title == "Yii Chen")
+}
