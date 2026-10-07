@@ -19,8 +19,12 @@ final class Prefs: ObservableObject {
         ("anthropic/claude-haiku-4.5", "Claude Haiku 4.5", L("穩定，但費用約 10 倍。")),
     ]
 
-    @Published var openRouterKey: String { didSet { Keychain.set(openRouterKey, account: "openrouter") } }
-    @Published var typesafeKey: String { didSet { Keychain.set(typesafeKey, account: "typesafe") } }
+    @Published var openRouterKey: String {
+        didSet { save(openRouterKey, over: oldValue, account: "openrouter", variable: "OPENROUTER_API_KEY") }
+    }
+    @Published var typesafeKey: String {
+        didSet { save(typesafeKey, over: oldValue, account: "typesafe", variable: "TYPESAFE_API_KEY") }
+    }
     @Published var model: String { didSet { UserDefaults.standard.set(model, forKey: "model") } }
     @Published var myName: String { didSet { UserDefaults.standard.set(myName, forKey: "myName") } }
     @Published var paused: Bool { didSet { UserDefaults.standard.set(paused, forKey: "paused") } }
@@ -82,6 +86,14 @@ final class Prefs: ObservableObject {
     }
 
     var hasWriterKey: Bool { !openRouterKey.isEmpty }
+
+    /// A key reaches the Keychain only when it changed and came from the person, not the environment. Settings writes a
+    /// field's value back when it gains focus, which saved a key given by OPENROUTER_API_KEY over the one kept in the
+    /// Keychain, and re-saved an unchanged key every time.
+    private func save(_ key: String, over old: String, account: String, variable: String) {
+        guard key != old, Self.usesKeychain, ProcessInfo.processInfo.environment[variable] == nil else { return }
+        Keychain.set(key, account: account)
+    }
 
     /// Keys, settings, the log and the cached sounds, all gone. Chats were never stored, so there is nothing else.
     @MainActor
