@@ -243,5 +243,6 @@
  "%@ 需要「螢幕與系統錄音」才讀得到": "%@ nécessite l’Enregistrement de l’écran et des sons du système pour être lu",
  "%@：這個畫面讀不到對話": "%@ : aucune conversation à lire sur cet écran",
  "已暫停自動分析，按 %@ 仍可用": "Analyse automatique en pause ; %@ fonctionne toujours",
- "%@：正在看「%@」": "%@ : lecture de « %@ »"
+ "%@：正在看「%@」": "%@ : lecture de « %@ »",
+ "快捷鍵改成 %@（%@ 被 %@ 用了）": "Le raccourci est maintenant %@ (%@ est pris par %@)"
 }

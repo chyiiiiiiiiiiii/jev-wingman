@@ -36,6 +36,12 @@ enum Render {
                 print("\(file.lastPathComponent) height \(Int(height))")
             }
         }
+        // The one-time note over the first chat after the shortcut was moved off a taken ⌥Space.
+        let moved = AppModel()
+        moved.loadSample(phase: .idle, drafts: 0,
+                         note: L("快捷鍵改成 %@（%@ 被 %@ 用了）", "⌥⇧Space", HotkeySetting.standard.label, "Raycast"))
+        write(PillView(model: moved).padding(24).background(Color(nsColor: NSColor(red: 0.11, green: 0.11, blue: 0.13, alpha: 1))),
+              appearance: NSAppearance(named: .darkAqua)!, to: url.appendingPathComponent("pill-hotkey-moved.png"))
         let settings = SettingsView(settings: Prefs.shared, model: AppModel())
             .frame(height: 1900)
             .background(Color(nsColor: .windowBackgroundColor))

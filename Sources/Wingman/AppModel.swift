@@ -172,6 +172,10 @@ final class AppModel: ObservableObject {
             if settings.keepHistory && convo.messages != known { remember(key) }
         }
         conversation = convo
+        if let owner = settings.hotkeyTakenBy {
+            settings.hotkeyTakenBy = nil
+            flash(L("快捷鍵改成 %@（%@ 被 %@ 用了）", hotkeyLabel, HotkeySetting.standard.label, owner), for: 8)
+        }
         // Only messages that came in while this chat was open count; opening it or scrolling back does not.
         let sameChat = convo.title == lastRead.title || ChatTitle.same(convo.title, lastRead.title, tolerant: app.readsPixels)
         let arrived = sameChat ? Arrivals.new(since: lastRead.messages, in: visible) : []
@@ -413,11 +417,11 @@ final class AppModel: ObservableObject {
         }
     }
 
-    private func flash(_ message: String) {
+    private func flash(_ message: String, for seconds: Double = 3) {
         noteTask?.cancel()
         note = message
         noteTask = Task { [weak self] in
-            try? await Task.sleep(for: .seconds(3))
+            try? await Task.sleep(for: .seconds(seconds))
             guard !Task.isCancelled else { return }
             self?.note = nil
         }

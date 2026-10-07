@@ -152,6 +152,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         guard UserDefaults.standard.object(forKey: "hotkey") == nil, let owner = HotkeySetting.standard.owner,
               let free = HotkeySetting.alternatives.first(where: { $0.owner == nil }) else { return }
         Prefs.shared.hotkey = free
+        // Onboarding shows a newcomer the shortcut; someone who knew the old one is told once.
+        if Prefs.shared.onboarded { Prefs.shared.hotkeyTakenBy = owner }
         Log.write("hotkey \(HotkeySetting.standard.label) belongs to \(owner); using \(free.label)")
     }
 

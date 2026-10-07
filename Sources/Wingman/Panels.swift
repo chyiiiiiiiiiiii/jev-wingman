@@ -189,7 +189,8 @@ struct PillView: View {
     var body: some View {
         Text(model.pillText ?? "")
             .font(.system(size: 12, weight: .medium))
-            .foregroundStyle(model.phase == .skipped || model.phase == .idle ? .secondary : .primary)
+            // A note (typed in, copied, the shortcut moved) is news; a quiet phase is not.
+            .foregroundStyle(model.note == nil && (model.phase == .skipped || model.phase == .idle) ? .secondary : .primary)
             .opacity(model.phase == .idle && model.note == nil ? 0.7 : 1)
             .help(L("Wingman：按 %@ 或點這裡，幫你想回覆", "\(model.hotkeyLabel)"))
             .padding(.horizontal, 10)

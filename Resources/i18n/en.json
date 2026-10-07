@@ -243,5 +243,6 @@
  "%@ 需要「螢幕與系統錄音」才讀得到": "%@ needs Screen & System Audio Recording to be read",
  "%@：這個畫面讀不到對話": "%@: no conversation to read on this screen",
  "已暫停自動分析，按 %@ 仍可用": "Automatic analysis paused; %@ still works",
- "%@：正在看「%@」": "%@: reading “%@”"
+ "%@：正在看「%@」": "%@: reading “%@”",
+ "快捷鍵改成 %@（%@ 被 %@ 用了）": "Shortcut is now %@ (%@ is taken by %@)"
 }

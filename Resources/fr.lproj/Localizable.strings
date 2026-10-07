@@ -24,6 +24,7 @@
 "✦ %@ 個建議  %@" = "✦ %@ suggestions  %@";
 "這則可以不回 · %@ 仍可寫回覆" = "Pas besoin de répondre · %@ pour le faire quand même";
 "⚠︎ 沒有產生建議  %@" = "⚠︎ Aucune suggestion  %@";
+"快捷鍵改成 %@（%@ 被 %@ 用了）" = "Le raccourci est maintenant %@ (%@ est pris par %@)";
 "這則訊息判斷好了。填入 OpenRouter key，就能幫你寫回覆" = "Message analysé. Ajoutez une clé OpenRouter pour obtenir des propositions de réponse.";
 "還沒設定 OpenRouter API key" = "Aucune clé API OpenRouter configurée";
 "畫面上沒有可以回覆的訊息" = "Aucun message auquel répondre à l'écran";

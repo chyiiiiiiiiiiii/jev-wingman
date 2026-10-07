@@ -50,6 +50,12 @@ final class Prefs: ObservableObject {
         didSet { UserDefaults.standard.set(try? JSONEncoder().encode(hotkey), forKey: "hotkey") }
     }
 
+    /// Who held ⌥Space when Wingman moved someone already set up off it; said once, over the next chat read.
+    var hotkeyTakenBy: String? {
+        get { UserDefaults.standard.string(forKey: "hotkeyTakenBy") }
+        set { UserDefaults.standard.set(newValue, forKey: "hotkeyTakenBy") }
+    }
+
     static var storedMyName: String? {
         UserDefaults.standard.string(forKey: "myName").flatMap { $0.isEmpty ? nil : $0 }
     }
