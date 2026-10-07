@@ -15,6 +15,9 @@ if let index = arguments.firstIndex(of: "--probe"), index + 1 < arguments.count 
 if arguments.contains("--check-history") {
     exit(Dump.checkHistory())
 }
+if arguments.contains("--try-panel") {
+    MainActor.assumeIsolated { Dump.tryPanel() }
+}
 if arguments.contains("--check-idle") {
     exit(MainActor.assumeIsolated { Dump.checkIdle() })
 }

@@ -170,6 +170,38 @@ enum Dump {
         return share < 1 ? 0 : 1
     }
 
+    /// `--try-panel`: the suggestion panel, live, over a made-up chat in the middle of the screen, to try its keys and
+    /// focus by hand or by script. Nothing is typed anywhere and nothing is sent: there is no chat to type into and no
+    /// key to write with; picks go to the log.
+    @MainActor
+    static func tryPanel() -> Never {
+        Prefs.usesKeychain = false
+        NSApplication.shared.setActivationPolicy(.accessory)
+        let screen = NSScreen.main?.frame ?? CGRect(x: 0, y: 0, width: 1440, height: 900)
+        let model = AppModel()
+        model.loadSample(phase: .ready)
+        var convo = model.conversation!
+        convo.composerFrame = CGRect(x: screen.midX - 280, y: screen.height * 0.8, width: 560, height: 40)
+        model.present(convo, judgment: model.judgment, candidates: model.candidates, phase: .ready)
+        let panels = PanelController(model: model)
+        model.panelShown = true
+        panels.refresh()
+        print("panel up; Ctrl-C to quit")
+        // Each change of what the keys act on, for a script to follow.
+        var last = ""
+        let watch = model.objectWillChange.sink { _ in
+            DispatchQueue.main.async {
+                let phase = switch model.phase { case .failed: "failed"; default: "\(model.phase)" }
+                let state = "shown=\(model.panelShown) field=\(model.fieldFocused) direction=\"\(model.direction)\" "
+                    + "selected=\(model.selected) phase=\(phase)"
+                if state != last { last = state; print(state); fflush(stdout) }
+            }
+        }
+        NSApplication.shared.run()
+        watch.cancel()
+        exit(0)
+    }
+
     /// `--check-jev`: ask Jev about three made-up chats, calm, tense and a request, with the keys in settings, and print
     /// what comes back (never the keys), to see the questions still suit the model after they change.
     static func checkJev() async -> Int32 {

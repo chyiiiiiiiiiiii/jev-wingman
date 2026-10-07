@@ -357,7 +357,10 @@ final class AppModel: ObservableObject {
     }
 
     func insert(_ index: Int) {
-        guard candidates.indices.contains(index), let pid = chatPID else { return }
+        guard candidates.indices.contains(index) else { return }
+        // Which draft people take, never its words: how often ★ is the one is the measure of the ranking.
+        Log.write("pick slot=\(index + 1) best=\(index == bestIndex)")
+        guard let pid = chatPID else { return }
         let text = candidates[index].text
         let app = app, chat = draftedFor
         closePanel()
