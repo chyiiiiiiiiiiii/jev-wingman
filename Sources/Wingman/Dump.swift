@@ -170,7 +170,7 @@ enum Dump {
         return share < 1 ? 0 : 1
     }
 
-    /// `--check-jev`: ask Jev about two made-up chats, one calm and one tense, with the keys in settings, and print
+    /// `--check-jev`: ask Jev about three made-up chats, calm, tense and a request, with the keys in settings, and print
     /// what comes back (never the keys), to see the questions still suit the model after they change.
     static func checkJev() async -> Int32 {
         func line(_ text: String, me: Bool = false) -> ChatMessage { ChatMessage(sender: me ? "我" : "Mia", text: text, isMe: me) }
@@ -178,6 +178,7 @@ enum Dump {
             ("calm", [line("早安～今天的站會改到十點喔"), line("好，收到", me: true), line("API 文件今天來得及更新嗎？")]),
             ("tense", [line("你上週說週三前會給我文件"), line("再等我一下，快好了", me: true),
                        line("你每次都這樣說"), line("算了，你忙你的吧，我自己弄")]),
+            ("request", [line("午安"), line("可以幫我 review 一下登入那個 PR 嗎？今天下班前要合")]),
         ]
         let brain = Brain(settings: Prefs.shared, app: .slack)
         for (name, messages) in chats {
@@ -190,6 +191,8 @@ enum Dump {
                              name, Int(Date().timeIntervalSince(started) * 1000), j.intent, j.intentConfidence, j.needsReply,
                              j.urgency ?? -1, j.tension.map { String(format: "%.2f", $0) } ?? "none",
                              j.subtext.map { String(format: "%.2f", $0) } ?? "none"))
+                print("  Jev's top three: \(j.strategies.prefix(3).map(\.name).joined(separator: " / ")) · drafted: "
+                      + ReplyQuestions.picks(from: j.strategies, tense: (j.tension ?? 0) >= Brain.tense).joined(separator: " / "))
             } catch {
                 print("\(name): \(error.localizedDescription)")
                 return 1

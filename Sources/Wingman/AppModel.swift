@@ -229,7 +229,8 @@ final class AppModel: ObservableObject {
                     Log.write("judge failed: \(error.localizedDescription)")
                 }
             }
-            let picks = self.judgment?.strategies.prefix(3).map(\.name) ?? []
+            let picks = ReplyQuestions.picks(from: self.judgment?.strategies ?? [],
+                                             tense: (self.judgment?.tension ?? 0) >= Brain.tense)
             if auto, let judgment = self.judgment, judgment.needsReply < 0.5 {
                 self.phase = .skipped
                 Log.write("drafts skipped needs_reply=\(String(format: "%.2f", judgment.needsReply))")
