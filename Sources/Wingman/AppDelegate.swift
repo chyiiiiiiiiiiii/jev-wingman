@@ -20,6 +20,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var hotkey: Hotkey?
     private var hotkeyObservation: AnyCancellable?
     private var appsObservation: AnyCancellable?
+    private var pauseObservation: AnyCancellable?
+    private static let statusTag = 1, pauseTag = 2
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         Log.write("launch trusted=\(AXIsProcessTrusted()) screenCapture=\(CGPreflightScreenCaptureAccess())")
@@ -33,13 +35,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         ) { [weak self] _ in
             MainActor.assumeIsolated { self?.frontmostChanged() }
         }
+        pickFreeHotkey()
         model.hotkeyLabel = Prefs.shared.hotkey.label
         hotkeyObservation = Prefs.shared.$hotkey.dropFirst().sink { [weak self] _ in
             DispatchQueue.main.async {
                 guard let self else { return }
                 self.hotkey = nil
                 self.model.hotkeyLabel = Prefs.shared.hotkey.label
-                if Front.current?.app != nil { self.registerHotkey() }   // a browser's comes with a web chat tab
+                // A browser's comes with a web chat tab; in settings it is there to be tried out.
+                if Front.current?.app != nil || NSApp.isActive { self.registerHotkey() }
             }
         }
         appsObservation = Prefs.shared.$disabledApps.dropFirst().sink { [weak self] _ in
@@ -49,6 +53,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 self?.model.chatLeft()
                 self?.frontmostChanged()
             }
+        }
+        // Paused, the icon fades, so a Wingman that stopped suggesting on purpose does not look broken.
+        pauseObservation = Prefs.shared.$paused.sink { [weak self] paused in
+            DispatchQueue.main.async { self?.statusItem?.button?.appearsDisabled = paused }
         }
         if !AXIsProcessTrusted() {
             AXIsProcessTrustedWithOptions([kAXTrustedCheckOptionPrompt.takeUnretainedValue(): true] as CFDictionary)
@@ -128,10 +136,23 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         guard hotkey == nil else { return }
         let setting = Prefs.shared.hotkey
         hotkey = Hotkey(keyCode: setting.keyCode, modifiers: setting.modifiers, id: 1) { [weak self] in
-            MainActor.assumeIsolated { self?.model.togglePanel() }
+            MainActor.assumeIsolated {
+                // Pressed in Wingman's own settings, the shortcut is only being tried out.
+                guard !NSApp.isActive else { return }
+                self?.model.togglePanel()
+            }
         }
         model.hotkeyLabel = setting.label
         if hotkey == nil { Log.write("hotkey \(setting.label) is taken") }
+    }
+
+    /// A first shortcut nobody else answers. Carbon cannot tell: Raycast holding ⌥Space still let Wingman register
+    /// it, and the press opened Raycast. Only a shortcut never chosen is changed.
+    private func pickFreeHotkey() {
+        guard UserDefaults.standard.object(forKey: "hotkey") == nil, let owner = HotkeySetting.standard.owner,
+              let free = HotkeySetting.alternatives.first(where: { $0.owner == nil }) else { return }
+        Prefs.shared.hotkey = free
+        Log.write("hotkey \(HotkeySetting.standard.label) belongs to \(owner); using \(free.label)")
     }
 
     /// A menu bar app has no menus, yet ⌘V, ⌘C and ⌘A in text fields are the Edit menu's key
@@ -172,9 +193,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             ?? NSImage(systemSymbolName: "bubble.left.and.text.bubble.right", accessibilityDescription: "Wingman")
         glyph?.isTemplate = true
         statusItem.button?.image = glyph
+        statusItem.button?.appearsDisabled = Prefs.shared.paused
         let menu = NSMenu()
+        let status = NSMenuItem(title: "", action: nil, keyEquivalent: "")
+        status.tag = Self.statusTag
+        menu.addItem(status)
+        menu.addItem(.separator())
         let pause = NSMenuItem(title: "", action: #selector(togglePause), keyEquivalent: "")
         pause.target = self
+        pause.tag = Self.pauseTag
         menu.addItem(pause)
         let settings = NSMenuItem(title: L("設定…"), action: #selector(showSettings), keyEquivalent: ",")
         settings.target = self
@@ -204,6 +231,23 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
 
+    /// What Wingman can see right now, at the top of its menu: the answer to "why is nothing happening?". `fixable`
+    /// when settings can fix it, which a click on the line then opens.
+    private func statusLine() -> (text: String, fixable: Bool) {
+        guard AXIsProcessTrusted() else { return (L("⚠︎ 還沒開啟「輔助使用」，讀不到聊天"), true) }
+        if let owner = Prefs.shared.hotkey.owner {
+            return (L("⚠︎ %@ 也用 %@，按下去可能會打開它", owner, Prefs.shared.hotkey.label), true)
+        }
+        guard model.chatInFront else { return (L("打開聊天 App，Wingman 就會開始讀"), false) }
+        let app = model.app
+        if app.readsPixels && !CGPreflightScreenCaptureAccess() {
+            return (L("%@ 需要「螢幕與系統錄音」才讀得到", app.name), true)
+        }
+        guard let convo = model.conversation else { return (L("%@：這個畫面讀不到對話", app.name), false) }
+        if Prefs.shared.paused { return (L("已暫停自動分析，按 %@ 仍可用", model.hotkeyLabel), false) }
+        return (L("%@：正在看「%@」", app.name, convo.title), false)
+    }
+
     @objc private func togglePause() {
         Prefs.shared.paused.toggle()
     }
@@ -215,6 +259,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             self?.onboardingWindow = nil
         }
         let window = NSWindow(contentViewController: NSHostingController(rootView: view))
+        window.delegate = self     // closing hands focus back; becoming key lets the shortcut be tried
         window.title = L("歡迎使用 Wingman")
         window.styleMask = [.titled, .closable, .miniaturizable]
         window.isReleasedWhenClosed = false
@@ -222,9 +267,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         onboardingWindow = window
         NSApp.activate()
         window.makeKeyAndOrderFront(nil)
+        registerHotkey()     // to be tried out on the last step
     }
 
-    @objc private func showSettings() {
+    @objc func showSettings() {
         model.iconHidden = statusItem.map(MenuBarIcon.isHidden) ?? false
         if settingsWindow == nil {
             let controller = NSHostingController(rootView: SettingsView(settings: Prefs.shared, model: model))
@@ -239,6 +285,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             settingsWindow = window
         }
         NSApp.activate()
+        registerHotkey()     // to be tried out beside the shortcut recorder
         if settingsWindow?.isMiniaturized == true { settingsWindow?.deminiaturize(nil) }
         settingsWindow?.makeKeyAndOrderFront(nil)
     }
@@ -247,14 +294,31 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 extension AppDelegate: NSWindowDelegate {
     /// Hand focus back to whatever was in front before settings opened; Wingman stays in the menu bar.
     nonisolated func windowWillClose(_ notification: Notification) {
-        MainActor.assumeIsolated { NSApp.hide(nil) }
+        MainActor.assumeIsolated {
+            NSApp.hide(nil)
+            // Settings checks permissions once a second; a window kept after closing went on checking for good.
+            // Reopened in the meantime, it stays.
+            DispatchQueue.main.async { if self.settingsWindow?.isVisible == false { self.settingsWindow = nil } }
+        }
+    }
+
+    /// Settings or onboarding in front again: its shortcut recorder can be tried, even after a trip to another app
+    /// put the shortcut away.
+    nonisolated func windowDidBecomeKey(_ notification: Notification) {
+        MainActor.assumeIsolated { registerHotkey() }
     }
 }
 
 extension AppDelegate: NSMenuDelegate {
     nonisolated func menuNeedsUpdate(_ menu: NSMenu) {
         MainActor.assumeIsolated {
-            menu.items.first?.title = Prefs.shared.paused ? L("繼續提供建議") : L("暫停建議")
+            menu.item(withTag: Self.pauseTag)?.title = Prefs.shared.paused ? L("繼續提供建議") : L("暫停建議")
+            if let status = menu.item(withTag: Self.statusTag) {
+                let line = statusLine()
+                status.title = line.text
+                status.action = line.fixable ? #selector(showSettings) : nil
+                status.target = line.fixable ? self : nil
+            }
         }
     }
 }

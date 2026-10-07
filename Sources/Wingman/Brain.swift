@@ -37,7 +37,7 @@ struct Brain {
         guard let replyTo = convo.messages.last(where: { !$0.isMe }) else { throw Failure.nothingToAnswer }
         let body: [String: Any] = ["model": jevModel, "state": state(convo, replyTo: replyTo),
                                    "questions": convo.isPost ? ReplyQuestions.postPayload : ReplyQuestions.payload]
-        let data = try await post(jevURL, key: jevKey, body: body)
+        let data = try await post(jevURL, key: jevKey, body: body, timeout: Self.jevTimeout)
         let usage = (try? JSONSerialization.jsonObject(with: data) as? [String: Any])?["usage"] as? [String: Any]
         let tokens = usage?["input_tokens"] as? Int ?? 0
         Log.write("jev tokens in=\(tokens) cost=$\(String(format: "%.6f", Double(tokens) * 0.042 / 1_000_000))")
@@ -45,22 +45,27 @@ struct Brain {
                                                                                 : ReplyQuestions.strategyOrder)
     }
 
+    /// Jev answers in about 0.3 s (p90 0.6 s, the slowest of 130 logged 3.4 s). Past this the drafts are written
+    /// without its judgment rather than after the 30 s a request may otherwise wait.
+    static let jevTimeout: TimeInterval = 6
+
     /// From "緊張" up the chat is tense, and replies should settle it before anything else.
     static let tense = 1.5
     /// A subtext this likely is worth answering.
     static let meaningful = 0.6
 
     /// Jev's pick among the drafts, as a probability per draft in the order given.
-    func rank(_ convo: Conversation, drafts: [String], tense: Bool = false) async throws -> [Double] {
+    func rank(_ convo: Conversation, drafts: [String], tense: Bool = false, followUp: Bool = false) async throws -> [Double] {
         guard let replyTo = convo.messages.last(where: { !$0.isMe }) else { throw Failure.nothingToAnswer }
         let criteria = Dictionary(drafts.map { ($0, NSNull()) }, uniquingKeysWith: { first, _ in first })
         let body: [String: Any] = ["model": jevModel, "state": state(convo, replyTo: replyTo),
                                    "questions": ["best": ["type": "choice",
                                                           "instructions": convo.isPost ? ReplyQuestions.postRankInstructions
+                                                              : followUp ? ReplyQuestions.followUpRankInstructions
                                                               : ReplyQuestions.rankInstructions
                                                                 + (tense ? "現在氣氛緊張，先接住對方情緒、語氣穩的那則比較好。" : ""),
                                                           "criteria": criteria]]]
-        let data = try await post(jevURL, key: jevKey, body: body)
+        let data = try await post(jevURL, key: jevKey, body: body, timeout: Self.jevTimeout)
         return try JevDecoder.scores(from: data, for: drafts)
     }
 
@@ -86,12 +91,19 @@ struct Brain {
         return try await complete(convo, brief: brief, onDrafts: onDrafts)
     }
 
+    /// I spoke last: what to send next, not another answer to what they said before me.
+    func followUp(_ convo: Conversation, onDrafts: @escaping Drafts) async throws -> [Candidate] {
+        let brief = "最後一則是我說的，對方還沒回。請寫三則我可以接著傳的訊息，作用各不相同（例如補充一點、追問、輕輕提醒），"
+            + "不要重複我已經說過的話，strategy 欄位用兩到六個字描述那一則的作用\(Self.labelLanguage)。"
+        return try await complete(convo, brief: brief, onDrafts: onDrafts)
+    }
+
     /// Rewrites along the user's own direction ("更短", or "跟他說週五前給").
-    func rewrite(_ convo: Conversation, direction: String, previous: [Candidate],
+    func rewrite(_ convo: Conversation, direction: String, previous: [Candidate], followUp: Bool = false,
                  onDrafts: @escaping Drafts) async throws -> [Candidate] {
         let drafts = previous.map { "- \($0.text)" }.joined(separator: "\n")
         let brief = """
-        我想這樣回：「\(direction)」
+        \(followUp ? "最後一則是我說的，這些是我要接著傳的訊息。\n" : "")我想這樣回：「\(direction)」
         之前的草稿（可參考，不必沿用）：
         \(drafts)
         請照我的意思寫三則不同說法的回覆，strategy 欄位用兩到六個字描述那一則的差別\(Self.labelLanguage)。
@@ -141,7 +153,8 @@ struct Brain {
                 ["sender": message.isMe ? (settings.myName.isEmpty ? "我" : settings.myName) : (message.sender ?? "（不明）"),
                  "text": message.text]
             },
-            "reply_to": replyTo.text,
+            // Their last few messages in a row: the question is often in an earlier one.
+            "reply_to": convo.replyToText ?? replyTo.text,
         ].merging(convo.hasAttachments ? ["attachments": Self.attachmentNote] : [:]) { $1 }
     }
 
@@ -259,8 +272,9 @@ struct Brain {
         return request
     }
 
-    private func post(_ url: URL, key: String, body: [String: Any]) async throws -> Data {
-        let request = try jsonRequest(url, key: key, body: body)
+    private func post(_ url: URL, key: String, body: [String: Any], timeout: TimeInterval = 30) async throws -> Data {
+        var request = try jsonRequest(url, key: key, body: body)
+        request.timeoutInterval = timeout
         let (data, response) = try await URLSession.shared.data(for: request)
         let code = (response as? HTTPURLResponse)?.statusCode ?? 0
         guard code == 200 else { throw Failure.http(code, String(decoding: data, as: UTF8.self)) }

@@ -62,6 +62,8 @@ struct HotkeyRecorder: View {
     @State private var recording = false
     @State private var monitor: Any?
     @State private var problem: String?
+    /// The shortcut was pressed and reached Wingman, so it works.
+    @State private var heard = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
@@ -73,9 +75,31 @@ struct HotkeyRecorder: View {
                     Button(L("恢復預設")) { settings.hotkey = .standard }.controlSize(.small)
                 }
             }
-            if let problem { Text(problem).font(.caption).foregroundStyle(.red) }
+            if let problem {
+                Text(problem).font(.caption).foregroundStyle(.red)
+            } else if !recording {
+                check.font(.caption)
+            }
         }
         .onDisappear(perform: stop)
+        // A window closing mid-recording would leave the key monitor to swallow the next key pressed in the panel.
+        .onReceive(NotificationCenter.default.publisher(for: NSWindow.willCloseNotification)) { _ in stop() }
+        .onChange(of: settings.hotkey) { _, _ in heard = false }
+        .onReceive(NotificationCenter.default.publisher(for: Hotkey.pressed)) { _ in heard = !recording }
+    }
+
+    /// Whether a press reaches Wingman: a tick once one has, a warning when another app is known to answer it first.
+    @ViewBuilder private var check: some View {
+        let label = settings.hotkey.label
+        if heard {
+            Label(L("收到了，%@ 可以用", label), systemImage: "checkmark.circle.fill").foregroundStyle(.green)
+        } else if let owner = settings.hotkey.owner {
+            Label(L("%@ 也用 %@，按下去可能會打開它。換一組，或到 %@ 的設定裡改掉。", owner, label, owner),
+                  systemImage: "exclamationmark.triangle.fill")
+                .foregroundStyle(.orange)
+        } else {
+            Text(L("按一下 %@ 試試，收到了這裡會打勾。", label)).foregroundStyle(.secondary)
+        }
     }
 
     private func start() {

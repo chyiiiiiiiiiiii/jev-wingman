@@ -5,7 +5,26 @@ import WingmanCore
 /// What Wingman knows about the Slack conversation in front of the user, and what it suggests.
 @MainActor
 final class AppModel: ObservableObject {
-    enum Phase: Equatable { case idle, thinking, ready, skipped, failed(String) }
+    enum Phase: Equatable { case idle, thinking, ready, skipped, failed(String, Fix) }
+
+    /// What can be done about a failure, offered as a button beside it: retrying does not top up a balance.
+    enum Fix: Equatable {
+        case retry, settings, credits
+
+        init(_ error: Error) {
+            switch error as? Brain.Failure {
+            case .missingKey?: self = .settings
+            case let .http(code, body)?:
+                switch code {
+                case 402: self = .credits
+                case 401, 403: self = .settings
+                case 404 where body.lowercased().contains("endpoint"): self = .settings   // a model without ZDR hosts
+                default: self = .retry
+                }
+            default: self = .retry
+            }
+        }
+    }
 
     @Published private(set) var conversation: Conversation?
     @Published private(set) var phase: Phase = .idle
@@ -13,6 +32,8 @@ final class AppModel: ObservableObject {
     @Published private(set) var candidates: [Candidate] = []
     @Published private(set) var note: String?
     @Published private(set) var ranking = false
+    /// I spoke last when the panel was asked for: the drafts carry on from what I said instead of answering again.
+    @Published private(set) var followingUp = false
     @Published var panelShown = false
     @Published var direction = ""
     @Published var fieldFocused = false
@@ -152,7 +173,8 @@ final class AppModel: ObservableObject {
         }
         conversation = convo
         // Only messages that came in while this chat was open count; opening it or scrolling back does not.
-        let arrived = convo.title == lastRead.title ? Arrivals.new(since: lastRead.messages, in: visible) : []
+        let sameChat = convo.title == lastRead.title || ChatTitle.same(convo.title, lastRead.title, tolerant: app.readsPixels)
+        let arrived = sameChat ? Arrivals.new(since: lastRead.messages, in: visible) : []
         // Under a post, the cursor landing in its reply box is the cue: a reply is on its way.
         let replyStarted = convo.isPost && convo.title != lastRead.title
         lastRead = (convo.title, visible)
@@ -204,19 +226,22 @@ final class AppModel: ObservableObject {
         shownFingerprint = print
         // ⌥Space after a skipped prefetch: Jev already read this exact conversation.
         let reuseJudgment = !auto && judgment != nil && judgedFingerprint == print
+        // Asked for after I spoke last: what they want and how soon was answered already.
+        let followUp = !auto && !convo.awaitingReply && !convo.isPost
+        followingUp = followUp
         phase = .thinking
         candidates = []
         resetSelection()
         ranking = false
-        if !reuseJudgment { judgment = nil }
+        if !reuseJudgment || followUp { judgment = nil }
         guard settings.hasWriterKey || !settings.typesafeKey.isEmpty else {
-            phase = .failed(Brain.Failure.missingKey.localizedDescription)
+            phase = .failed(Brain.Failure.missingKey.localizedDescription, .settings)
             return
         }
         workTask = Task { [weak self] in
             guard let self else { return }
             let started = Date()
-            if !reuseJudgment {
+            if !reuseJudgment && !followUp {
                 do {
                     let judgment = try await self.brain.judge(convo)
                     guard !Task.isCancelled else { return }
@@ -228,7 +253,8 @@ final class AppModel: ObservableObject {
                     Log.write("judge failed: \(error.localizedDescription)")
                 }
             }
-            let picks = self.judgment?.strategies.prefix(3).map(\.name) ?? []
+            let picks = ReplyQuestions.picks(from: self.judgment?.strategies ?? [],
+                                             tense: (self.judgment?.tension ?? 0) >= Brain.tense)
             if auto, let judgment = self.judgment, judgment.needsReply < 0.5 {
                 self.phase = .skipped
                 Log.write("drafts skipped needs_reply=\(String(format: "%.2f", judgment.needsReply))")
@@ -236,14 +262,14 @@ final class AppModel: ObservableObject {
             }
             guard self.settings.hasWriterKey else {
                 // A TypeSafe key alone still answers "what do they want, how soon"; writing needs an LLM.
-                self.phase = .failed(L("這則訊息判斷好了。填入 OpenRouter key，就能幫你寫回覆"))
+                self.phase = .failed(L("這則訊息判斷好了。填入 OpenRouter key，就能幫你寫回覆"), .settings)
                 return
             }
             let current = self.generation
             do {
-                let written = try await self.brain.write(convo, strategies: picks, judgment: self.judgment) { drafts in
-                    await self.show(drafts, for: current)
-                }
+                let show: Brain.Drafts = { drafts in await self.show(drafts, for: current) }
+                let written = followUp ? try await self.brain.followUp(convo, onDrafts: show)
+                    : try await self.brain.write(convo, strategies: picks, judgment: self.judgment, onDrafts: show)
                 guard !Task.isCancelled else { return }
                 withAnimation(Motion.reveal) {
                     let final = Array(written.prefix(3))
@@ -255,7 +281,7 @@ final class AppModel: ObservableObject {
                 await self.rankCandidates(convo)
             } catch {
                 guard !Task.isCancelled else { return }
-                self.phase = .failed(error.localizedDescription)
+                self.phase = .failed(error.localizedDescription, Fix(error))
                 Log.write("write failed: \(error.localizedDescription)")
             }
         }
@@ -275,7 +301,8 @@ final class AppModel: ObservableObject {
         workTask = Task { [weak self] in
             guard let self else { return }
             do {
-                let written = try await self.brain.rewrite(convo, direction: direction, previous: previous) { drafts in
+                let written = try await self.brain.rewrite(convo, direction: direction, previous: previous,
+                                                           followUp: self.followingUp) { drafts in
                     await self.show(drafts, for: current)
                 }
                 guard !Task.isCancelled else { return }
@@ -289,7 +316,7 @@ final class AppModel: ObservableObject {
                 await self.rankCandidates(convo)
             } catch {
                 guard !Task.isCancelled else { return }
-                self.phase = .failed(error.localizedDescription)
+                self.phase = .failed(error.localizedDescription, Fix(error))
             }
         }
     }
@@ -308,7 +335,8 @@ final class AppModel: ObservableObject {
         defer { ranking = false }
         let started = Date()
         do {
-            let scores = try await brain.rank(convo, drafts: drafts, tense: (judgment?.tension ?? 0) >= Brain.tense)
+            let scores = try await brain.rank(convo, drafts: drafts, tense: (judgment?.tension ?? 0) >= Brain.tense,
+                                              followUp: followingUp)
             guard !Task.isCancelled, candidates.map(\.text) == drafts else { return }
             withAnimation(.easeOut(duration: 0.22)) {
                 for index in candidates.indices { candidates[index].score = scores[index] }
@@ -327,7 +355,10 @@ final class AppModel: ObservableObject {
     }
 
     func openPanel() {
-        guard let convo = conversation else { return }
+        // The shortcut is also live in settings, to be tried there; no chat in front, nothing to read or send.
+        guard chatInFront, let convo = conversation else { return }
+        // Whether drafts were waiting when the panel opened: how often the prefetch spared a wait.
+        Log.write("open drafts=\(phase == .ready && fingerprint(convo) == shownFingerprint ? "ready" : "pending")")
         if fingerprint(convo) != shownFingerprint || phase == .idle || phase == .skipped { analyze() }
         if case .failed = phase { analyze() }
         panelShown = true
@@ -338,8 +369,21 @@ final class AppModel: ObservableObject {
         fieldFocused = false
     }
 
+    /// Enter on a failure does what its button says.
+    func resolveFailure() {
+        guard case let .failed(_, fix) = phase else { return }
+        switch fix {
+        case .retry: analyze()
+        case .settings:
+            closePanel()
+            NSApp.sendAction(#selector(AppDelegate.showSettings), to: nil, from: nil)
+        case .credits: NSWorkspace.shared.open(URL(string: "https://openrouter.ai/settings/credits")!)
+        }
+    }
+
     /// Enter: the draft the arrows are on.
     func insertSelected() {
+        if case .failed = phase { return resolveFailure() }
         insert(candidates.indices.contains(selected) ? selected : bestIndex ?? 0)
     }
 
@@ -355,7 +399,10 @@ final class AppModel: ObservableObject {
     }
 
     func insert(_ index: Int) {
-        guard candidates.indices.contains(index), let pid = chatPID else { return }
+        guard candidates.indices.contains(index) else { return }
+        // Which draft people take, never its words: how often ★ is the one is the measure of the ranking.
+        Log.write("pick slot=\(index + 1) best=\(index == bestIndex)")
+        guard let pid = chatPID else { return }
         let text = candidates[index].text
         let app = app, chat = draftedFor
         closePanel()
@@ -376,8 +423,9 @@ final class AppModel: ObservableObject {
         }
     }
 
+    /// Which chat and message the drafts answer. Reads that differ only in spacing or older lines keep it: OCR
+    /// jitter used to throw away drafts written in the background and cancel Jev mid-request.
     private func fingerprint(_ convo: Conversation) -> String {
-        ([app.rawValue, convo.title, convo.isThread ? "t" : "c"] + convo.messages.suffix(4).map { "\($0.sender ?? "")|\($0.text)" })
-            .joined(separator: "\u{1f}")
+        app.rawValue + "\u{1f}" + convo.replyKey
     }
 }

@@ -76,6 +76,42 @@ public struct Conversation: Equatable {
     /// A photo, video, sticker or shared post is in the conversation (as 📎).
     public var hasAttachments: Bool { messages.contains { $0.text == BubbleParser.attachment } }
 
+    /// What drafts are written for: this chat (and, in a thread, its first message, since Slack titles a thread with its
+    /// channel), the message being answered, my own last message, and whether a reply is still owed. A re-read that
+    /// differs only in spacing, in older messages or in a sender header (OCR reads lines a little differently each
+    /// time, Slack drops a header as it scrolls) keeps the key, and with it the drafts. The same words sent again keep
+    /// it too: the drafts for them still answer them.
+    public var replyKey: String {
+        let replyTo = replyRun.last.map { Transcript.words($0.text) } ?? ""
+        let mine = messages.last(where: \.isMe).map { Transcript.words($0.text) } ?? ""
+        let root = isThread ? messages.first.map { Transcript.words($0.text) } ?? "" : ""
+        return [Transcript.words(title), isThread ? "t" : "c", root, replyTo, mine, awaitingReply ? "waiting" : "answered"]
+            .joined(separator: "\u{1f}")
+    }
+
+    /// Their last message and the ones the same person sent just before it, oldest first, at most five. A message
+    /// without a sender belongs to whoever spoke above it: Slack shows a sender once per run, and OCR reads none, so
+    /// there every message since my last one is theirs.
+    var replyRun: [ChatMessage] {
+        guard var index = messages.lastIndex(where: { !$0.isMe }) else { return [] }
+        func owner(_ i: Int) -> String? { messages[...i].last { $0.sender != nil }?.sender }
+        let who = owner(index)
+        var run = [messages[index]]
+        while index > 0, run.count < 5 {
+            index -= 1
+            guard !messages[index].isMe, owner(index) == who else { break }
+            run.insert(messages[index], at: 0)
+        }
+        return run
+    }
+
+    /// The message to answer as Jev reads it: `replyRun` as one text, since a thought often spans several messages and
+    /// its question is not always the last.
+    public var replyToText: String? {
+        let run = replyRun
+        return run.isEmpty ? nil : run.map(\.text).joined(separator: "\n")
+    }
+
     /// The other side spoke last, so there is something to answer.
     public var awaitingReply: Bool {
         guard let last = messages.last else { return false }

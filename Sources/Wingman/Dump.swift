@@ -138,14 +138,82 @@ enum Dump {
         return back == messages && !plaintext && excluded ? 0 : 1
     }
 
-    /// `--check-jev`: ask Jev about two made-up chats, one calm and one tense, with the keys in settings, and print
-    /// what comes back (never the keys), to see the questions still suit the model after they change.
+    /// `--check-idle`: show the suggestion panel once while nothing is written yet, put it away, and measure how
+    /// much CPU Wingman then spends doing nothing. Above 1% of a core fails: a hidden panel must cost nothing.
+    @MainActor
+    static func checkIdle() -> Int32 {
+        Prefs.usesKeychain = false
+        NSApplication.shared.setActivationPolicy(.accessory)
+        let screen = NSScreen.main?.frame ?? CGRect(x: 0, y: 0, width: 1440, height: 900)
+        let convo = Conversation(title: "#dev", isThread: false,
+                                 messages: [ChatMessage(sender: "Mia", text: "API 文件今天來得及更新嗎？")], draft: "",
+                                 composerHandle: -1, composerFrame: CGRect(x: screen.midX - 280, y: screen.midY, width: 560, height: 40))
+        let model = AppModel()
+        let panels = PanelController(model: model)
+        model.present(convo, judgment: nil, candidates: [], phase: .thinking)
+        model.panelShown = true
+        panels.refresh()
+        RunLoop.main.run(until: Date().addingTimeInterval(1))
+        model.closePanel()
+        panels.refresh()
+        RunLoop.main.run(until: Date().addingTimeInterval(1))
+        func cpu() -> Double {
+            var usage = rusage()
+            getrusage(RUSAGE_SELF, &usage)
+            return Double(usage.ru_utime.tv_sec + usage.ru_stime.tv_sec)
+                + Double(usage.ru_utime.tv_usec + usage.ru_stime.tv_usec) / 1_000_000
+        }
+        let before = cpu(), seconds = 5.0
+        RunLoop.main.run(until: Date().addingTimeInterval(seconds))
+        let share = (cpu() - before) / seconds * 100
+        print(String(format: "idle with the panel put away: %.1f%% of one core over %.0f s", share, seconds))
+        return share < 1 ? 0 : 1
+    }
+
+    /// `--try-panel`: the suggestion panel, live, over a made-up chat in the middle of the screen, to try its keys and
+    /// focus by hand or by script. Nothing is typed anywhere and nothing is sent: there is no chat to type into and no
+    /// key to write with; what would be logged, picks included, is printed instead.
+    @MainActor
+    static func tryPanel() -> Never {
+        Prefs.usesKeychain = false
+        Log.toStandardOutput = true
+        NSApplication.shared.setActivationPolicy(.accessory)
+        let screen = NSScreen.main?.frame ?? CGRect(x: 0, y: 0, width: 1440, height: 900)
+        let model = AppModel()
+        model.loadSample(phase: .ready)
+        var convo = model.conversation!
+        convo.composerFrame = CGRect(x: screen.midX - 280, y: screen.height * 0.8, width: 560, height: 40)
+        model.present(convo, judgment: model.judgment, candidates: model.candidates, phase: .ready)
+        let panels = PanelController(model: model)
+        model.panelShown = true
+        panels.refresh()
+        print("panel up; Ctrl-C to quit")
+        // Each change of what the keys act on, for a script to follow.
+        var last = ""
+        let watch = model.objectWillChange.sink { _ in
+            DispatchQueue.main.async {
+                let phase = switch model.phase { case .failed: "failed"; default: "\(model.phase)" }
+                let state = "shown=\(model.panelShown) field=\(model.fieldFocused) direction=\"\(model.direction)\" "
+                    + "selected=\(model.selected) phase=\(phase)"
+                if state != last { last = state; print(state); fflush(stdout) }
+            }
+        }
+        NSApplication.shared.run()
+        watch.cancel()
+        exit(0)
+    }
+
+    /// `--check-jev`: ask Jev about four made-up chats (calm, tense, a request, a question sent in two messages) with the
+    /// keys in settings, and print what comes back (never the keys), to see the questions still suit the model after
+    /// they change.
     static func checkJev() async -> Int32 {
         func line(_ text: String, me: Bool = false) -> ChatMessage { ChatMessage(sender: me ? "我" : "Mia", text: text, isMe: me) }
         let chats = [
             ("calm", [line("早安～今天的站會改到十點喔"), line("好，收到", me: true), line("API 文件今天來得及更新嗎？")]),
             ("tense", [line("你上週說週三前會給我文件"), line("再等我一下，快好了", me: true),
                        line("你每次都這樣說"), line("算了，你忙你的吧，我自己弄")]),
+            ("request", [line("午安"), line("可以幫我 review 一下登入那個 PR 嗎？今天下班前要合")]),
+            ("burst", [line("早"), line("早安", me: true), line("週五晚上要不要一起吃飯？"), line("哈哈")]),
         ]
         let brain = Brain(settings: Prefs.shared, app: .slack)
         for (name, messages) in chats {
@@ -158,6 +226,8 @@ enum Dump {
                              name, Int(Date().timeIntervalSince(started) * 1000), j.intent, j.intentConfidence, j.needsReply,
                              j.urgency ?? -1, j.tension.map { String(format: "%.2f", $0) } ?? "none",
                              j.subtext.map { String(format: "%.2f", $0) } ?? "none"))
+                print("  Jev's top three: \(j.strategies.prefix(3).map(\.name).joined(separator: " / ")) · drafted: "
+                      + ReplyQuestions.picks(from: j.strategies, tense: (j.tension ?? 0) >= Brain.tense).joined(separator: " / "))
             } catch {
                 print("\(name): \(error.localizedDescription)")
                 return 1

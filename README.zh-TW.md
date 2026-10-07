@@ -71,7 +71,7 @@ cd jev-wingman
 ## 使用
 
 - 訊息進來時，輸入框上方會出現「**✦ 3 個建議**」。按 **⌥Space**（可以在設定裡改）或直接點它。
-- 面板一打開就停在 ★ 推薦的那句：**↑↓** 換一句，**Enter** 填入，**1–3** 直接填入，**Tab** 改成自己打想法，**Esc** 關閉。填入後看一下內容，再自己按 Enter 送出。
+- 面板一打開就停在 ★ 推薦的那句：**↑↓** 換一句，**Enter** 填入，**1–3** 直接填入，直接打字（或按 **Tab**）就是說你想怎麼回，注音輸入時 1–3 照樣是 ㄅ ㄉ ˇ，**Esc** 關閉。填入後看一下內容，再自己按 Enter 送出。
 - 按「更短」「更委婉」「更正式」「更熱情」可以重寫；也可以直接打你想說的意思，例如「跟他說週五前給」，按 Enter 重寫。
 - **音效**：你在等的建議寫好時，和回覆填進輸入框時，會輕輕響一聲；背景自動分析完成時不會出聲。設定裡可以關掉，也可以從「木質」「拇指琴」「豎琴」「電鋼琴」「玻璃」「水滴」「竹筒」「輕觸」八種音色中挑一種，點一下就能試聽。聲音由 App 自己合成，走系統音效：音量跟著提示音音量，系統關掉介面音效時也不會響，而且遠低於最大值。
 
@@ -89,6 +89,8 @@ build/Wingman.app/Contents/MacOS/Wingman --render /tmp/wingman   # 把面板、�
 OPENROUTER_API_KEY=… scripts/bench-writers.py                     # 用虛構對話比較寫回覆的模型
 scripts/make-demo.py                                               # 產生 README 最上面的 GIF（需要 ffmpeg）
 scripts/make-diagrams.py                                           # 產生流程圖和系統架構圖（需要 Chrome）
+scripts/log-stats.py --days 7                                      # 從紀錄檔算建議時間、預先產生命中率、採用率和 ★ 被選的比例
+build/Wingman.app/Contents/MacOS/Wingman --try-panel              # 用假對話開一個真的面板，試按鍵和焦點
 ```
 
 - `Sources/WingmanCore`：純邏輯，都有測試（Slack、Discord、Messenger、Instagram、Threads 的解析、哪些網頁可以讀、截圖辨識的氣泡分析、Jev 與 LLM 回應的解碼、語言與安全規則、音效）。

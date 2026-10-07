@@ -67,6 +67,9 @@ public enum ReplyQuestions {
     public static let postRankInstructions = "`me` 要在公開貼文底下留言回覆 `reply_to`。下面哪一則留言最適合直接發出？"
         + "考慮它是否切題、語氣是否自然得體，以及有沒有編造貼文裡沒有的事實。"
 
+    public static let followUpRankInstructions = "最後一則是 `me` 說的，`me` 想再接著傳一則。下面哪一則最適合接著送出？"
+        + "考慮它是否自然接續、有沒有重複 `me` 說過的話，以及有沒有做出對話裡沒有根據的承諾。"
+
     public static let rankInstructions = "`me` 要回覆 `reply_to`。下面哪一則草稿最適合直接送出？"
         + "考慮它有沒有回應對方真正的意思、語氣是否得體，以及有沒有做出對話裡沒有根據的承諾。"
 
@@ -106,4 +109,18 @@ public enum ReplyQuestions {
                          "criteria": Dictionary(uniqueKeysWithValues: postStrategies)],
         ]
     }
+}
+
+extension ReplyQuestions {
+    /// The three ways to reply that get a draft each: Jev's three likeliest, except that three kinds of yes make room
+    /// for a no. Smart Reply found people use suggestions more when one of them declines
+    /// (arxiv.org/abs/1606.04870), and with three yeses someone who cannot do it has nothing to pick. Not in a tense
+    /// chat, where the drafts should settle things first.
+    public static func picks(from strategies: [Strategy], tense: Bool = false) -> [String] {
+        let top = Array(strategies.prefix(3).map(\.name))
+        guard !tense, top.count == 3, top.allSatisfy(yeses.contains) else { return top }
+        return top.prefix(2) + ["婉拒或延後"]
+    }
+
+    static let yeses: Set = ["直接答應", "答應但附條件", "給進度和時間"]
 }

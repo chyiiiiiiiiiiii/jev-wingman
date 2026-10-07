@@ -61,14 +61,17 @@ final class PanelController: NSObject, NSWindowDelegate {
             panel.orderOut(nil)
             return
         }
-        let top = Self.appKitY(ofAXY: composer.minY)
+        // The message box in AppKit's coordinates, and the screens the panels must stay inside.
+        let box = CGRect(x: composer.minX, y: Self.appKitY(ofAXY: composer.maxY), width: composer.width,
+                         height: composer.height)
+        let screens = NSScreen.screens.map(\.visibleFrame)
 
         if model.panelShown {
             pill.orderOut(nil)
             let width = min(max(composer.width, 440), 580)
             if model.panelWidth != width { model.panelWidth = width }   // the view lays out at this width
             let height = panel.contentView!.fittingSize.height
-            let frame = NSRect(x: composer.minX, y: top + 8, width: width, height: height).integral
+            let frame = Placement.above(box, size: CGSize(width: width, height: height), gap: 8, screens: screens).integral
             // Touch the window only when its frame really changes, and ease a height change instead of
             // snapping; the bottom edge stays on the composer.
             if !panel.isVisible {
@@ -91,8 +94,7 @@ final class PanelController: NSObject, NSWindowDelegate {
                 return
             }
             let size = pill.contentView!.fittingSize
-            pill.setFrame(NSRect(x: composer.maxX - size.width - 10, y: top + 6, width: size.width, height: size.height),
-                          display: true)
+            pill.setFrame(Placement.pill(size, over: box, screens: screens).integral, display: true)
             pill.orderFrontRegardless()
         }
     }
@@ -109,15 +111,19 @@ final class PanelController: NSObject, NSWindowDelegate {
     private var pressed: UInt16?
 
     private func handleKey(_ event: NSEvent) -> Bool {
-        let insertKeys: Set<UInt16> = [18, 19, 20, 36, 76]
-        if insertKeys.contains(event.keyCode) && (!model.fieldFocused || event.modifierFlags.contains(.command)) {
-            if event.type == .keyDown {
-                if !event.isARepeat { pressed = event.keyCode }
-                return true
-            }
-            guard pressed == event.keyCode else { return true }
+        // The release of a press taken for inserting inserts, whatever is held by then: ⌘1 let go ⌘ first did nothing.
+        if event.type == .keyUp, let key = pressed, key == event.keyCode {
             pressed = nil
-            if event.keyCode >= 18 && event.keyCode <= 20 { model.insert(Int(event.keyCode) - 18) } else { model.insertSelected() }
+            if (18...20).contains(key) { model.insert(Int(key) - 18) } else { model.insertSelected() }
+            return true
+        }
+        let insertKeys: Set<UInt16> = [18, 19, 20, 36, 76]
+        // 1–3 pick a draft only where they type digits: under Zhuyin the same keys are ㄅ, ㄉ and ˇ, and 不 or 但
+        // starting a direction typed in a draft instead.
+        let letter = (18...20).contains(event.keyCode) && !event.modifierFlags.contains(.command)
+            && !["1", "2", "3"].contains(event.charactersIgnoringModifiers ?? "")
+        if insertKeys.contains(event.keyCode) && !letter && (!model.fieldFocused || event.modifierFlags.contains(.command)) {
+            if event.type == .keyDown && !event.isARepeat { pressed = event.keyCode }
             return true
         }
         guard event.type == .keyDown else { return false }
@@ -136,8 +142,25 @@ final class PanelController: NSObject, NSWindowDelegate {
             }
             return true
         default:
+            // Typing goes to the direction field whatever key it starts with; it used to go nowhere. Returning false
+            // passes the press on to the field, through the input method, so Zhuyin composes as it would anywhere.
+            if !model.fieldFocused, Self.writes(event), let field = panel.contentView.flatMap(Self.textField(in:)) {
+                panel.makeFirstResponder(field)
+            }
             return false
         }
+    }
+
+    /// A key that writes something: no ⌘ or ⌃, and neither a control character nor one of AppKit's function keys.
+    private static func writes(_ event: NSEvent) -> Bool {
+        guard event.modifierFlags.intersection([.command, .control]).isEmpty,
+              let scalar = event.charactersIgnoringModifiers?.unicodeScalars.first else { return false }
+        return scalar.value >= 0x20 && scalar.value != 0x7F && !(0xF700...0xF8FF).contains(scalar.value)
+    }
+
+    private static func textField(in view: NSView) -> NSTextField? {
+        if let field = view as? NSTextField, field.isEditable { return field }
+        return view.subviews.lazy.compactMap(textField(in:)).first
     }
 
     /// Accessibility frames use a top-left origin on the primary screen; AppKit uses bottom-left.
@@ -147,6 +170,18 @@ final class PanelController: NSObject, NSWindowDelegate {
 }
 
 // MARK: - Views
+
+/// Filled in the icon's indigo, and still filled while Wingman is not the active app, which a prominent button is not.
+struct BrandButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .font(.system(size: 11.5, weight: .semibold))
+            .foregroundStyle(.white)
+            .padding(.horizontal, 9)
+            .padding(.vertical, 3)
+            .background(SuggestionView.brand.opacity(configuration.isPressed ? 0.75 : 1), in: RoundedRectangle(cornerRadius: 5))
+    }
+}
 
 struct PillView: View {
     @ObservedObject var model: AppModel
@@ -273,8 +308,8 @@ struct SuggestionView: View {
     private var hint: String {
         if fieldFocused { return L("Enter 重寫 · Esc 回到選項 · ⌘1–3 填入") }
         switch model.phase {
-        case .ready: return L("↑↓ 選一句 · Enter 填入 · Tab 說你的想法 · Esc 關閉 · 不會自動送出")
-        case .failed: return L("Esc 關閉")
+        case .ready: return L("↑↓ 選一句 · Enter 填入 · 打字說你的想法 · Esc 關閉 · 不會自動送出")
+        case let .failed(_, fix): return L("Enter：%@ · Esc 關閉", Self.fixAction(fix) ?? L("再試一次"))
         default: return L("正在寫，好了就能 ↑↓ 選、Enter 填入 · Esc 關閉")
         }
     }
@@ -316,10 +351,20 @@ struct SuggestionView: View {
                 if let tension = j.tension {
                     MoodBar(tension: tension, subtext: (j.subtext ?? 0) >= Brain.meaningful)
                 }
+            } else if model.followingUp {
+                HStack(spacing: 8) {
+                    Text("Wingman").font(.system(size: 13, weight: .semibold))
+                    Tag(text: L("你最後回過了 · 接著說"), symbol: "arrowshape.turn.up.right")
+                }
             } else {
                 Text("Wingman").font(.system(size: 13, weight: .semibold))
             }
-            if let replyTo = model.replyTo {
+            if model.followingUp, let mine = model.conversation?.messages.last(where: \.isMe) {
+                (Text(L("接著你剛說的：%@", "")) + Text(mine.text).font(Self.chatFont(for: mine.text, size: 12)))
+                    .font(.system(size: 12))
+                    .foregroundStyle(.secondary)
+                    .lineLimit(2)
+            } else if let replyTo = model.replyTo {
                 // Every translation ends with the quoted text, so it can take the chat's own face.
                 (Text(L("回覆 %@：%@", "\(replyTo.sender ?? L("對方"))", ""))
                     + Text(replyTo.text).font(Self.chatFont(for: replyTo.text, size: 12)))
@@ -334,10 +379,16 @@ struct SuggestionView: View {
     /// which a skeleton fades into its draft. Swapping layouts between writing and done re-created the
     /// rows (they replayed their entrance) and dropped the status line, which read as a jolt.
     @ViewBuilder private var content: some View {
-        if case let .failed(reason) = model.phase {
+        if case let .failed(reason, fix) = model.phase {
             VStack(alignment: .leading, spacing: 6) {
                 Text(reason).foregroundStyle(.red).font(.system(size: 12))
-                Button(L("再試一次")) { model.analyze() }.controlSize(.small)
+                HStack(spacing: 8) {
+                    if let action = Self.fixAction(fix) {
+                        Button(action) { model.resolveFailure() }.buttonStyle(BrandButtonStyle())
+                    }
+                    Button(L("再試一次")) { model.analyze() }
+                }
+                .controlSize(.small)
             }
         } else {
             VStack(alignment: .leading, spacing: 4) {
@@ -353,6 +404,7 @@ struct SuggestionView: View {
                             candidateRow(slot, model.candidates[slot]).transition(.opacity.combined(with: .offset(y: 6)))
                         } else {
                             SkeletonRow().transition(.opacity)
+                                .environment(\.skeletonMoves, model.panelShown && model.phase == .thinking)
                         }
                     }
                 }
@@ -368,7 +420,7 @@ struct SuggestionView: View {
                 return L("幾句都可以，挑你喜歡的語氣")
             }
             return L("★ 是最推薦的一句")
-        default: return model.judgment == nil ? L("正在讀對話、判斷怎麼回…") : L("正在寫回覆…")
+        default: return model.judgment == nil && !model.followingUp ? L("正在讀對話、判斷怎麼回…") : L("正在寫回覆…")
         }
     }
 
@@ -430,6 +482,15 @@ struct SuggestionView: View {
         case .japanese: .custom("Hiragino Sans", size: size)
         case .korean: .custom("Apple SD Gothic Neo", size: size)
         case .theirs: .system(size: size)
+        }
+    }
+
+    /// The button a failure gets besides 再試一次, which Enter presses.
+    static func fixAction(_ fix: AppModel.Fix) -> String? {
+        switch fix {
+        case .retry: nil
+        case .settings: L("打開設定")
+        case .credits: L("儲值 ↗")
         }
     }
 

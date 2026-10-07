@@ -4,8 +4,18 @@ public enum Arrivals {
     /// follow it. Opening a chat, switching chats or scrolling back through history yields none, so
     /// automatic analysis never fires just because someone looked.
     public static func new(since previous: [ChatMessage], in current: [ChatMessage]) -> [ChatMessage] {
-        guard let last = previous.last, let index = current.lastIndex(of: last) else { return [] }
-        return Array(current[(index + 1)...])
+        // The end of the last read is found in this one by as many of its last messages as both have, up to three,
+        // matched the way Transcript matches them (OCR spacing and a scrolled-away sender header do not count): one
+        // alone would match an earlier copy of a "？" sent twice.
+        for length in stride(from: min(3, previous.count), through: 1, by: -1) where current.count >= length {
+            let tail = previous.suffix(length)
+            if let start = (0...(current.count - length)).last(where: {
+                zip(current[$0..<($0 + length)], tail).allSatisfy(Transcript.same)
+            }) {
+                return Array(current[(start + length)...])
+            }
+        }
+        return []
     }
 }
 
