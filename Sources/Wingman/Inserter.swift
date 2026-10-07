@@ -111,8 +111,12 @@ enum Log {
     private static let url = FileManager.default.homeDirectoryForCurrentUser
         .appendingPathComponent("Library/Logs/Wingman.log")
 
+    /// Lines go to standard output instead, so `--try-panel` leaves the real log and its numbers alone.
+    nonisolated(unsafe) static var toStandardOutput = false
+
     /// Events and timings only; message text never goes to the log.
     static func write(_ line: String) {
+        if toStandardOutput { print(line); fflush(stdout); return }
         let stamp = ISO8601DateFormatter().string(from: Date())
         let data = Data("\(stamp) \(line)\n".utf8)
         if let handle = try? FileHandle(forWritingTo: url) {

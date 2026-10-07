@@ -172,10 +172,11 @@ enum Dump {
 
     /// `--try-panel`: the suggestion panel, live, over a made-up chat in the middle of the screen, to try its keys and
     /// focus by hand or by script. Nothing is typed anywhere and nothing is sent: there is no chat to type into and no
-    /// key to write with; picks go to the log.
+    /// key to write with; what would be logged, picks included, is printed instead.
     @MainActor
     static func tryPanel() -> Never {
         Prefs.usesKeychain = false
+        Log.toStandardOutput = true
         NSApplication.shared.setActivationPolicy(.accessory)
         let screen = NSScreen.main?.frame ?? CGRect(x: 0, y: 0, width: 1440, height: 900)
         let model = AppModel()
