@@ -4,7 +4,9 @@ public enum Arrivals {
     /// follow it. Opening a chat, switching chats or scrolling back through history yields none, so
     /// automatic analysis never fires just because someone looked.
     public static func new(since previous: [ChatMessage], in current: [ChatMessage]) -> [ChatMessage] {
-        guard let last = previous.last, let index = current.lastIndex(of: last) else { return [] }
+        // The old last message is found the way Transcript matches messages: OCR spacing and a sender header
+        // scrolled away do not make it a different message.
+        guard let last = previous.last, let index = current.lastIndex(where: { Transcript.same($0, last) }) else { return [] }
         return Array(current[(index + 1)...])
     }
 }

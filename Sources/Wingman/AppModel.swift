@@ -152,7 +152,8 @@ final class AppModel: ObservableObject {
         }
         conversation = convo
         // Only messages that came in while this chat was open count; opening it or scrolling back does not.
-        let arrived = convo.title == lastRead.title ? Arrivals.new(since: lastRead.messages, in: visible) : []
+        let sameChat = convo.title == lastRead.title || ChatTitle.same(convo.title, lastRead.title, tolerant: app.readsPixels)
+        let arrived = sameChat ? Arrivals.new(since: lastRead.messages, in: visible) : []
         // Under a post, the cursor landing in its reply box is the cue: a reply is on its way.
         let replyStarted = convo.isPost && convo.title != lastRead.title
         lastRead = (convo.title, visible)
@@ -376,8 +377,9 @@ final class AppModel: ObservableObject {
         }
     }
 
+    /// Which chat and message the drafts answer. Reads that differ only in spacing or older lines keep it: OCR
+    /// jitter used to throw away drafts written in the background and cancel Jev mid-request.
     private func fingerprint(_ convo: Conversation) -> String {
-        ([app.rawValue, convo.title, convo.isThread ? "t" : "c"] + convo.messages.suffix(4).map { "\($0.sender ?? "")|\($0.text)" })
-            .joined(separator: "\u{1f}")
+        app.rawValue + "\u{1f}" + convo.replyKey
     }
 }

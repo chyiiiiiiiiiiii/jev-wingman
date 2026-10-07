@@ -76,6 +76,15 @@ public struct Conversation: Equatable {
     /// A photo, video, sticker or shared post is in the conversation (as 📎).
     public var hasAttachments: Bool { messages.contains { $0.text == BubbleParser.attachment } }
 
+    /// What drafts are written for: this chat, the message being answered, and whether it still waits for an
+    /// answer. A re-read that differs only in spacing, in older messages or in a sender header (OCR reads lines a
+    /// little differently each time, Slack drops a header as it scrolls) keeps the key, and with it the drafts.
+    public var replyKey: String {
+        let replyTo = messages.last { !$0.isMe }.map { Transcript.words($0.text) } ?? ""
+        return [Transcript.words(title), isThread ? "t" : "c", replyTo, awaitingReply ? "waiting" : "answered"]
+            .joined(separator: "\u{1f}")
+    }
+
     /// The other side spoke last, so there is something to answer.
     public var awaitingReply: Bool {
         guard let last = messages.last else { return false }

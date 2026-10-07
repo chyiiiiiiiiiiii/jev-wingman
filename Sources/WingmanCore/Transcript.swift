@@ -47,10 +47,12 @@ public enum Transcript {
     /// The same message read twice: same side, same words give or take spaces, and the same sender when
     /// both reads have one.
     static func same(_ one: ChatMessage, _ other: ChatMessage) -> Bool {
-        func words(_ text: String) -> String { text.filter { !$0.isWhitespace } }
-        return one.isMe == other.isMe && words(one.text) == words(other.text)
+        one.isMe == other.isMe && words(one.text) == words(other.text)
             && (one.sender == nil || other.sender == nil || one.sender == other.sender)
     }
+
+    /// Text without its spacing, which OCR reads differently from one capture to the next.
+    static func words(_ text: String) -> String { text.filter { !$0.isWhitespace } }
 
     /// Of two reads of the same messages, the copy that still has its sender and time.
     static func fuller(_ one: ArraySlice<ChatMessage>, _ other: ArraySlice<ChatMessage>) -> [ChatMessage] {
