@@ -27,3 +27,8 @@ private func chat(_ messages: [ChatMessage]) -> Conversation {
 @Test func withNothingFromThemThereIsNothingToAnswer() {
     #expect(chat([m("在嗎", me: true)]).replyToText == nil)
 }
+
+@Test func aMessageWithoutASenderBelongsToWhoeverSpokeBeforeIt() {
+    // In Slack the line without a sender is Leo's, the rest of his run, not Mia's.
+    #expect(chat([m("我也要去", "Leo"), m("順便帶午餐", nil), m("幾點？")]).replyToText == "幾點？")
+}

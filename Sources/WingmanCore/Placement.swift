@@ -15,12 +15,14 @@ public enum Placement {
                screen(of: composer, in: screens))
     }
 
-    /// The screen holding the box's top edge, or the one it overlaps most.
+    /// The screen holding the box's top edge, or the nearest one when the edge is in none (behind the Dock).
     static func screen(of composer: CGRect, in screens: [CGRect]) -> CGRect? {
         let top = CGPoint(x: composer.midX, y: composer.maxY - 1)
-        return screens.first { $0.contains(top) }
-            ?? screens.max { $0.intersection(composer).width * $0.intersection(composer).height
-                < $1.intersection(composer).width * $1.intersection(composer).height }
+        func distance(_ screen: CGRect) -> CGFloat {
+            let dx = max(screen.minX - top.x, 0, top.x - screen.maxX), dy = max(screen.minY - top.y, 0, top.y - screen.maxY)
+            return dx * dx + dy * dy
+        }
+        return screens.min { distance($0) < distance($1) }
     }
 
     static func inside(_ frame: CGRect, _ screen: CGRect?) -> CGRect {

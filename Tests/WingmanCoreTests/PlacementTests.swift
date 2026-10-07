@@ -40,3 +40,9 @@ private let panel = CGSize(width: 480, height: 460)
     #expect(Placement.pill(CGSize(width: 120, height: 24), over: composer, screens: [laptop])
         == CGRect(x: 730, y: 126, width: 120, height: 24))
 }
+
+@Test func aMessageBoxBehindTheDockStaysOnItsOwnScreen() {
+    // The box's top edge is in no visible frame (the Dock covers it); the nearest screen is still the left one.
+    let composer = CGRect(x: -1500, y: -260, width: 560, height: 40)
+    #expect(Placement.above(composer, size: panel, gap: 8, screens: [laptop, leftMonitor]).minX == -1500)
+}
