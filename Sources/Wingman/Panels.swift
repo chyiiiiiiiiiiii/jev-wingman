@@ -112,7 +112,11 @@ final class PanelController: NSObject, NSWindowDelegate {
 
     private func handleKey(_ event: NSEvent) -> Bool {
         let insertKeys: Set<UInt16> = [18, 19, 20, 36, 76]
-        if insertKeys.contains(event.keyCode) && (!model.fieldFocused || event.modifierFlags.contains(.command)) {
+        // 1–3 pick a draft only where they type digits: under Zhuyin the same keys are ㄅ, ㄉ and ˇ, and 不 or 但
+        // starting a direction typed in a draft instead.
+        let letter = (18...20).contains(event.keyCode) && !event.modifierFlags.contains(.command)
+            && !["1", "2", "3"].contains(event.charactersIgnoringModifiers ?? "")
+        if insertKeys.contains(event.keyCode) && !letter && (!model.fieldFocused || event.modifierFlags.contains(.command)) {
             if event.type == .keyDown {
                 if !event.isARepeat { pressed = event.keyCode }
                 return true
@@ -138,8 +142,25 @@ final class PanelController: NSObject, NSWindowDelegate {
             }
             return true
         default:
+            // Typing goes to the direction field whatever key it starts with; it used to go nowhere. Returning false
+            // passes the press on to the field, through the input method, so Zhuyin composes as it would anywhere.
+            if !model.fieldFocused, Self.writes(event), let field = panel.contentView.flatMap(Self.textField(in:)) {
+                panel.makeFirstResponder(field)
+            }
             return false
         }
+    }
+
+    /// A key that writes something: no ⌘ or ⌃, and neither a control character nor one of AppKit's function keys.
+    private static func writes(_ event: NSEvent) -> Bool {
+        guard event.modifierFlags.intersection([.command, .control]).isEmpty,
+              let scalar = event.charactersIgnoringModifiers?.unicodeScalars.first else { return false }
+        return scalar.value >= 0x20 && scalar.value != 0x7F && !(0xF700...0xF8FF).contains(scalar.value)
+    }
+
+    private static func textField(in view: NSView) -> NSTextField? {
+        if let field = view as? NSTextField, field.isEditable { return field }
+        return view.subviews.lazy.compactMap(textField(in:)).first
     }
 
     /// Accessibility frames use a top-left origin on the primary screen; AppKit uses bottom-left.
@@ -275,7 +296,7 @@ struct SuggestionView: View {
     private var hint: String {
         if fieldFocused { return L("Enter 重寫 · Esc 回到選項 · ⌘1–3 填入") }
         switch model.phase {
-        case .ready: return L("↑↓ 選一句 · Enter 填入 · Tab 說你的想法 · Esc 關閉 · 不會自動送出")
+        case .ready: return L("↑↓ 選一句 · Enter 填入 · 打字說你的想法 · Esc 關閉 · 不會自動送出")
         case .failed: return L("Esc 關閉")
         default: return L("正在寫，好了就能 ↑↓ 選、Enter 填入 · Esc 關閉")
         }

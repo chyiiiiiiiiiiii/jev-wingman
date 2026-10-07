@@ -64,7 +64,7 @@ On first launch Wingman walks through three steps: permissions, keys (an [OpenRo
 ## Use
 
 - When a message arrives, **✦ 3 suggestions** appears above the message box. Press **⌥Space** (you can change the shortcut) or click it.
-- **↑↓** picks a draft (it starts on the ★ one), **Enter** types it, **1–3** types one directly, **Tab** lets you type what you want instead, **Esc** closes. Check the text, then press Enter yourself.
+- **↑↓** picks a draft (it starts on the ★ one), **Enter** types it, **1–3** types one directly, and typing anything else (or **Tab**) says what you want instead; with Zhuyin on, 1–3 are ㄅ ㄉ ˇ as usual. **Esc** closes. Check the text, then press Enter yourself.
 - **Shorter, Softer, More formal, Warmer** rewrite the drafts. You can also type what you want to say, for example "tell them by Friday", and press Enter.
 - **Sounds:** a soft sound when suggestions you are waiting for are ready, and when a reply is typed in. Analysis that finishes in the background stays silent. Settings has a switch and eight voices: Wood, Kalimba, Harp, Keys, Glass, Droplet, Bamboo and Tap; click one to hear it. They are synthesised by the app, play as system sound effects (at the alert volume, and not at all when interface sounds are off in System Settings), well under full volume.
 

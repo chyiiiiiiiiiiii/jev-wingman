@@ -80,7 +80,7 @@
 "更熱情" = "Warmer";
 "說說你想怎麼回，例如「跟他說週五前給」，按 Enter 重寫" = "Say what to reply, e.g. “tell them by Friday”";
 "Enter 重寫 · Esc 回到選項 · ⌘1–3 填入" = "Enter rewrites · Esc back to drafts · ⌘1–3 types";
-"↑↓ 選一句 · Enter 填入 · Tab 說你的想法 · Esc 關閉 · 不會自動送出" = "↑↓ choose · Enter types it · Tab to say what you want · Esc closes · never sends";
+"↑↓ 選一句 · Enter 填入 · 打字說你的想法 · Esc 關閉 · 不會自動送出" = "↑↓ choose · Enter types it · type to say what you want · Esc closes · never sends";
 "Esc 關閉" = "Esc close";
 "正在寫，好了就能 ↑↓ 選、Enter 填入 · Esc 關閉" = "Writing… then ↑↓ to choose, Enter to type · Esc closes";
 "關閉（Esc）" = "Close (Esc)";

@@ -80,7 +80,7 @@
 "更熱情" = "Herzlicher";
 "說說你想怎麼回，例如「跟他說週五前給」，按 Enter 重寫" = "Sag, was du antworten willst, z. B. „bis Freitag“";
 "Enter 重寫 · Esc 回到選項 · ⌘1–3 填入" = "Enter schreibt neu · Esc zurück zu den Vorschlägen · ⌘1–3 fügt ein";
-"↑↓ 選一句 · Enter 填入 · Tab 說你的想法 · Esc 關閉 · 不會自動送出" = "↑↓ wählen · Enter einfügen · Tab für eigenen Wunsch · Esc schließen · sendet nie";
+"↑↓ 選一句 · Enter 填入 · 打字說你的想法 · Esc 關閉 · 不會自動送出" = "↑↓ wählen · Enter einfügen · tippen für eigenen Wunsch · Esc schließen · sendet nie";
 "Esc 關閉" = "Esc schließen";
 "正在寫，好了就能 ↑↓ 選、Enter 填入 · Esc 關閉" = "Schreibt… dann ↑↓ wählen, Enter einfügen · Esc schließen";
 "關閉（Esc）" = "Schließen (Esc)";
