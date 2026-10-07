@@ -89,6 +89,8 @@ build/Wingman.app/Contents/MacOS/Wingman --render /tmp/wingman   # 把面板、�
 OPENROUTER_API_KEY=… scripts/bench-writers.py                     # 用虛構對話比較寫回覆的模型
 scripts/make-demo.py                                               # 產生 README 最上面的 GIF（需要 ffmpeg）
 scripts/make-diagrams.py                                           # 產生流程圖和系統架構圖（需要 Chrome）
+scripts/log-stats.py --days 7                                      # 從紀錄檔算建議時間、預先產生命中率、採用率和 ★ 被選的比例
+build/Wingman.app/Contents/MacOS/Wingman --try-panel              # 用假對話開一個真的面板，試按鍵和焦點
 ```
 
 - `Sources/WingmanCore`：純邏輯，都有測試（Slack、Discord、Messenger、Instagram、Threads 的解析、哪些網頁可以讀、截圖辨識的氣泡分析、Jev 與 LLM 回應的解碼、語言與安全規則、音效）。

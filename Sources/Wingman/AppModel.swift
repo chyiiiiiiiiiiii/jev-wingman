@@ -355,6 +355,8 @@ final class AppModel: ObservableObject {
 
     func openPanel() {
         guard let convo = conversation else { return }
+        // Whether drafts were waiting when the panel opened: how often the prefetch spared a wait.
+        Log.write("open drafts=\(phase == .ready && fingerprint(convo) == shownFingerprint ? "ready" : "pending")")
         if fingerprint(convo) != shownFingerprint || phase == .idle || phase == .skipped { analyze() }
         if case .failed = phase { analyze() }
         panelShown = true

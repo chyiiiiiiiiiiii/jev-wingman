@@ -82,6 +82,8 @@ build/Wingman.app/Contents/MacOS/Wingman --render /tmp/wingman   # the panel, on
 OPENROUTER_API_KEY=… scripts/bench-writers.py                     # compare writer models on made-up threads
 scripts/make-demo.py                                               # the GIFs at the top of the READMEs (needs ffmpeg)
 scripts/make-diagrams.py                                           # the flow and system design diagrams (needs Chrome)
+scripts/log-stats.py --days 7                                      # suggestion times, prefetch hits, picks and ★ from the log
+build/Wingman.app/Contents/MacOS/Wingman --try-panel              # the panel live over a made-up chat, to try its keys
 ```
 
 - `Sources/WingmanCore`: pure logic with tests (Slack, Discord, Messenger, Instagram and Threads parsers, which web pages are read, OCR bubble parser, Jev and LLM decoders, language and safety rules, the sounds).
