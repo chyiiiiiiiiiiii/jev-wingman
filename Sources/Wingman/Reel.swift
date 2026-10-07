@@ -78,6 +78,10 @@ enum Reel {
         /// A drawn scene (ReelScene), animated through the beat; `start` skips into its animation.
         var scene: String?
         var start: Double?
+        /// A noir shot's case title ("CASE 01｜你很忙齁"), and a rubber stamp that lands `stampAt` seconds in.
+        var title: String?
+        var stamp: String?
+        var stampAt: Double?
         var sound: String?
         /// Seconds into the beat the sound starts; at its start when absent.
         var soundAt: Double?
@@ -171,6 +175,7 @@ enum Reel {
         }
         let said = (try? load([String: Said].self, folder.appendingPathComponent("staged.json"))) ?? [:]
         var listed: [[String: Any]] = []
+        var noir: NoirStage?
         for (index, beat) in spec.beats.enumerated() {
             let frame = String(format: "frame-%02d.png", index + 1)
             let overlay = String(format: "overlay-%02d.png", index + 1)
@@ -179,9 +184,22 @@ enum Reel {
                 let context = ReelContext(said: said, lines: { lines($0, script) }, app: { ChatApp(rawValue: script.chats[$0]?.app ?? "") },
                                           panel: { panel($0, script, said) }, text: spec.reply, chat: spec.chat ?? "")
                 for step in 0..<Int((beat.seconds * 30).rounded()) {
-                    let view = ZStack {
-                        ReelScene(name: scene, t: Double(step) / 30 + (beat.start ?? 0), context: context)
-                        Overlay(caption: beat.caption, key: nil, t: Double(step) / 30)
+                    let local = Double(step) / 30
+                    let view: AnyView
+                    if scene.hasPrefix("noir-") {
+                        // A 3D shot, rendered by SceneKit, with noir type over it.
+                        if noir == nil { noir = NoirStage(context: context) }
+                        let shot = noir!.image(String(scene.dropFirst(5)), t: local + (beat.start ?? 0))
+                        view = AnyView(ZStack {
+                            Image(nsImage: shot).resizable().frame(width: canvas.width, height: canvas.height)
+                            NoirOverlay(caption: beat.caption, title: beat.title, stamp: beat.stamp, stampAt: beat.stampAt ?? 0, t: local,
+                                        ending: beat.end == true)
+                        })
+                    } else {
+                        view = AnyView(ZStack {
+                            ReelScene(name: scene, t: local + (beat.start ?? 0), context: context)
+                            Overlay(caption: beat.caption, key: nil, t: local)
+                        })
                     }
                     write(view, to: out.appendingPathComponent(String(format: "beat-%02d-%03d.png", index + 1, step)))
                 }

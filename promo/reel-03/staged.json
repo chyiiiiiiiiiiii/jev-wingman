@@ -1,0 +1,92 @@
+{
+  "boss": {
+    "drafts": [
+      {
+        "score": 0.73,
+        "strategy": "給進度和時間",
+        "text": "大綱已經在共用資料夾，數據我正在補，預計今晚 [時間] 前完成，明早再順一次就沒問題。"
+      },
+      {
+        "score": 0.11,
+        "strategy": "直接答應",
+        "text": "OK，我這邊沒問題，明天十點前會把簡報準備好。"
+      },
+      {
+        "score": 0.16,
+        "strategy": "答應但附條件",
+        "text": "可以，不過有幾頁數據要等 [來源] 確認後才能定稿，如果今晚拿不到我會先用現有數字，明早再更新。"
+      }
+    ],
+    "intent": "確認或同意",
+    "intentConfidence": 0.89,
+    "needsReply": 0.92,
+    "strategies": [
+      "給進度和時間",
+      "直接答應",
+      "答應但附條件"
+    ],
+    "subtext": 0.52,
+    "tension": 0.66,
+    "urgency": 2.46
+  },
+  "ivy": {
+    "drafts": [
+      {
+        "score": 0.29,
+        "strategy": "婉拒或延後",
+        "text": "好啦我知道你在酸我，這週真的卡死，等下週專案結束我再約你，換我請你看電影"
+      },
+      {
+        "score": 0.18,
+        "strategy": "給進度和時間",
+        "text": "別這樣啦，專案大概再[天數]就會收尾，到時候我時間就自由了，先記著這筆"
+      },
+      {
+        "score": 0.53,
+        "strategy": "答應但附條件",
+        "text": "不然這樣，如果週末加班能提早收工我就衝去找你，但要是拖到晚上就真的只能下次了"
+      }
+    ],
+    "intent": "抱怨或不滿",
+    "intentConfidence": 0.36,
+    "needsReply": 0.72,
+    "strategies": [
+      "婉拒或延後",
+      "給進度和時間",
+      "答應但附條件"
+    ],
+    "subtext": 0.73,
+    "tension": 1.38,
+    "urgency": 1.31
+  },
+  "notice": {
+    "drafts": [
+      {
+        "score": 0.04,
+        "strategy": "簡短回應",
+        "text": "收到"
+      },
+      {
+        "score": 0.83,
+        "strategy": "表達感謝",
+        "text": "了解，謝謝提醒"
+      },
+      {
+        "score": 0.13,
+        "strategy": "先問清楚",
+        "text": "請問維護期間是整個站都不能登入，還是只有部分功能受影響？"
+      }
+    ],
+    "intent": "告知",
+    "intentConfidence": 0.98,
+    "needsReply": 0.33,
+    "strategies": [
+      "簡短回應",
+      "表達感謝",
+      "先問清楚"
+    ],
+    "subtext": 0.1,
+    "tension": 0.01,
+    "urgency": 0.26
+  }
+}

@@ -207,6 +207,66 @@ def sfx(kind: str, pitch: float = 1.0) -> list:
             add(out, k * 0.06, shaped(noise(0.08, 20 + k, smooth=0.4), 0.0005, 0.015), 0.7)
         add(out, 0.2, tone(440, 0.5, (1, 0.6, 0.4, 0.3), decay=0.6, glide=0.2, vibrato=0.02), 0.25)
         return out
+    if kind == "thunder":
+        # A crack, then a long roll.
+        out = shaped(noise(0.25, 31, high=True), 0.001, 0.05)
+        out = [0.9 * x for x in out] + [0.0] * int(RATE * 2.8)
+        add(out, 0.05, shaped(noise(2.9, 32, smooth=0.015), 0.08, 0.9), 9.0)
+        return normalized(out, 0.95)
+    if kind == "neon":
+        # A tube flickering on: a hum that stutters, then holds.
+        out = []
+        for i in range(int(RATE * 0.9)):
+            t = i / RATE
+            on = 0 if (0.08 < t < 0.14 or 0.22 < t < 0.25) else 1
+            hum = math.sin(2 * math.pi * 120 * t) + 0.5 * math.sin(2 * math.pi * 240 * t) + 0.3 * math.sin(2 * math.pi * 360 * t)
+            out.append(0.18 * on * hum * min(1, (0.9 - t) / 0.2))
+        add(out, 0.0, shaped(noise(0.02, 33, high=True), 0.0005, 0.005), 0.5)
+        return out
+    if kind == "slam":
+        out = tone(70, 0.4, (1, 0.4), decay=0.12)
+        add(out, 0, shaped(noise(0.15, 34, smooth=0.25), 0.001, 0.04), 1.2)
+        return normalized(out, 0.9)
+    if kind == "steps":
+        out = [0.0] * int(RATE * 1.0)
+        for k in range(5):
+            add(out, k * 0.17, tone(95, 0.12, (1, 0.3), decay=0.03), 0.6)
+            add(out, k * 0.17, shaped(noise(0.04, 35 + k, smooth=0.4), 0.0005, 0.01), 0.35)
+        return out
+    if kind == "boing":
+        return [0.45 * x for x in tone(220, 0.55, (1, 0.3), decay=0.3, glide=1.4, vibrato=0.06)]
+    if kind == "squeak":
+        # A marker ringing a word.
+        out, phase = [], 0.0
+        random.seed(36)
+        for i in range(int(RATE * 0.32)):
+            t = i / RATE
+            phase += 2 * math.pi * (1700 + 500 * math.sin(2 * math.pi * 6 * t)) / RATE
+            out.append((0.14 * math.sin(phase) + 0.05 * random.uniform(-1, 1)) * math.sin(math.pi * t / 0.32))
+        return out
+    if kind == "pin":
+        return [0.6 * x for x in bell(2400, 0.15, 0.02)]
+    if kind == "sting":
+        # The penny drops: a low minor chord hit, all at once, and a cymbal.
+        out = [0.0] * int(RATE * 1.6)
+        for note in (38, 50, 53, 57, 64):
+            add(out, 0, tone(hz(note), 1.5, (1, 0.5, 0.33, 0.25, 0.2), decay=0.55), 0.16)
+        add(out, 0, crash(37), 0.4)
+        add(out, 0, kick(), 0.6)
+        return normalized(out, 0.9)
+    if kind == "paper":
+        random.seed(38)
+        out, low = [], 0.0
+        for i in range(int(RATE * 0.3)):
+            x = i / (RATE * 0.3)
+            low += 0.35 * (random.uniform(-1, 1) - low)
+            out.append((random.uniform(-1, 1) - low) * 0.3 * math.sin(math.pi * x) ** 2)
+        return out
+    if kind == "clack":
+        random.seed(39)
+        out = shaped(noise(0.04, 39, high=True), 0.0003, 0.006)
+        add(out, 0, tone(1900, 0.03, decay=0.006), 0.25)
+        return [0.55 * x for x in out]
     raise ValueError(f"no sound called {kind}")
 
 
@@ -243,15 +303,20 @@ def score(sections: list, total: float) -> list:
         # Each section on its own, then in at its level: quiet before the storm and as Wingman walks in,
         # loud in the argument, the party and the last chord, so the story can be heard rising and falling.
         part = [0.0] * len(out)
-        {"hook": hook, "chaos": chaos, "stop": stop, "enter": enter, "groove": groove,
-         "party": party, "end": ending}[name](part, start, end - start)
+        {"hook": hook, "chaos": chaos, "stop": stop, "enter": enter, "groove": groove, "party": party, "end": ending,
+         "rain": downpour, "noir": noir, "tension": tension, "closed": closed, "montage": montage,
+         "curtain": curtain}[name](part, start, end - start)
         level = LEVELS[name]
         for i in range(int(start * RATE), len(out)):
             out[i] += level * part[i]
+    if any(name == "rain" for _, name in sections):
+        # It rains the whole way through the noir.
+        add(out, 0, rain_bed(total), 0.35)
     return normalized(out, 0.9)
 
 
-LEVELS = {"hook": 0.55, "chaos": 1.45, "stop": 1.0, "enter": 0.65, "groove": 1.0, "party": 1.3, "end": 1.5}
+LEVELS = {"hook": 0.55, "chaos": 1.45, "stop": 1.0, "enter": 0.65, "groove": 1.0, "party": 1.3, "end": 1.5,
+          "rain": 0.7, "noir": 1.0, "tension": 0.9, "closed": 1.15, "montage": 1.2, "curtain": 1.3}
 
 
 def chord_pad(notes, seconds: float, swell: float = 0.3) -> list:
@@ -372,6 +437,134 @@ def ending(out, start, seconds):
     for k, note in enumerate((79, 84, 88, 91)):
         add(out, start + 0.1 + k * 0.08, bell(hz(note), 2.0, 0.8), 0.18)
     fade = int(RATE * min(1.2, seconds))
+    end = min(len(out), int((start + seconds) * RATE))
+    for i in range(end - fade, end):
+        out[i] *= (end - i) / fade
+
+
+# The noir: brushed swing, a walking bass, a vibraphone with a blue note, and rain.
+
+def rain_bed(seconds: float) -> list:
+    random.seed(40)
+    out, low, high = [], 0.0, 0.0
+    for i in range(int(RATE * seconds)):
+        value = random.uniform(-1, 1)
+        low += 0.12 * (value - low)
+        high = value - low
+        out.append(0.5 * low + 0.12 * high)
+    # Drops on the sill.
+    t = 0.1
+    while t < seconds - 0.1:
+        add(out, t, [0.5 * x for x in bell(random.uniform(2500, 4200), 0.08, 0.01)], 0.6)
+        t += random.uniform(0.08, 0.3)
+    return out
+
+
+def vibes(note: float, seconds: float) -> list:
+    """A vibraphone: a soft bell with the motor's tremolo."""
+    out = bell(hz(note), seconds, 0.7)
+    return [x * (0.75 + 0.25 * math.sin(2 * math.pi * 5.5 * i / RATE)) for i, x in enumerate(out)]
+
+
+def ride(seed: int) -> list:
+    """A ride cymbal: a metallic ping in a wash."""
+    out = [0.0] * int(RATE * 0.5)
+    for ratio in (1.0, 1.41, 1.83, 2.37):
+        add(out, 0, bell(3100 * ratio, 0.5, 0.18), 0.08)
+    add(out, 0, shaped(noise(0.5, seed, high=True), 0.001, 0.12), 0.12)
+    return out
+
+
+def brush(seed: int) -> list:
+    """A brush swept across a snare."""
+    return shaped(noise(0.25, seed, smooth=0.6), 0.04, 0.09)
+
+
+NOIR = [(38, (53, 57, 60, 64)), (40, (55, 58, 62, 65)), (45, (55, 59, 61, 65)), (38, (53, 57, 60, 64))]   # Dm9, Em7b5, A7(b9), Dm9
+CLOSED = [(38, (54, 57, 61, 64)), (43, (55, 59, 62, 66)), (45, (55, 57, 61, 64)), (38, (54, 57, 61, 66))]  # Dmaj9, Gmaj7, A, D
+TUNE = [(74, 0), (77, 1.5), (79, 2), (80, 3), (79, 3.5), (77, 4.5), (74, 6)]   # D F G A♭ G F D: the blue note
+
+
+def swing(out, start, seconds, bpm, chords, tune=True, busy=False):
+    beat = 60 / bpm
+    bars = int(seconds / (beat * 4)) + 1
+    for bar in range(bars):
+        root, voicing = chords[bar % len(chords)]
+        at = start + bar * beat * 4
+        if at >= start + seconds:
+            break
+        # Walking bass: root, third-ish, fifth, a step towards the next root.
+        nxt = chords[(bar + 1) % len(chords)][0]
+        for k, note in enumerate((root, root + 3, root + 7, nxt + (1 if nxt < root else -1))):
+            when = at + k * beat
+            if when < start + seconds:
+                add(out, when, pluck(note, beat * 1.1, seed=bar * 4 + k, brightness=0.2), 0.55)
+        # Ride: ding, ding-a ding, ding-a, swung.
+        for k in range(4):
+            when = at + k * beat
+            if when < start + seconds:
+                add(out, when, ride(bar * 8 + k), 0.6)
+            if k in (1, 3) and when + beat * 0.66 < start + seconds:
+                add(out, when + beat * 0.66, ride(bar * 8 + k + 4), 0.35)
+            if k in (1, 3) and when < start + seconds:
+                add(out, when, brush(bar * 8 + k), 0.25 if not busy else 0.35)
+                if busy:
+                    add(out, when, shaped(noise(0.05, bar * 9 + k, high=True), 0.0005, 0.02), 0.12)
+        # Piano comping: the chord on the "and" of one and on four.
+        for when in (at + beat * 0.66, at + beat * 3):
+            if when < start + seconds:
+                for note in voicing:
+                    add(out, when, tone(hz(note), 0.5, (1, 0.35, 0.15, 0.08), decay=0.2), 0.05)
+        if tune and bar % 2 == 0:
+            for note, offset in TUNE:
+                when = at + offset * beat * 0.5
+                if when < start + seconds:
+                    add(out, when, vibes(note, 0.9), 0.22)
+
+
+def downpour(out, start, seconds):
+    """Only the rain, a low piano note and something uneasy underneath."""
+    add(out, start, tone(hz(26), seconds, (1, 0.6, 0.4, 0.3), decay=2.0), 0.18)
+    add(out, start, chord_pad((50, 53, 56), seconds, swell=1.0), 0.02)
+
+
+def noir(out, start, seconds):
+    swing(out, start, seconds, 88, NOIR)
+
+
+def tension(out, start, seconds):
+    """Something is found: the bass sits on D, the ride ticks, strings creep upward."""
+    beat = 60 / 88
+    n = int(seconds / beat)
+    for k in range(n):
+        add(out, start + k * beat, pluck(38, beat, seed=200 + k, brightness=0.2), 0.6)
+        add(out, start + k * beat, ride(300 + k), 0.4)
+    for k in range(int(seconds / 0.5)):
+        note = 74 + k * 0.5
+        add(out, start + k * 0.5, [x * (0.6 + 0.4 * math.sin(2 * math.pi * 11 * i / RATE)) for i, x in
+                                   enumerate(tone(hz(note), 0.5, (1, 0.3, 0.1), decay=0.6, attack=0.08))], 0.06)
+
+
+def closed(out, start, seconds):
+    swing(out, start, seconds, 96, CLOSED)
+    for k, note in enumerate((74, 78, 81, 85, 86)):
+        add(out, start + k * 0.09, vibes(note, 1.2), 0.2)
+
+
+def montage(out, start, seconds):
+    swing(out, start, seconds, 116, NOIR, busy=True)
+
+
+def curtain(out, start, seconds):
+    """The last chord: D minor with a major seventh, the noir sound, left ringing in the rain."""
+    add(out, start, kick(), 0.5)
+    add(out, start, crash(41), 0.25)
+    add(out, start, pluck(26, 2.5, seed=500, brightness=0.2), 0.7)
+    for note in (50, 53, 57, 61, 64):
+        add(out, start, tone(hz(note), seconds, (1, 0.35, 0.15), decay=1.4), 0.06)
+    for k, note in enumerate((74, 77, 81, 85)):
+        add(out, start + 0.15 + k * 0.12, vibes(note, 2.2), 0.2)
+    fade = int(RATE * min(1.4, seconds))
     end = min(len(out), int((start + seconds) * RATE))
     for i in range(end - fade, end):
         out[i] *= (end - i) / fade

@@ -17,6 +17,7 @@ Needs ffmpeg. Every chat in it is made up.
 """
 import json
 import math
+import os
 import random
 import struct
 import subprocess
@@ -28,7 +29,8 @@ from pathlib import Path
 import reel_sound
 
 ROOT = Path(__file__).resolve().parent.parent
-APP = ROOT / "build/Wingman.app/Contents/MacOS/Wingman"
+# REEL_APP points at another copy of the binary, say one renamed so relaunching Wingman leaves a long render alone.
+APP = Path(os.environ.get("REEL_APP", ROOT / "build/Wingman.app/Contents/MacOS/Wingman"))
 RATE = 44100
 FPS = 30
 
@@ -211,7 +213,23 @@ def segment(beat: dict, frames: Path, footage: Path, cuts: dict, out: Path) -> N
                "-filter_complex", "[0][1]overlay,setsar=1[out]", "-map", "[out]", "-map", "2:a", *encode, out)
 
 
-TRANSITIONS = {"zoomin": 0.3, "circleopen": 0.35, "fadewhite": 0.3, "slideup": 0.3, "slideleft": 0.25, "fade": 0.3}
+TRANSITIONS = {"zoomin": 0.3, "circleopen": 0.35, "fadewhite": 0.3, "slideup": 0.3, "slideleft": 0.25, "fade": 0.3,
+               "fadeblack": 0.4, "dissolve": 0.4}
+# The noir captions' typewriter: keys a second, the wait at a "／", and the first key (NoirOverlay in the app).
+TYPE_RATE, TYPE_PAUSE, TYPE_DELAY = 16.0, 0.35, 0.08
+
+
+def typed(caption: str) -> list:
+    """The seconds at which each key of a typed caption lands."""
+    clock, keys = TYPE_DELAY, []
+    for character in caption:
+        if character == "／":
+            clock += TYPE_PAUSE
+            continue
+        if character.strip():
+            keys.append(clock)
+        clock += 1 / TYPE_RATE
+    return keys
 
 
 def video(beat: dict, frames: Path, out: Path) -> None:
@@ -271,22 +289,32 @@ def story(spec: list, beats: list, frames: Path, work: Path, out: Path) -> float
     reel_sound.write_wav(work / "score.wav", reel_sound.score(sections, length))
     inputs, chain, mix = ["-i", joined, "-i", work / "score.wav"], "[1:a]volume=0.42[m];", ["[m]"]
     for i, beat in enumerate(spec):
-        for k, cue in enumerate(beat.get("cues", [])):
+        cues = list(beat.get("cues", []))
+        if beat.get("scene", "").startswith("noir-") and beat.get("caption"):
+            cues += [{"sound": "clack", "at": at, "gain": 0.5} for at in typed(beat["caption"])]
+        for k, cue in enumerate(cues):
             path = work / f"cue-{i:02d}-{k}.wav"
             if "babble" in cue:
                 reel_sound.write_wav(path, reel_sound.babble(cue["babble"], cue["voice"], seed=i * 10 + k))
                 gain = 0.9
             else:
                 reel_sound.write_wav(path, reel_sound.sfx(cue["sound"], cue.get("pitch", 1.0)))
-                gain = 0.8
+                gain = cue.get("gain", 0.8)
             n = len(mix) + 1
             inputs += ["-i", path]
             chain += f"[{n}:a]volume={gain},adelay={int((starts[i] + cue.get('at', 0)) * 1000)}:all=1[c{n}];"
             mix.append(f"[c{n}]")
-    chain += (f"{''.join(mix)}amix=inputs={len(mix)}:duration=first:normalize=0,"
-              "loudnorm=I=-14:TP=-1.5:LRA=11,aresample=44100[a]")
-    ffmpeg(*inputs, "-filter_complex", chain, "-map", "0:v", "-map", "[a]", "-c:v", "copy", "-c:a", "aac", "-b:a", "192k",
-           "-t", f"{length:.3f}", "-movflags", "+faststart", out)
+    chain += f"{''.join(mix)}amix=inputs={len(mix)}:duration=first:normalize=0[a]"
+    mixed = work / "mix.wav"
+    ffmpeg(*inputs, "-filter_complex", chain, "-map", "[a]", "-t", f"{length:.3f}", mixed)
+    # Measure, then lift towards -15 LUFS under a limiter 4.4 dB below full scale: true peaks and AAC ride
+    # over a sample limiter by 3 dB or more.
+    report = subprocess.run(["ffmpeg", "-hide_banner", "-i", str(mixed), "-af", "ebur128", "-f", "null", "-"],
+                            capture_output=True, text=True).stderr
+    loudness = float(report.rsplit("I:", 1)[1].split("LUFS")[0])
+    ffmpeg("-i", joined, "-i", mixed, "-filter_complex", f"[1:a]volume={-15 - loudness:.2f}dB,alimiter=limit=0.6:level=false:attack=1:release=60[a]",
+           "-map", "0:v", "-map", "[a]", "-c:v", "copy", "-c:a", "aac", "-b:a", "192k", "-t", f"{length:.3f}",
+           "-movflags", "+faststart", out)
     return length
 
 
