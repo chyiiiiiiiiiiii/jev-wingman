@@ -269,7 +269,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         registerHotkey()     // to be tried out on the last step
     }
 
-    @objc private func showSettings() {
+    @objc func showSettings() {
         model.iconHidden = statusItem.map(MenuBarIcon.isHidden) ?? false
         if settingsWindow == nil {
             let controller = NSHostingController(rootView: SettingsView(settings: Prefs.shared, model: model))

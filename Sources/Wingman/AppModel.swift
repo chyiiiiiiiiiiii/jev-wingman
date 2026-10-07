@@ -374,7 +374,7 @@ final class AppModel: ObservableObject {
         case .retry: analyze()
         case .settings:
             closePanel()
-            NSApp.sendAction(Selector(("showSettings")), to: nil, from: nil)
+            NSApp.sendAction(#selector(AppDelegate.showSettings), to: nil, from: nil)
         case .credits: NSWorkspace.shared.open(URL(string: "https://openrouter.ai/settings/credits")!)
         }
     }
