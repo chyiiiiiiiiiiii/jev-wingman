@@ -138,6 +138,38 @@ enum Dump {
         return back == messages && !plaintext && excluded ? 0 : 1
     }
 
+    /// `--check-idle`: show the suggestion panel once while nothing is written yet, put it away, and measure how
+    /// much CPU Wingman then spends doing nothing. Above 1% of a core fails: a hidden panel must cost nothing.
+    @MainActor
+    static func checkIdle() -> Int32 {
+        Prefs.usesKeychain = false
+        NSApplication.shared.setActivationPolicy(.accessory)
+        let screen = NSScreen.main?.frame ?? CGRect(x: 0, y: 0, width: 1440, height: 900)
+        let convo = Conversation(title: "#dev", isThread: false,
+                                 messages: [ChatMessage(sender: "Mia", text: "API 文件今天來得及更新嗎？")], draft: "",
+                                 composerHandle: -1, composerFrame: CGRect(x: screen.midX - 280, y: screen.midY, width: 560, height: 40))
+        let model = AppModel()
+        let panels = PanelController(model: model)
+        model.present(convo, judgment: nil, candidates: [], phase: .thinking)
+        model.panelShown = true
+        panels.refresh()
+        RunLoop.main.run(until: Date().addingTimeInterval(1))
+        model.closePanel()
+        panels.refresh()
+        RunLoop.main.run(until: Date().addingTimeInterval(1))
+        func cpu() -> Double {
+            var usage = rusage()
+            getrusage(RUSAGE_SELF, &usage)
+            return Double(usage.ru_utime.tv_sec + usage.ru_stime.tv_sec)
+                + Double(usage.ru_utime.tv_usec + usage.ru_stime.tv_usec) / 1_000_000
+        }
+        let before = cpu(), seconds = 5.0
+        RunLoop.main.run(until: Date().addingTimeInterval(seconds))
+        let share = (cpu() - before) / seconds * 100
+        print(String(format: "idle with the panel put away: %.1f%% of one core over %.0f s", share, seconds))
+        return share < 1 ? 0 : 1
+    }
+
     /// `--check-jev`: ask Jev about two made-up chats, one calm and one tense, with the keys in settings, and print
     /// what comes back (never the keys), to see the questions still suit the model after they change.
     static func checkJev() async -> Int32 {

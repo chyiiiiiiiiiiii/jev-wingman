@@ -353,6 +353,7 @@ struct SuggestionView: View {
                             candidateRow(slot, model.candidates[slot]).transition(.opacity.combined(with: .offset(y: 6)))
                         } else {
                             SkeletonRow().transition(.opacity)
+                                .environment(\.skeletonMoves, model.panelShown && model.phase == .thinking)
                         }
                     }
                 }

@@ -247,7 +247,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 extension AppDelegate: NSWindowDelegate {
     /// Hand focus back to whatever was in front before settings opened; Wingman stays in the menu bar.
     nonisolated func windowWillClose(_ notification: Notification) {
-        MainActor.assumeIsolated { NSApp.hide(nil) }
+        MainActor.assumeIsolated {
+            NSApp.hide(nil)
+            // Settings checks permissions once a second; a window kept after closing went on checking for good.
+            DispatchQueue.main.async { self.settingsWindow = nil }
+        }
     }
 }
 

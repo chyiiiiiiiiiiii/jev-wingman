@@ -30,8 +30,15 @@ struct Bone: View {
     }
 }
 
+extension EnvironmentValues {
+    /// Off while the panel is put away: a hidden window's timeline still redraws 30 times a second, which
+    /// kept Wingman at about 15% CPU with no chat in front.
+    @Entry var skeletonMoves = true
+}
+
 private struct BoneSweep: ViewModifier {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.skeletonMoves) private var moves
     @State private var duration = Double.random(in: 1.3...1.7)
     @State private var phase = Double.random(in: 0..<1)
 
@@ -39,7 +46,7 @@ private struct BoneSweep: ViewModifier {
         content.overlay {
             if !reduceMotion {
                 GeometryReader { geometry in
-                    TimelineView(.animation(minimumInterval: 1 / 30)) { timeline in
+                    TimelineView(.animation(minimumInterval: 1 / 30, paused: !moves)) { timeline in
                         let raw = (timeline.date.timeIntervalSinceReferenceDate / duration + phase)
                             .truncatingRemainder(dividingBy: 1)
                         let eased = raw * raw * (3 - 2 * raw)          // ease-in-out, fast through the middle
