@@ -61,14 +61,17 @@ final class PanelController: NSObject, NSWindowDelegate {
             panel.orderOut(nil)
             return
         }
-        let top = Self.appKitY(ofAXY: composer.minY)
+        // The message box in AppKit's coordinates, and the screens the panels must stay inside.
+        let box = CGRect(x: composer.minX, y: Self.appKitY(ofAXY: composer.maxY), width: composer.width,
+                         height: composer.height)
+        let screens = NSScreen.screens.map(\.visibleFrame)
 
         if model.panelShown {
             pill.orderOut(nil)
             let width = min(max(composer.width, 440), 580)
             if model.panelWidth != width { model.panelWidth = width }   // the view lays out at this width
             let height = panel.contentView!.fittingSize.height
-            let frame = NSRect(x: composer.minX, y: top + 8, width: width, height: height).integral
+            let frame = Placement.above(box, size: CGSize(width: width, height: height), gap: 8, screens: screens).integral
             // Touch the window only when its frame really changes, and ease a height change instead of
             // snapping; the bottom edge stays on the composer.
             if !panel.isVisible {
@@ -91,8 +94,7 @@ final class PanelController: NSObject, NSWindowDelegate {
                 return
             }
             let size = pill.contentView!.fittingSize
-            pill.setFrame(NSRect(x: composer.maxX - size.width - 10, y: top + 6, width: size.width, height: size.height),
-                          display: true)
+            pill.setFrame(Placement.pill(size, over: box, screens: screens).integral, display: true)
             pill.orderFrontRegardless()
         }
     }
