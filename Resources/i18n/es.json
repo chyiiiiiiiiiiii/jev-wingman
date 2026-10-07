@@ -236,5 +236,12 @@
  "↑↓ 選一句 · Enter 填入 · 打字說你的想法 · Esc 關閉 · 不會自動送出": "↑↓ elegir · Enter insertar · escribe para decir lo que quieres · Esc cerrar · nunca envía",
  "Enter：%@ · Esc 關閉": "Enter: %@ · Esc cerrar",
  "你最後回過了 · 接著說": "Respondiste tú al final · qué añadir",
- "接著你剛說的：%@": "Tras lo que dijiste: %@"
+ "接著你剛說的：%@": "Tras lo que dijiste: %@",
+ "⚠︎ 還沒開啟「輔助使用」，讀不到聊天": "⚠︎ Accesibilidad está desactivada; no se pueden leer los chats",
+ "⚠︎ %@ 也用 %@，按下去可能會打開它": "⚠︎ %@ también usa %@; al pulsarlo puede abrirse eso",
+ "打開聊天 App，Wingman 就會開始讀": "Abre una app de chat y Wingman empezará a leer",
+ "%@ 需要「螢幕與系統錄音」才讀得到": "%@ necesita Grabación de pantalla y del audio del sistema para leerse",
+ "%@：這個畫面讀不到對話": "%@: no hay conversación que leer en esta pantalla",
+ "已暫停自動分析，按 %@ 仍可用": "Análisis automático en pausa; %@ sigue funcionando",
+ "%@：正在看「%@」": "%@: leyendo «%@»"
 }

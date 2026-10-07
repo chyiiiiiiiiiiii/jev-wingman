@@ -55,11 +55,11 @@ enum Clashes {
                 found.append((names[Int(id) ?? 0] ?? "macOS", shortcut))
             }
         }
-        if installed("com.raycast.macos"),
+        if running("com.raycast.macos"),
            let shortcut = UserDefaults(suiteName: "com.raycast.macos")?.string(forKey: "raycastGlobalHotkey").flatMap(Shortcut.init(raycast:)) {
             found.append(("Raycast", shortcut))
         }
-        if installed("com.openai.chat") {
+        if running("com.openai.chat") {
             // ChatGPT's launcher is ⌥Space until someone changes it; a cleared shortcut is stored as something else.
             let stored = UserDefaults(suiteName: "com.openai.chat")?.object(forKey: "KeyboardShortcuts_toggleLauncher")
             if let shortcut = stored == nil ? Shortcut(keyCode: kVK_Space, carbonModifiers: optionKey)
@@ -70,8 +70,9 @@ enum Clashes {
         return found
     }
 
-    private static func installed(_ bundleID: String) -> Bool {
-        NSWorkspace.shared.urlForApplication(withBundleIdentifier: bundleID) != nil
+    /// Only a running app holds its shortcut; whichever registered first gets the press.
+    private static func running(_ bundleID: String) -> Bool {
+        !NSRunningApplication.runningApplications(withBundleIdentifier: bundleID).isEmpty
     }
 }
 

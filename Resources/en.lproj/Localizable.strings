@@ -8,6 +8,13 @@
 "關閉視窗" = "Close Window";
 "結束 Wingman" = "Quit Wingman";
 "設定…" = "Settings…";
+"⚠︎ 還沒開啟「輔助使用」，讀不到聊天" = "⚠︎ Accessibility is off, so chats cannot be read";
+"⚠︎ %@ 也用 %@，按下去可能會打開它" = "⚠︎ %@ also uses %@, so pressing it may open that instead";
+"打開聊天 App，Wingman 就會開始讀" = "Open a chat app and Wingman starts reading";
+"%@ 需要「螢幕與系統錄音」才讀得到" = "%@ needs Screen & System Audio Recording to be read";
+"%@：這個畫面讀不到對話" = "%@: no conversation to read on this screen";
+"已暫停自動分析，按 %@ 仍可用" = "Automatic analysis paused; %@ still works";
+"%@：正在看「%@」" = "%@: reading “%@”";
 "歡迎使用 Wingman" = "Welcome to Wingman";
 "Wingman 設定" = "Wingman Settings";
 "繼續提供建議" = "Resume Suggestions";

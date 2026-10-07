@@ -20,6 +20,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var hotkey: Hotkey?
     private var hotkeyObservation: AnyCancellable?
     private var appsObservation: AnyCancellable?
+    private var pauseObservation: AnyCancellable?
+    private static let statusTag = 1, pauseTag = 2
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         Log.write("launch trusted=\(AXIsProcessTrusted()) screenCapture=\(CGPreflightScreenCaptureAccess())")
@@ -51,6 +53,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 self?.model.chatLeft()
                 self?.frontmostChanged()
             }
+        }
+        // Paused, the icon fades, so a Wingman that stopped suggesting on purpose does not look broken.
+        pauseObservation = Prefs.shared.$paused.sink { [weak self] paused in
+            DispatchQueue.main.async { self?.statusItem?.button?.appearsDisabled = paused }
         }
         if !AXIsProcessTrusted() {
             AXIsProcessTrustedWithOptions([kAXTrustedCheckOptionPrompt.takeUnretainedValue(): true] as CFDictionary)
@@ -187,9 +193,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             ?? NSImage(systemSymbolName: "bubble.left.and.text.bubble.right", accessibilityDescription: "Wingman")
         glyph?.isTemplate = true
         statusItem.button?.image = glyph
+        statusItem.button?.appearsDisabled = Prefs.shared.paused
         let menu = NSMenu()
+        let status = NSMenuItem(title: "", action: nil, keyEquivalent: "")
+        status.tag = Self.statusTag
+        menu.addItem(status)
+        menu.addItem(.separator())
         let pause = NSMenuItem(title: "", action: #selector(togglePause), keyEquivalent: "")
         pause.target = self
+        pause.tag = Self.pauseTag
         menu.addItem(pause)
         let settings = NSMenuItem(title: L("設定…"), action: #selector(showSettings), keyEquivalent: ",")
         settings.target = self
@@ -217,6 +229,23 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 Log.write("menu bar icon \(self.model.iconHidden ? "still hidden" : "in sight")")
             }
         }
+    }
+
+    /// What Wingman can see right now, at the top of its menu: the answer to "why is nothing happening?". `fixable`
+    /// when settings can fix it, which a click on the line then opens.
+    private func statusLine() -> (text: String, fixable: Bool) {
+        guard AXIsProcessTrusted() else { return (L("⚠︎ 還沒開啟「輔助使用」，讀不到聊天"), true) }
+        if let owner = Prefs.shared.hotkey.owner {
+            return (L("⚠︎ %@ 也用 %@，按下去可能會打開它", owner, Prefs.shared.hotkey.label), true)
+        }
+        guard model.chatInFront else { return (L("打開聊天 App，Wingman 就會開始讀"), false) }
+        let app = model.app
+        if app.readsPixels && !CGPreflightScreenCaptureAccess() {
+            return (L("%@ 需要「螢幕與系統錄音」才讀得到", app.name), true)
+        }
+        guard let convo = model.conversation else { return (L("%@：這個畫面讀不到對話", app.name), false) }
+        if Prefs.shared.paused { return (L("已暫停自動分析，按 %@ 仍可用", model.hotkeyLabel), false) }
+        return (L("%@：正在看「%@」", app.name, convo.title), false)
     }
 
     @objc private func togglePause() {
@@ -275,7 +304,13 @@ extension AppDelegate: NSWindowDelegate {
 extension AppDelegate: NSMenuDelegate {
     nonisolated func menuNeedsUpdate(_ menu: NSMenu) {
         MainActor.assumeIsolated {
-            menu.items.first?.title = Prefs.shared.paused ? L("繼續提供建議") : L("暫停建議")
+            menu.item(withTag: Self.pauseTag)?.title = Prefs.shared.paused ? L("繼續提供建議") : L("暫停建議")
+            if let status = menu.item(withTag: Self.statusTag) {
+                let line = statusLine()
+                status.title = line.text
+                status.action = line.fixable ? #selector(showSettings) : nil
+                status.target = line.fixable ? self : nil
+            }
         }
     }
 }
