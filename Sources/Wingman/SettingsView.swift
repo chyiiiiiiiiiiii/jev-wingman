@@ -82,6 +82,8 @@ struct HotkeyRecorder: View {
             }
         }
         .onDisappear(perform: stop)
+        // A window closing mid-recording would leave the key monitor to swallow the next key pressed in the panel.
+        .onReceive(NotificationCenter.default.publisher(for: NSWindow.willCloseNotification)) { _ in stop() }
         .onChange(of: settings.hotkey) { _, _ in heard = false }
         .onReceive(NotificationCenter.default.publisher(for: Hotkey.pressed)) { _ in heard = !recording }
     }

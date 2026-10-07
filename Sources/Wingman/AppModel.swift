@@ -301,7 +301,8 @@ final class AppModel: ObservableObject {
         workTask = Task { [weak self] in
             guard let self else { return }
             do {
-                let written = try await self.brain.rewrite(convo, direction: direction, previous: previous) { drafts in
+                let written = try await self.brain.rewrite(convo, direction: direction, previous: previous,
+                                                           followUp: self.followingUp) { drafts in
                     await self.show(drafts, for: current)
                 }
                 guard !Task.isCancelled else { return }
@@ -354,7 +355,8 @@ final class AppModel: ObservableObject {
     }
 
     func openPanel() {
-        guard let convo = conversation else { return }
+        // The shortcut is also live in settings, to be tried there; no chat in front, nothing to read or send.
+        guard chatInFront, let convo = conversation else { return }
         // Whether drafts were waiting when the panel opened: how often the prefetch spared a wait.
         Log.write("open drafts=\(phase == .ready && fingerprint(convo) == shownFingerprint ? "ready" : "pending")")
         if fingerprint(convo) != shownFingerprint || phase == .idle || phase == .skipped { analyze() }

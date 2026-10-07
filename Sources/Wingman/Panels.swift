@@ -111,19 +111,19 @@ final class PanelController: NSObject, NSWindowDelegate {
     private var pressed: UInt16?
 
     private func handleKey(_ event: NSEvent) -> Bool {
+        // The release of a press taken for inserting inserts, whatever is held by then: ⌘1 let go ⌘ first did nothing.
+        if event.type == .keyUp, let key = pressed, key == event.keyCode {
+            pressed = nil
+            if (18...20).contains(key) { model.insert(Int(key) - 18) } else { model.insertSelected() }
+            return true
+        }
         let insertKeys: Set<UInt16> = [18, 19, 20, 36, 76]
         // 1–3 pick a draft only where they type digits: under Zhuyin the same keys are ㄅ, ㄉ and ˇ, and 不 or 但
         // starting a direction typed in a draft instead.
         let letter = (18...20).contains(event.keyCode) && !event.modifierFlags.contains(.command)
             && !["1", "2", "3"].contains(event.charactersIgnoringModifiers ?? "")
         if insertKeys.contains(event.keyCode) && !letter && (!model.fieldFocused || event.modifierFlags.contains(.command)) {
-            if event.type == .keyDown {
-                if !event.isARepeat { pressed = event.keyCode }
-                return true
-            }
-            guard pressed == event.keyCode else { return true }
-            pressed = nil
-            if event.keyCode >= 18 && event.keyCode <= 20 { model.insert(Int(event.keyCode) - 18) } else { model.insertSelected() }
+            if event.type == .keyDown && !event.isARepeat { pressed = event.keyCode }
             return true
         }
         guard event.type == .keyDown else { return false }

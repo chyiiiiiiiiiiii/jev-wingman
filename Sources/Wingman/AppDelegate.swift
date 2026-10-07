@@ -259,6 +259,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             self?.onboardingWindow = nil
         }
         let window = NSWindow(contentViewController: NSHostingController(rootView: view))
+        window.delegate = self     // closing hands focus back; becoming key lets the shortcut be tried
         window.title = L("歡迎使用 Wingman")
         window.styleMask = [.titled, .closable, .miniaturizable]
         window.isReleasedWhenClosed = false
@@ -296,8 +297,15 @@ extension AppDelegate: NSWindowDelegate {
         MainActor.assumeIsolated {
             NSApp.hide(nil)
             // Settings checks permissions once a second; a window kept after closing went on checking for good.
-            DispatchQueue.main.async { self.settingsWindow = nil }
+            // Reopened in the meantime, it stays.
+            DispatchQueue.main.async { if self.settingsWindow?.isVisible == false { self.settingsWindow = nil } }
         }
+    }
+
+    /// Settings or onboarding in front again: its shortcut recorder can be tried, even after a trip to another app
+    /// put the shortcut away.
+    nonisolated func windowDidBecomeKey(_ notification: Notification) {
+        MainActor.assumeIsolated { registerHotkey() }
     }
 }
 

@@ -99,11 +99,11 @@ struct Brain {
     }
 
     /// Rewrites along the user's own direction ("更短", or "跟他說週五前給").
-    func rewrite(_ convo: Conversation, direction: String, previous: [Candidate],
+    func rewrite(_ convo: Conversation, direction: String, previous: [Candidate], followUp: Bool = false,
                  onDrafts: @escaping Drafts) async throws -> [Candidate] {
         let drafts = previous.map { "- \($0.text)" }.joined(separator: "\n")
         let brief = """
-        我想這樣回：「\(direction)」
+        \(followUp ? "最後一則是我說的，這些是我要接著傳的訊息。\n" : "")我想這樣回：「\(direction)」
         之前的草稿（可參考，不必沿用）：
         \(drafts)
         請照我的意思寫三則不同說法的回覆，strategy 欄位用兩到六個字描述那一則的差別\(Self.labelLanguage)。
