@@ -61,7 +61,6 @@
  "更正式": "Más formal",
  "更熱情": "Más cálido",
  "說說你想怎麼回，例如「跟他說週五前給」，按 Enter 重寫": "Di qué responder, p. ej., “dile que el viernes”",
- "Esc 關閉": "Esc cerrar",
  "關閉（Esc）": "Cerrar (Esc)",
  "回覆 %@：%@": "Respondiendo a %@: %@",
  "對方": "la otra persona",
@@ -234,5 +233,6 @@
  "收到了，%@ 可以用": "Recibido: %@ funciona",
  "%@ 也用 %@，按下去可能會打開它。換一組，或到 %@ 的設定裡改掉。": "%@ también usa %@, así que al pulsarlo puede abrirse eso. Elige otra combinación o cámbiala en los ajustes de %@.",
  "按一下 %@ 試試，收到了這裡會打勾。": "Pulsa %@ para probarlo; aquí aparecerá una marca cuando llegue.",
- "↑↓ 選一句 · Enter 填入 · 打字說你的想法 · Esc 關閉 · 不會自動送出": "↑↓ elegir · Enter insertar · escribe para decir lo que quieres · Esc cerrar · nunca envía"
+ "↑↓ 選一句 · Enter 填入 · 打字說你的想法 · Esc 關閉 · 不會自動送出": "↑↓ elegir · Enter insertar · escribe para decir lo que quieres · Esc cerrar · nunca envía",
+ "Enter：%@ · Esc 關閉": "Enter: %@ · Esc cerrar"
 }

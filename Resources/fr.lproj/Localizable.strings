@@ -81,14 +81,14 @@
 "說說你想怎麼回，例如「跟他說週五前給」，按 Enter 重寫" = "Dites quoi répondre, ex. « prêt vendredi »";
 "Enter 重寫 · Esc 回到選項 · ⌘1–3 填入" = "Entrée réécrit · Échap revient aux réponses · ⌘1–3 insère";
 "↑↓ 選一句 · Enter 填入 · 打字說你的想法 · Esc 關閉 · 不會自動送出" = "↑↓ choisir · Entrée insérer · tapez pour dire ce que vous voulez · Échap fermer · n'envoie jamais";
-"Esc 關閉" = "Esc : fermer";
+"Enter：%@ · Esc 關閉" = "Entrée : %@ · Échap fermer";
+"再試一次" = "Réessayer";
 "正在寫，好了就能 ↑↓ 選、Enter 填入 · Esc 關閉" = "Rédaction… puis ↑↓ pour choisir, Entrée pour insérer · Échap fermer";
 "關閉（Esc）" = "Fermer (Esc)";
 "你的回覆會公開" = "Votre réponse sera publique";
 "這則可以不回" = "Pas besoin de répondre";
 "回覆 %@：%@" = "Réponse à %@ : %@";
 "對方" = "votre interlocuteur";
-"再試一次" = "Réessayer";
 "正在挑最推薦的一句…" = "Choix de la meilleure réponse…";
 "幾句都可以，挑你喜歡的語氣" = "Toutes conviennent : choisissez le ton qui vous plaît";
 "★ 是最推薦的一句" = "★ indique la réponse recommandée";

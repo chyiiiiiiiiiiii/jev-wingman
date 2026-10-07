@@ -18,7 +18,11 @@ enum Render {
                                                           ("2-streaming", .thinking, 1, false, false),
                                                           ("3-written", .ready, 3, false, false),
                                                           ("4-ranked", .ready, 3, true, false),
-                                                          ("5-tense", .ready, 3, true, true)] {
+                                                          ("5-tense", .ready, 3, true, true),
+                                                          ("6-no-credit", .failed(Brain.Failure.http(402, "").localizedDescription,
+                                                                                  .credits), 0, false, false),
+                                                          ("7-no-key", .failed(Brain.Failure.missingKey.localizedDescription,
+                                                                               .settings), 0, false, false)] {
                 let model = AppModel()
                 model.loadSample(phase: phase, drafts: drafts, scored: scored, tense: tense)
                 let view = VStack(alignment: .trailing, spacing: 16) {

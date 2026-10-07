@@ -5,7 +5,26 @@ import WingmanCore
 /// What Wingman knows about the Slack conversation in front of the user, and what it suggests.
 @MainActor
 final class AppModel: ObservableObject {
-    enum Phase: Equatable { case idle, thinking, ready, skipped, failed(String) }
+    enum Phase: Equatable { case idle, thinking, ready, skipped, failed(String, Fix) }
+
+    /// What can be done about a failure, offered as a button beside it: retrying does not top up a balance.
+    enum Fix: Equatable {
+        case retry, settings, credits
+
+        init(_ error: Error) {
+            switch error as? Brain.Failure {
+            case .missingKey?: self = .settings
+            case let .http(code, body)?:
+                switch code {
+                case 402: self = .credits
+                case 401, 403: self = .settings
+                case 404 where body.lowercased().contains("endpoint"): self = .settings   // a model without ZDR hosts
+                default: self = .retry
+                }
+            default: self = .retry
+            }
+        }
+    }
 
     @Published private(set) var conversation: Conversation?
     @Published private(set) var phase: Phase = .idle
@@ -211,7 +230,7 @@ final class AppModel: ObservableObject {
         ranking = false
         if !reuseJudgment { judgment = nil }
         guard settings.hasWriterKey || !settings.typesafeKey.isEmpty else {
-            phase = .failed(Brain.Failure.missingKey.localizedDescription)
+            phase = .failed(Brain.Failure.missingKey.localizedDescription, .settings)
             return
         }
         workTask = Task { [weak self] in
@@ -238,7 +257,7 @@ final class AppModel: ObservableObject {
             }
             guard self.settings.hasWriterKey else {
                 // A TypeSafe key alone still answers "what do they want, how soon"; writing needs an LLM.
-                self.phase = .failed(L("這則訊息判斷好了。填入 OpenRouter key，就能幫你寫回覆"))
+                self.phase = .failed(L("這則訊息判斷好了。填入 OpenRouter key，就能幫你寫回覆"), .settings)
                 return
             }
             let current = self.generation
@@ -257,7 +276,7 @@ final class AppModel: ObservableObject {
                 await self.rankCandidates(convo)
             } catch {
                 guard !Task.isCancelled else { return }
-                self.phase = .failed(error.localizedDescription)
+                self.phase = .failed(error.localizedDescription, Fix(error))
                 Log.write("write failed: \(error.localizedDescription)")
             }
         }
@@ -291,7 +310,7 @@ final class AppModel: ObservableObject {
                 await self.rankCandidates(convo)
             } catch {
                 guard !Task.isCancelled else { return }
-                self.phase = .failed(error.localizedDescription)
+                self.phase = .failed(error.localizedDescription, Fix(error))
             }
         }
     }
@@ -340,8 +359,21 @@ final class AppModel: ObservableObject {
         fieldFocused = false
     }
 
+    /// Enter on a failure does what its button says.
+    func resolveFailure() {
+        guard case let .failed(_, fix) = phase else { return }
+        switch fix {
+        case .retry: analyze()
+        case .settings:
+            closePanel()
+            NSApp.sendAction(Selector(("showSettings")), to: nil, from: nil)
+        case .credits: NSWorkspace.shared.open(URL(string: "https://openrouter.ai/settings/credits")!)
+        }
+    }
+
     /// Enter: the draft the arrows are on.
     func insertSelected() {
+        if case .failed = phase { return resolveFailure() }
         insert(candidates.indices.contains(selected) ? selected : bestIndex ?? 0)
     }
 

@@ -171,6 +171,18 @@ final class PanelController: NSObject, NSWindowDelegate {
 
 // MARK: - Views
 
+/// Filled in the icon's indigo, and still filled while Wingman is not the active app, which a prominent button is not.
+struct BrandButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .font(.system(size: 11.5, weight: .semibold))
+            .foregroundStyle(.white)
+            .padding(.horizontal, 9)
+            .padding(.vertical, 3)
+            .background(SuggestionView.brand.opacity(configuration.isPressed ? 0.75 : 1), in: RoundedRectangle(cornerRadius: 5))
+    }
+}
+
 struct PillView: View {
     @ObservedObject var model: AppModel
 
@@ -297,7 +309,7 @@ struct SuggestionView: View {
         if fieldFocused { return L("Enter 重寫 · Esc 回到選項 · ⌘1–3 填入") }
         switch model.phase {
         case .ready: return L("↑↓ 選一句 · Enter 填入 · 打字說你的想法 · Esc 關閉 · 不會自動送出")
-        case .failed: return L("Esc 關閉")
+        case let .failed(_, fix): return L("Enter：%@ · Esc 關閉", Self.fixAction(fix) ?? L("再試一次"))
         default: return L("正在寫，好了就能 ↑↓ 選、Enter 填入 · Esc 關閉")
         }
     }
@@ -357,10 +369,16 @@ struct SuggestionView: View {
     /// which a skeleton fades into its draft. Swapping layouts between writing and done re-created the
     /// rows (they replayed their entrance) and dropped the status line, which read as a jolt.
     @ViewBuilder private var content: some View {
-        if case let .failed(reason) = model.phase {
+        if case let .failed(reason, fix) = model.phase {
             VStack(alignment: .leading, spacing: 6) {
                 Text(reason).foregroundStyle(.red).font(.system(size: 12))
-                Button(L("再試一次")) { model.analyze() }.controlSize(.small)
+                HStack(spacing: 8) {
+                    if let action = Self.fixAction(fix) {
+                        Button(action) { model.resolveFailure() }.buttonStyle(BrandButtonStyle())
+                    }
+                    Button(L("再試一次")) { model.analyze() }
+                }
+                .controlSize(.small)
             }
         } else {
             VStack(alignment: .leading, spacing: 4) {
@@ -454,6 +472,15 @@ struct SuggestionView: View {
         case .japanese: .custom("Hiragino Sans", size: size)
         case .korean: .custom("Apple SD Gothic Neo", size: size)
         case .theirs: .system(size: size)
+        }
+    }
+
+    /// The button a failure gets besides 再試一次, which Enter presses.
+    static func fixAction(_ fix: AppModel.Fix) -> String? {
+        switch fix {
+        case .retry: nil
+        case .settings: L("打開設定")
+        case .credits: L("儲值 ↗")
         }
     }
 
