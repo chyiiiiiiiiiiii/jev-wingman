@@ -31,6 +31,8 @@
 "✗ OpenRouter 回應 %@，請檢查 key" = "✗ OpenRouter respondió %@; revisa la clave";
 "✓ 判斷訊息可以用（TypeSafe Jev，%@ ms）" = "✓ El análisis de mensajes funciona (TypeSafe Jev, %@ ms)";
 "✗ 判斷訊息（TypeSafe Jev）：%@" = "✗ Análisis de mensajes (TypeSafe Jev): %@";
+"macOS 切換輸入法" = "el cambio de fuente de entrada de macOS";
+"Finder 搜尋" = "la búsqueda del Finder";
 "已填入，檢查後按 Enter 送出" = "Respuesta insertada. Revísala y presiona Enter para enviarla.";
 "已輸入，看一下再按 Enter 送出" = "Respuesta escrita. Échale un vistazo y presiona Enter para enviarla.";
 "%@，已複製到剪貼簿" = "%@. Se copió al portapapeles.";
@@ -138,6 +140,9 @@
 "展開建議的快捷鍵" = "Atajo para abrir las sugerencias";
 "請按下新的組合…（Esc 取消）" = "Presiona la nueva combinación… (Esc para cancelar)";
 "恢復預設" = "Restablecer";
+"收到了，%@ 可以用" = "Recibido: %@ funciona";
+"%@ 也用 %@，按下去可能會打開它。換一組，或到 %@ 的設定裡改掉。" = "%@ también usa %@, así que al pulsarlo puede abrirse eso. Elige otra combinación o cámbiala en los ajustes de %@.";
+"按一下 %@ 試試，收到了這裡會打勾。" = "Pulsa %@ para probarlo; aquí aparecerá una marca cuando llegue.";
 "要搭配 ⌘、⌥ 或 ⌃，不然會吃掉一般打字" = "Incluye ⌘, ⌥ o ⌃; si no, interferiría con la escritura normal";
 "%@ 已經被其他 App 用了，換一組試試" = "Otra app ya usa %@; prueba otra combinación";
 "已開啟「輔助使用」" = "Accesibilidad activada";

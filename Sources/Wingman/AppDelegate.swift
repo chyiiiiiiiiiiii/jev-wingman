@@ -33,13 +33,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         ) { [weak self] _ in
             MainActor.assumeIsolated { self?.frontmostChanged() }
         }
+        pickFreeHotkey()
         model.hotkeyLabel = Prefs.shared.hotkey.label
         hotkeyObservation = Prefs.shared.$hotkey.dropFirst().sink { [weak self] _ in
             DispatchQueue.main.async {
                 guard let self else { return }
                 self.hotkey = nil
                 self.model.hotkeyLabel = Prefs.shared.hotkey.label
-                if Front.current?.app != nil { self.registerHotkey() }   // a browser's comes with a web chat tab
+                // A browser's comes with a web chat tab; in settings it is there to be tried out.
+                if Front.current?.app != nil || NSApp.isActive { self.registerHotkey() }
             }
         }
         appsObservation = Prefs.shared.$disabledApps.dropFirst().sink { [weak self] _ in
@@ -128,10 +130,23 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         guard hotkey == nil else { return }
         let setting = Prefs.shared.hotkey
         hotkey = Hotkey(keyCode: setting.keyCode, modifiers: setting.modifiers, id: 1) { [weak self] in
-            MainActor.assumeIsolated { self?.model.togglePanel() }
+            MainActor.assumeIsolated {
+                // Pressed in Wingman's own settings, the shortcut is only being tried out.
+                guard !NSApp.isActive else { return }
+                self?.model.togglePanel()
+            }
         }
         model.hotkeyLabel = setting.label
         if hotkey == nil { Log.write("hotkey \(setting.label) is taken") }
+    }
+
+    /// A first shortcut nobody else answers. Carbon cannot tell: Raycast holding ⌥Space still let Wingman register
+    /// it, and the press opened Raycast. Only a shortcut never chosen is changed.
+    private func pickFreeHotkey() {
+        guard UserDefaults.standard.object(forKey: "hotkey") == nil, let owner = HotkeySetting.standard.owner,
+              let free = HotkeySetting.alternatives.first(where: { $0.owner == nil }) else { return }
+        Prefs.shared.hotkey = free
+        Log.write("hotkey \(HotkeySetting.standard.label) belongs to \(owner); using \(free.label)")
     }
 
     /// A menu bar app has no menus, yet ⌘V, ⌘C and ⌘A in text fields are the Edit menu's key
@@ -222,6 +237,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         onboardingWindow = window
         NSApp.activate()
         window.makeKeyAndOrderFront(nil)
+        registerHotkey()     // to be tried out on the last step
     }
 
     @objc private func showSettings() {
@@ -239,6 +255,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             settingsWindow = window
         }
         NSApp.activate()
+        registerHotkey()     // to be tried out beside the shortcut recorder
         if settingsWindow?.isMiniaturized == true { settingsWindow?.deminiaturize(nil) }
         settingsWindow?.makeKeyAndOrderFront(nil)
     }

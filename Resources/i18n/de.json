@@ -229,5 +229,10 @@
  "Enter 重寫 · Esc 回到選項 · ⌘1–3 填入": "Enter schreibt neu · Esc zurück zu den Vorschlägen · ⌘1–3 fügt ein",
  "↑↓ 選一句 · Enter 填入 · Tab 說你的想法 · Esc 關閉 · 不會自動送出": "↑↓ wählen · Enter einfügen · Tab für eigenen Wunsch · Esc schließen · sendet nie",
  "正在寫，好了就能 ↑↓ 選、Enter 填入 · Esc 關閉": "Schreibt… dann ↑↓ wählen, Enter einfügen · Esc schließen",
- "在 Slack、Discord、LINE、Telegram，或 Messenger、Instagram、Threads 網頁版收到訊息時，以及在 Instagram、Threads 的貼文底下準備留言時，輸入框右上方會出現「✦ 3 個建議」。按 %@ 或點它展開，一開始就停在 ★ 推薦的那句，用 ↑↓ 換一句、按 Enter 填入（或直接按 1、2、3），確認後自己按 Enter 送出。": "Kommt in Slack, Discord, LINE, Telegram oder in Messenger, Instagram oder Threads im Web eine Nachricht an, und wenn du unter einem Instagram- oder Threads-Beitrag eine Antwort beginnst, erscheint über dem Eingabefeld „✦ 3 Vorschläge“. Drücke %@ oder klicke darauf: Der ★-Vorschlag ist schon ausgewählt; ↑↓ wählt einen anderen, Enter fügt ihn ein (oder 1, 2, 3). Prüfe ihn und drücke selbst Enter zum Senden."
+ "在 Slack、Discord、LINE、Telegram，或 Messenger、Instagram、Threads 網頁版收到訊息時，以及在 Instagram、Threads 的貼文底下準備留言時，輸入框右上方會出現「✦ 3 個建議」。按 %@ 或點它展開，一開始就停在 ★ 推薦的那句，用 ↑↓ 換一句、按 Enter 填入（或直接按 1、2、3），確認後自己按 Enter 送出。": "Kommt in Slack, Discord, LINE, Telegram oder in Messenger, Instagram oder Threads im Web eine Nachricht an, und wenn du unter einem Instagram- oder Threads-Beitrag eine Antwort beginnst, erscheint über dem Eingabefeld „✦ 3 Vorschläge“. Drücke %@ oder klicke darauf: Der ★-Vorschlag ist schon ausgewählt; ↑↓ wählt einen anderen, Enter fügt ihn ein (oder 1, 2, 3). Prüfe ihn und drücke selbst Enter zum Senden.",
+ "macOS 切換輸入法": "der Eingabequellenwechsel von macOS",
+ "Finder 搜尋": "die Finder-Suche",
+ "收到了，%@ 可以用": "Angekommen: %@ funktioniert",
+ "%@ 也用 %@，按下去可能會打開它。換一組，或到 %@ 的設定裡改掉。": "%@ nutzt %@ ebenfalls, ein Druck öffnet womöglich das. Wähle eine andere Kombination oder ändere sie in den Einstellungen von %@.",
+ "按一下 %@ 試試，收到了這裡會打勾。": "Drück %@ zum Ausprobieren; hier erscheint ein Haken, wenn er ankommt."
 }

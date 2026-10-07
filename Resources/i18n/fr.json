@@ -229,5 +229,10 @@
  "Enter 重寫 · Esc 回到選項 · ⌘1–3 填入": "Entrée réécrit · Échap revient aux réponses · ⌘1–3 insère",
  "↑↓ 選一句 · Enter 填入 · Tab 說你的想法 · Esc 關閉 · 不會自動送出": "↑↓ choisir · Entrée insérer · Tab pour dire ce que vous voulez · Échap fermer · n'envoie jamais",
  "正在寫，好了就能 ↑↓ 選、Enter 填入 · Esc 關閉": "Rédaction… puis ↑↓ pour choisir, Entrée pour insérer · Échap fermer",
- "在 Slack、Discord、LINE、Telegram，或 Messenger、Instagram、Threads 網頁版收到訊息時，以及在 Instagram、Threads 的貼文底下準備留言時，輸入框右上方會出現「✦ 3 個建議」。按 %@ 或點它展開，一開始就停在 ★ 推薦的那句，用 ↑↓ 換一句、按 Enter 填入（或直接按 1、2、3），確認後自己按 Enter 送出。": "Quand un message arrive dans Slack, Discord, LINE, Telegram, ou dans Messenger, Instagram ou Threads sur le web, et quand vous commencez une réponse sous une publication Instagram ou Threads, « ✦ 3 suggestions » apparaît au-dessus du champ de message, à droite. Appuyez sur %@ ou cliquez dessus : la réponse ★ est sélectionnée d'emblée ; ↑↓ en choisit une autre et Entrée l'insère (ou 1, 2, 3). Vérifiez-la, puis appuyez vous-même sur Entrée pour l'envoyer."
+ "在 Slack、Discord、LINE、Telegram，或 Messenger、Instagram、Threads 網頁版收到訊息時，以及在 Instagram、Threads 的貼文底下準備留言時，輸入框右上方會出現「✦ 3 個建議」。按 %@ 或點它展開，一開始就停在 ★ 推薦的那句，用 ↑↓ 換一句、按 Enter 填入（或直接按 1、2、3），確認後自己按 Enter 送出。": "Quand un message arrive dans Slack, Discord, LINE, Telegram, ou dans Messenger, Instagram ou Threads sur le web, et quand vous commencez une réponse sous une publication Instagram ou Threads, « ✦ 3 suggestions » apparaît au-dessus du champ de message, à droite. Appuyez sur %@ ou cliquez dessus : la réponse ★ est sélectionnée d'emblée ; ↑↓ en choisit une autre et Entrée l'insère (ou 1, 2, 3). Vérifiez-la, puis appuyez vous-même sur Entrée pour l'envoyer.",
+ "macOS 切換輸入法": "le changement de source de saisie de macOS",
+ "Finder 搜尋": "la recherche du Finder",
+ "收到了，%@ 可以用": "Reçu : %@ fonctionne",
+ "%@ 也用 %@，按下去可能會打開它。換一組，或到 %@ 的設定裡改掉。": "%@ utilise aussi %@ : l’appuyer peut l’ouvrir à la place. Choisissez-en un autre, ou changez-le dans les réglages de %@.",
+ "按一下 %@ 試試，收到了這裡會打勾。": "Appuyez sur %@ pour l’essayer ; une coche apparaît ici quand il arrive."
 }
