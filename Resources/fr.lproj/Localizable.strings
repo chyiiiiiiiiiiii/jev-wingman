@@ -87,6 +87,8 @@
 "關閉（Esc）" = "Fermer (Esc)";
 "你的回覆會公開" = "Votre réponse sera publique";
 "這則可以不回" = "Pas besoin de répondre";
+"你最後回過了 · 接著說" = "Vous avez répondu en dernier · la suite";
+"接著你剛說的：%@" = "À la suite de votre message : %@";
 "回覆 %@：%@" = "Réponse à %@ : %@";
 "對方" = "votre interlocuteur";
 "正在挑最推薦的一句…" = "Choix de la meilleure réponse…";

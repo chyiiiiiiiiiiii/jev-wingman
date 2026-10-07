@@ -351,10 +351,20 @@ struct SuggestionView: View {
                 if let tension = j.tension {
                     MoodBar(tension: tension, subtext: (j.subtext ?? 0) >= Brain.meaningful)
                 }
+            } else if model.followingUp {
+                HStack(spacing: 8) {
+                    Text("Wingman").font(.system(size: 13, weight: .semibold))
+                    Tag(text: L("你最後回過了 · 接著說"), symbol: "arrowshape.turn.up.right")
+                }
             } else {
                 Text("Wingman").font(.system(size: 13, weight: .semibold))
             }
-            if let replyTo = model.replyTo {
+            if model.followingUp, let mine = model.conversation?.messages.last(where: \.isMe) {
+                (Text(L("接著你剛說的：%@", "")) + Text(mine.text).font(Self.chatFont(for: mine.text, size: 12)))
+                    .font(.system(size: 12))
+                    .foregroundStyle(.secondary)
+                    .lineLimit(2)
+            } else if let replyTo = model.replyTo {
                 // Every translation ends with the quoted text, so it can take the chat's own face.
                 (Text(L("回覆 %@：%@", "\(replyTo.sender ?? L("對方"))", ""))
                     + Text(replyTo.text).font(Self.chatFont(for: replyTo.text, size: 12)))
@@ -410,7 +420,7 @@ struct SuggestionView: View {
                 return L("幾句都可以，挑你喜歡的語氣")
             }
             return L("★ 是最推薦的一句")
-        default: return model.judgment == nil ? L("正在讀對話、判斷怎麼回…") : L("正在寫回覆…")
+        default: return model.judgment == nil && !model.followingUp ? L("正在讀對話、判斷怎麼回…") : L("正在寫回覆…")
         }
     }
 

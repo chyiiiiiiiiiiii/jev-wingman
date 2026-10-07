@@ -234,5 +234,7 @@
  "%@ 也用 %@，按下去可能會打開它。換一組，或到 %@ 的設定裡改掉。": "%@ nutzt %@ ebenfalls, ein Druck öffnet womöglich das. Wähle eine andere Kombination oder ändere sie in den Einstellungen von %@.",
  "按一下 %@ 試試，收到了這裡會打勾。": "Drück %@ zum Ausprobieren; hier erscheint ein Haken, wenn er ankommt.",
  "↑↓ 選一句 · Enter 填入 · 打字說你的想法 · Esc 關閉 · 不會自動送出": "↑↓ wählen · Enter einfügen · tippen für eigenen Wunsch · Esc schließen · sendet nie",
- "Enter：%@ · Esc 關閉": "Enter: %@ · Esc schließen"
+ "Enter：%@ · Esc 關閉": "Enter: %@ · Esc schließen",
+ "你最後回過了 · 接著說": "Du hast zuletzt geantwortet · was du nachschiebst",
+ "接著你剛說的：%@": "Im Anschluss an deine Nachricht: %@"
 }

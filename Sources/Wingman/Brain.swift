@@ -51,12 +51,13 @@ struct Brain {
     static let meaningful = 0.6
 
     /// Jev's pick among the drafts, as a probability per draft in the order given.
-    func rank(_ convo: Conversation, drafts: [String], tense: Bool = false) async throws -> [Double] {
+    func rank(_ convo: Conversation, drafts: [String], tense: Bool = false, followUp: Bool = false) async throws -> [Double] {
         guard let replyTo = convo.messages.last(where: { !$0.isMe }) else { throw Failure.nothingToAnswer }
         let criteria = Dictionary(drafts.map { ($0, NSNull()) }, uniquingKeysWith: { first, _ in first })
         let body: [String: Any] = ["model": jevModel, "state": state(convo, replyTo: replyTo),
                                    "questions": ["best": ["type": "choice",
                                                           "instructions": convo.isPost ? ReplyQuestions.postRankInstructions
+                                                              : followUp ? ReplyQuestions.followUpRankInstructions
                                                               : ReplyQuestions.rankInstructions
                                                                 + (tense ? "現在氣氛緊張，先接住對方情緒、語氣穩的那則比較好。" : ""),
                                                           "criteria": criteria]]]
@@ -83,6 +84,13 @@ struct Brain {
                 brief = "對方可能話中有話（試探、反諷或拐彎抱怨）：回應真正的意思，不要只照字面回。\n" + brief
             }
         }
+        return try await complete(convo, brief: brief, onDrafts: onDrafts)
+    }
+
+    /// I spoke last: what to send next, not another answer to what they said before me.
+    func followUp(_ convo: Conversation, onDrafts: @escaping Drafts) async throws -> [Candidate] {
+        let brief = "最後一則是我說的，對方還沒回。請寫三則我可以接著傳的訊息，作用各不相同（例如補充一點、追問、輕輕提醒），"
+            + "不要重複我已經說過的話，strategy 欄位用兩到六個字描述那一則的作用\(Self.labelLanguage)。"
         return try await complete(convo, brief: brief, onDrafts: onDrafts)
     }
 

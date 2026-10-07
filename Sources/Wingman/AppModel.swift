@@ -32,6 +32,8 @@ final class AppModel: ObservableObject {
     @Published private(set) var candidates: [Candidate] = []
     @Published private(set) var note: String?
     @Published private(set) var ranking = false
+    /// I spoke last when the panel was asked for: the drafts carry on from what I said instead of answering again.
+    @Published private(set) var followingUp = false
     @Published var panelShown = false
     @Published var direction = ""
     @Published var fieldFocused = false
@@ -224,11 +226,14 @@ final class AppModel: ObservableObject {
         shownFingerprint = print
         // ⌥Space after a skipped prefetch: Jev already read this exact conversation.
         let reuseJudgment = !auto && judgment != nil && judgedFingerprint == print
+        // Asked for after I spoke last: what they want and how soon was answered already.
+        let followUp = !auto && !convo.awaitingReply && !convo.isPost
+        followingUp = followUp
         phase = .thinking
         candidates = []
         resetSelection()
         ranking = false
-        if !reuseJudgment { judgment = nil }
+        if !reuseJudgment || followUp { judgment = nil }
         guard settings.hasWriterKey || !settings.typesafeKey.isEmpty else {
             phase = .failed(Brain.Failure.missingKey.localizedDescription, .settings)
             return
@@ -236,7 +241,7 @@ final class AppModel: ObservableObject {
         workTask = Task { [weak self] in
             guard let self else { return }
             let started = Date()
-            if !reuseJudgment {
+            if !reuseJudgment && !followUp {
                 do {
                     let judgment = try await self.brain.judge(convo)
                     guard !Task.isCancelled else { return }
@@ -262,9 +267,9 @@ final class AppModel: ObservableObject {
             }
             let current = self.generation
             do {
-                let written = try await self.brain.write(convo, strategies: picks, judgment: self.judgment) { drafts in
-                    await self.show(drafts, for: current)
-                }
+                let show: Brain.Drafts = { drafts in await self.show(drafts, for: current) }
+                let written = followUp ? try await self.brain.followUp(convo, onDrafts: show)
+                    : try await self.brain.write(convo, strategies: picks, judgment: self.judgment, onDrafts: show)
                 guard !Task.isCancelled else { return }
                 withAnimation(Motion.reveal) {
                     let final = Array(written.prefix(3))
@@ -329,7 +334,8 @@ final class AppModel: ObservableObject {
         defer { ranking = false }
         let started = Date()
         do {
-            let scores = try await brain.rank(convo, drafts: drafts, tense: (judgment?.tension ?? 0) >= Brain.tense)
+            let scores = try await brain.rank(convo, drafts: drafts, tense: (judgment?.tension ?? 0) >= Brain.tense,
+                                              followUp: followingUp)
             guard !Task.isCancelled, candidates.map(\.text) == drafts else { return }
             withAnimation(.easeOut(duration: 0.22)) {
                 for index in candidates.indices { candidates[index].score = scores[index] }

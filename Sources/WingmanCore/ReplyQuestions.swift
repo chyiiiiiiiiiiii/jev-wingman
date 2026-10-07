@@ -67,6 +67,9 @@ public enum ReplyQuestions {
     public static let postRankInstructions = "`me` 要在公開貼文底下留言回覆 `reply_to`。下面哪一則留言最適合直接發出？"
         + "考慮它是否切題、語氣是否自然得體，以及有沒有編造貼文裡沒有的事實。"
 
+    public static let followUpRankInstructions = "最後一則是 `me` 說的，`me` 想再接著傳一則。下面哪一則最適合接著送出？"
+        + "考慮它是否自然接續、有沒有重複 `me` 說過的話，以及有沒有做出對話裡沒有根據的承諾。"
+
     public static let rankInstructions = "`me` 要回覆 `reply_to`。下面哪一則草稿最適合直接送出？"
         + "考慮它有沒有回應對方真正的意思、語氣是否得體，以及有沒有做出對話裡沒有根據的承諾。"
 
