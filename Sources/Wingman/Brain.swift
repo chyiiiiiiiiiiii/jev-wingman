@@ -37,13 +37,17 @@ struct Brain {
         guard let replyTo = convo.messages.last(where: { !$0.isMe }) else { throw Failure.nothingToAnswer }
         let body: [String: Any] = ["model": jevModel, "state": state(convo, replyTo: replyTo),
                                    "questions": convo.isPost ? ReplyQuestions.postPayload : ReplyQuestions.payload]
-        let data = try await post(jevURL, key: jevKey, body: body)
+        let data = try await post(jevURL, key: jevKey, body: body, timeout: Self.jevTimeout)
         let usage = (try? JSONSerialization.jsonObject(with: data) as? [String: Any])?["usage"] as? [String: Any]
         let tokens = usage?["input_tokens"] as? Int ?? 0
         Log.write("jev tokens in=\(tokens) cost=$\(String(format: "%.6f", Double(tokens) * 0.042 / 1_000_000))")
         return try JevDecoder.judgment(from: data, strategyOrder: convo.isPost ? ReplyQuestions.postStrategyOrder
                                                                                 : ReplyQuestions.strategyOrder)
     }
+
+    /// Jev answers in about 0.3 s (p90 0.6 s, the slowest of 130 logged 3.4 s). Past this the drafts are written
+    /// without its judgment rather than after the 30 s a request may otherwise wait.
+    static let jevTimeout: TimeInterval = 6
 
     /// From "緊張" up the chat is tense, and replies should settle it before anything else.
     static let tense = 1.5
@@ -61,7 +65,7 @@ struct Brain {
                                                               : ReplyQuestions.rankInstructions
                                                                 + (tense ? "現在氣氛緊張，先接住對方情緒、語氣穩的那則比較好。" : ""),
                                                           "criteria": criteria]]]
-        let data = try await post(jevURL, key: jevKey, body: body)
+        let data = try await post(jevURL, key: jevKey, body: body, timeout: Self.jevTimeout)
         return try JevDecoder.scores(from: data, for: drafts)
     }
 
@@ -268,8 +272,9 @@ struct Brain {
         return request
     }
 
-    private func post(_ url: URL, key: String, body: [String: Any]) async throws -> Data {
-        let request = try jsonRequest(url, key: key, body: body)
+    private func post(_ url: URL, key: String, body: [String: Any], timeout: TimeInterval = 30) async throws -> Data {
+        var request = try jsonRequest(url, key: key, body: body)
+        request.timeoutInterval = timeout
         let (data, response) = try await URLSession.shared.data(for: request)
         let code = (response as? HTTPURLResponse)?.statusCode ?? 0
         guard code == 200 else { throw Failure.http(code, String(decoding: data, as: UTF8.self)) }
