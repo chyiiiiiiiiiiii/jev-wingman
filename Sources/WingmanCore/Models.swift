@@ -85,6 +85,22 @@ public struct Conversation: Equatable {
             .joined(separator: "\u{1f}")
     }
 
+    /// The message to answer as Jev reads it: their last message with the ones the same person sent just before it,
+    /// since a thought often spans several messages and its question is not always the last. At most five; a
+    /// message without a sender (Slack shows it once per run) belongs to the run around it.
+    public var replyToText: String? {
+        guard var index = messages.lastIndex(where: { !$0.isMe }) else { return nil }
+        var run = [messages[index]], sender = messages[index].sender
+        while index > 0, run.count < 5 {
+            index -= 1
+            let message = messages[index]
+            guard !message.isMe, message.sender == nil || sender == nil || message.sender == sender else { break }
+            sender = sender ?? message.sender
+            run.insert(message, at: 0)
+        }
+        return run.map(\.text).joined(separator: "\n")
+    }
+
     /// The other side spoke last, so there is something to answer.
     public var awaitingReply: Bool {
         guard let last = messages.last else { return false }

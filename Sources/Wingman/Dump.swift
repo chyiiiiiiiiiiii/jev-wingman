@@ -202,8 +202,9 @@ enum Dump {
         exit(0)
     }
 
-    /// `--check-jev`: ask Jev about three made-up chats, calm, tense and a request, with the keys in settings, and print
-    /// what comes back (never the keys), to see the questions still suit the model after they change.
+    /// `--check-jev`: ask Jev about four made-up chats (calm, tense, a request, a question sent in two messages) with the
+    /// keys in settings, and print what comes back (never the keys), to see the questions still suit the model after
+    /// they change.
     static func checkJev() async -> Int32 {
         func line(_ text: String, me: Bool = false) -> ChatMessage { ChatMessage(sender: me ? "我" : "Mia", text: text, isMe: me) }
         let chats = [
@@ -211,6 +212,7 @@ enum Dump {
             ("tense", [line("你上週說週三前會給我文件"), line("再等我一下，快好了", me: true),
                        line("你每次都這樣說"), line("算了，你忙你的吧，我自己弄")]),
             ("request", [line("午安"), line("可以幫我 review 一下登入那個 PR 嗎？今天下班前要合")]),
+            ("burst", [line("早"), line("早安", me: true), line("週五晚上要不要一起吃飯？"), line("哈哈")]),
         ]
         let brain = Brain(settings: Prefs.shared, app: .slack)
         for (name, messages) in chats {

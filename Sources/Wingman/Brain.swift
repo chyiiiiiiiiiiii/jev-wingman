@@ -149,7 +149,8 @@ struct Brain {
                 ["sender": message.isMe ? (settings.myName.isEmpty ? "我" : settings.myName) : (message.sender ?? "（不明）"),
                  "text": message.text]
             },
-            "reply_to": replyTo.text,
+            // Their last few messages in a row: the question is often in an earlier one.
+            "reply_to": convo.replyToText ?? replyTo.text,
         ].merging(convo.hasAttachments ? ["attachments": Self.attachmentNote] : [:]) { $1 }
     }
 
