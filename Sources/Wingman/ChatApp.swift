@@ -115,7 +115,7 @@ enum Readers {
             guard let (shown, reading) = readBrowser(pid: pid), shown == app else { return nil }
             return reading
         case .line: return await PixelReader.shared.readLine(pid: pid)
-        case .telegram: return await PixelReader.shared.readTelegram(pid: pid)
+        case .telegram: return await PixelReader.shared.readTelegram(pid: pid, myName: myName)
         }
     }
 

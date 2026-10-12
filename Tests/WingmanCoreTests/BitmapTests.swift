@@ -29,3 +29,16 @@ private func capture(background: [CGFloat], bubble: [CGFloat]? = nil, ink: [CGFl
     let (bitmap, text) = capture(background: [33, 33, 33], bubble: [43, 82, 160])
     #expect(bitmap.tint(around: text) >= 0.25)
 }
+
+@Test func aSenderNameIsColouredTextAndAMessageIsNot() {
+    // Telegram without bubbles writes each sender's name in a colour over white message text.
+    let (name, nameBox) = capture(background: [19, 26, 34], ink: [40, 141, 172])
+    let (body, bodyBox) = capture(background: [19, 26, 34], ink: [255, 255, 255])
+    #expect(name.ink(of: nameBox) >= 0.4)
+    #expect(body.ink(of: bodyBox) < 0.1)
+    // The day theme: dark text, and a name in blue.
+    let (dayName, dayNameBox) = capture(background: [255, 255, 255], ink: [51, 144, 236])
+    let (dayBody, dayBodyBox) = capture(background: [255, 255, 255], ink: [20, 20, 20])
+    #expect(dayName.ink(of: dayNameBox) >= 0.4)
+    #expect(dayBody.ink(of: dayBodyBox) < 0.1)
+}

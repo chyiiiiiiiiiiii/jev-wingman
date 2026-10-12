@@ -48,7 +48,7 @@ actor PixelReader {
     /// Placeholder text of Telegram's empty input box, which marks where the chat pane starts.
     private static let placeholders = ["Write a message", "Message", "訊息", "輸入訊息", "撰寫訊息", "写消息"]
 
-    func readTelegram(pid: pid_t) async -> Reading? {
+    func readTelegram(pid: pid_t, myName: String?) async -> Reading? {
         guard let (image, windowFrame) = await Self.capture(pid: pid) else { return nil }
         let size = windowFrame.size
         let lines = recognise(image, windowSize: size, region: CGRect(origin: .zero, size: size), pid: pid)
@@ -63,7 +63,7 @@ actor PixelReader {
         let composer = CGRect(x: windowFrame.minX + paneX, y: windowFrame.minY + inputTop,
                               width: size.width - paneX, height: size.height - inputTop)
         let convo = Conversation(title: Self.header(in: lines, pane: pane),
-                                 isThread: false, messages: BubbleParser.messages(from: lines, pane: pane),
+                                 isThread: false, messages: BubbleParser.messages(from: lines, pane: pane, myName: myName),
                                  draft: "", composerHandle: -1, composerFrame: composer)
         return Reading(conversation: convo, composer: nil)
     }
@@ -121,7 +121,7 @@ actor PixelReader {
             return OCRLine(text: best.string, confidence: Double(best.confidence),
                            frame: CGRect(x: region.minX + inCrop.minX / scale, y: region.minY + inCrop.minY / scale,
                                          width: inCrop.width / scale, height: inCrop.height / scale),
-                           tint: bitmap.tint(around: inCrop))
+                           tint: bitmap.tint(around: inCrop), ink: bitmap.ink(of: inCrop))
         }
         cache[pid] = Cached(fingerprint: print, lines: lines)
         Log.write("ocr pid=\(pid) lines=\(lines.count) \(Int(Date().timeIntervalSince(started) * 1000))ms")
