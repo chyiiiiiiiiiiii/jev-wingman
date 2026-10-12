@@ -121,7 +121,7 @@ actor PixelReader {
             return OCRLine(text: best.string, confidence: Double(best.confidence),
                            frame: CGRect(x: region.minX + inCrop.minX / scale, y: region.minY + inCrop.minY / scale,
                                          width: inCrop.width / scale, height: inCrop.height / scale),
-                           tint: bitmap.surroundingSaturation(of: inCrop))
+                           tint: bitmap.tint(around: inCrop))
         }
         cache[pid] = Cached(fingerprint: print, lines: lines)
         Log.write("ocr pid=\(pid) lines=\(lines.count) \(Int(Date().timeIntervalSince(started) * 1000))ms")

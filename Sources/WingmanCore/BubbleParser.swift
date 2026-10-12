@@ -6,8 +6,8 @@ public struct OCRLine: Equatable {
     public var text: String
     public var confidence: Double
     public var frame: CGRect
-    /// Saturation of the background just around the text: own bubbles are coloured (LINE green,
-    /// Telegram blue), the other side's are grey.
+    /// Saturation just around the text, above the chat's own background: own bubbles are coloured
+    /// (LINE green, Telegram blue), the other side's are grey.
     public var tint: Double
 
     public init(text: String, confidence: Double = 1, frame: CGRect, tint: Double = 0) {
